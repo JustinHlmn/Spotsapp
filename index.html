@@ -69,6 +69,8 @@ h1{font-size:22px;font-weight:700;margin:0;letter-spacing:-.015em}
 h2{font-size:22px;font-weight:700;margin:0;letter-spacing:-.015em;text-wrap:balance}
 .icon-btn{width:32px;height:32px;border-radius:50%;border:0;background:var(--fill);display:grid;place-items:center;flex:none}
 .icon-btn.accent{background:var(--accent);color:var(--accent-fg)}
+.here-btn{height:32px;border-radius:16px;border:0;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;gap:5px;padding:0 12px 0 9px;white-space:nowrap}
+.here-btn[disabled]{opacity:.6}
 .search{display:flex;align-items:center;gap:6px;background:var(--fill);border-radius:11px;padding:0 10px;height:38px;color:var(--muted)}
 .search input{flex:1;min-width:0;border:0;background:none;outline:none;height:100%;color:var(--fg);font-size:16px}
 .search input::placeholder{color:var(--muted)}
@@ -251,7 +253,7 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
     <div class="ph">
       <div class="row between">
         <h1>Meine Spots</h1>
-        <button class="icon-btn accent press" id="addBtn" aria-label="Spot hinzufügen" title="Spot hinzufügen"></button>
+        <div class="row"><button class="here-btn press" id="hereBtn" title="Spot an deinem aktuellen Standort speichern"></button><button class="icon-btn accent press" id="addBtn" aria-label="Spot auf der Karte setzen" title="Spot auf der Karte setzen"></button></div>
       </div>
       <div class="search"><span id="searchIc"></span><input id="q" type="search" placeholder="Spots oder Orte suchen" autocomplete="off" enterkeyhint="search"></div>
       <div class="chips" id="chips"></div>
@@ -760,7 +762,7 @@ function enterMode(m){
   $('#modeView').innerHTML = `<div class="mode">
       <div class="big"><span class="pulse"></span>${txt}</div>
       <div class="muted">${tip}</div>
-      <div class="btns"><button class="btn" data-act="cancel">Abbrechen</button><button class="btn primary" data-act="center">Kartenmitte nehmen</button></div>
+      <div class="btns"><button class="btn" data-act="cancel">Abbrechen</button><button class="btn primary" data-act="center">Kartenmitte nehmen</button><button class="btn full" style="grid-column:1/-1" data-act="here">${svg(UI.locate,15)} Mein Standort nehmen</button></div>
     </div>`;
   show('mode', 'peek');
 }
@@ -773,6 +775,7 @@ $('#modeView').addEventListener('click', e => {
     else showEdit();
   }
   if(a === 'center') place(map.getCenter());
+  if(a === 'here') getHere().then(p => { if(p && mode) place(p); });
 });
 map.on('click', e => {
   if(mode) return place(e.lngLat);
@@ -929,7 +932,36 @@ $('#importFile').addEventListener('change', async e => {
 });
 
 /* ================= Standort (live) ================= */
-let meMarker = null, watchId = null, centerOnFix = false, lastListPos = null;
+let meMarker = null, watchId = null, centerOnFix = false, lastListPos = null, meTime = 0, meAccM = 0;
+/* Aktuellen Standort holen (frisch, genau) */
+function getHere(){
+  return new Promise(resolve => {
+    if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return resolve(null); }
+    if(me && Date.now() - meTime < 15000 && meAccM <= 50) return resolve({...me});
+    toast('Standort wird ermittelt …');
+    navigator.geolocation.getCurrentPosition(p => {
+      onPos(p); hideToast();
+      if(p.coords.accuracy > 50) toast(`Genauigkeit ca. ${Math.round(p.coords.accuracy)} m – Marker ggf. verschieben.`);
+      resolve({lat:p.coords.latitude, lng:p.coords.longitude});
+    }, err => {
+      toast(err.code === 1 ? 'Standortzugriff verweigert. Erlaube ihn in den Einstellungen für Safari/Chrome.' : 'Standort gerade nicht verfügbar. Versuch es draußen nochmal.');
+      resolve(null);
+    }, {enableHighAccuracy:true, maximumAge:0, timeout:15000});
+    if(watchId == null) startGPS(false);
+  });
+}
+async function saveHere(){
+  if(view === 'edit' || mode) return;
+  const btn = $('#hereBtn'); btn.disabled = true;
+  const p = await getHere();
+  btn.disabled = false;
+  if(!p) return;
+  newDraft(); draft.lat = p.lat; draft.lng = p.lng;
+  showEdit();
+  map.flyTo({center:LL(p), zoom:Math.max(map.getZoom(), 17), padding:camPad(), duration:1200});
+  setTimeout(() => $('#f-name')?.focus(), 450);
+}
+$('#hereBtn').addEventListener('click', saveHere);
 function startGPS(center){
   if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
   centerOnFix = center;
@@ -942,7 +974,7 @@ function startGPS(center){
   }, {enableHighAccuracy:true, maximumAge:5000, timeout:20000});
 }
 function onPos(p){
-  me = {lat:p.coords.latitude, lng:p.coords.longitude};
+  me = {lat:p.coords.latitude, lng:p.coords.longitude}; meTime = Date.now(); meAccM = p.coords.accuracy || 0;
   const acc = p.coords.accuracy || 0;
   if(!meMarker){
     const el = document.createElement('div'); el.className = 'me'; el.innerHTML = '<span class="p"></span><span class="d"></span>';
@@ -993,6 +1025,7 @@ function fitAll(animate){
 
 /* ================= Start ================= */
 $('#addBtn').innerHTML = svg(UI.plus, 16, 2.6);
+$('#hereBtn').innerHTML = svg(UI.locate, 14) + 'Hier speichern';
 $('#searchIc').innerHTML = svg(UI.search, 15);
 $('#b-locate').innerHTML = svg(UI.locate, 18);
 $('#b-labels').innerHTML = svg(UI.labels, 18);
