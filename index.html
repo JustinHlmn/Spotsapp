@@ -754,6 +754,8 @@ $('#importFile').addEventListener('change', async e => {
     if(!Array.isArray(j.spots)) throw 0;
     (j.cats || []).forEach(c => { if(c && c.id && !data.cats.some(x => x.id === c.id)) data.cats.push(c); });
     let n = 0;
+    // Beispiel-Spots beim ersten Import mit echten Spots entfernen
+    if(j.spots.some(s => s && !String(s.id).startsWith('bsp'))) data.spots = data.spots.filter(s => !String(s.id).startsWith('bsp'));
     j.spots.forEach(s => {
       if(!s || typeof s.lat !== 'number' || typeof s.lng !== 'number') return;
       const i = data.spots.findIndex(x => x.id === s.id);
