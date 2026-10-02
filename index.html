@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Meine Spots</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0a7cff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spots">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/* Layout: Vollbild-Karte, schwebendes Glas-Panel links (Handy: Bottom-Sheet), Ansichtsschalter oben rechts */
+:root{
+  --page:#e8eaed; --glass:rgba(249,249,251,.88); --solid:#ffffff;
+  --fg:#1c1c1e; --muted:#6c6c74; --line:rgba(60,60,67,.14);
+  --fill:rgba(118,118,128,.12); --accent:#0a7cff; --accent-fg:#ffffff;
+  --danger:#e5484d; --park:#2b6cb0;
+  --shadow:0 6px 24px rgba(0,0,0,.14),0 1px 3px rgba(0,0,0,.08);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --page:#111214; --glass:rgba(32,32,35,.86); --solid:#2c2c2e;
+  --fg:#f2f2f7; --muted:#9d9da6; --line:rgba(235,235,245,.14);
+  --fill:rgba(118,118,128,.26); --accent:#3c95ff; --accent-fg:#ffffff;
+  --danger:#ff6369; --park:#5a9be8;
+  --shadow:0 6px 24px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.4);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --page:#111214; --glass:rgba(32,32,35,.86); --solid:#2c2c2e;
+  --fg:#f2f2f7; --muted:#9d9da6; --line:rgba(235,235,245,.14);
+  --fill:rgba(118,118,128,.26); --accent:#3c95ff; --accent-fg:#ffffff;
+  --danger:#ff6369; --park:#5a9be8;
+  --shadow:0 6px 24px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.4);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--page);color:var(--fg);font:14px/1.4 var(--font);overflow:hidden;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+
+#map{position:absolute;inset:0;background:var(--page)}
+#map.placing{cursor:crosshair}
+#map.placing .leaflet-interactive,#map.placing .leaflet-marker-icon{cursor:crosshair}
+
+.glass{background:var(--glass);backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);box-shadow:var(--shadow);border:1px solid var(--line)}
+
+/* ---------- Panel ---------- */
+#panel{position:absolute;z-index:1000;top:12px;left:12px;width:348px;max-height:calc(100% - 24px);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+.view{display:flex;flex-direction:column;min-height:0;flex:1}
+.ph{padding:14px 14px 10px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)}
+.grab{display:none}
+.row{display:flex;align-items:center;gap:8px}
+.row.between{justify-content:space-between}
+h1{font-size:22px;font-weight:700;margin:0;letter-spacing:-.01em}
+h2{font-size:21px;font-weight:700;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.count{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.icon-btn{width:32px;height:32px;border-radius:50%;border:0;background:var(--fill);display:grid;place-items:center;flex:none}
+.icon-btn.accent{background:var(--accent);color:var(--accent-fg)}
+.search{display:flex;align-items:center;gap:6px;background:var(--fill);border-radius:10px;padding:0 10px;height:36px;color:var(--muted)}
+.search input{flex:1;min-width:0;border:0;background:none;outline:none;height:100%;color:var(--fg)}
+.search input::placeholder{color:var(--muted)}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -14px;padding:0 14px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:14px;border:1px solid var(--line);background:var(--solid);font-size:13px;white-space:nowrap}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.chip.on{background:var(--fg);color:var(--page);border-color:var(--fg)}
+.chip .n{color:var(--muted);font-variant-numeric:tabular-nums}
+.chip.on .n{color:inherit;opacity:.7}
+
+.pb{overflow-y:auto;flex:1;min-height:0;padding:6px 8px 8px}
+.sec{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:10px 8px 4px}
+.item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;padding:8px;border-radius:10px}
+.item:hover{background:var(--fill)}
+.item .ic{width:32px;height:32px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;flex:none}
+.item .tx{min-width:0;flex:1}
+.item .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .s{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag-p{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:4px;background:var(--park);color:#fff;font-size:10px;font-weight:800;vertical-align:-2px;margin-right:3px}
+.empty{padding:22px 12px;color:var(--muted);text-align:center;line-height:1.5}
+.empty b{color:var(--fg);display:block;margin-bottom:4px}
+
+.pf{display:flex;gap:4px;padding:8px 10px;border-top:1px solid var(--line)}
+.link{border:0;background:none;color:var(--accent);padding:6px 8px;border-radius:8px;font-size:13.5px}
+.link:hover{background:var(--fill)}
+
+/* Detail / Edit */
+.top{display:flex;align-items:center;justify-content:space-between;padding:10px 10px 0}
+.pad{padding:8px 16px 16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;min-height:0}
+.badge{display:inline-flex;align-items:center;gap:6px;color:var(--c);font-weight:600;font-size:13px}
+.badge .ic{width:22px;height:22px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center}
+.notes{margin:0;white-space:pre-wrap;line-height:1.5;color:var(--fg)}
+.card{background:var(--solid);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.card .h{display:flex;align-items:center;gap:8px;font-weight:600}
+.pmark{width:22px;height:22px;border-radius:6px;background:var(--park);color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center;flex:none}
+.stats{display:flex;gap:16px;font-variant-numeric:tabular-nums}
+.stats div{display:flex;flex-direction:column}
+.stats b{font-size:17px}
+.stats span{color:var(--muted);font-size:12px}
+.muted{color:var(--muted);font-size:12.5px}
+.coords{display:flex;align-items:center;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{height:40px;border-radius:10px;border:0;background:var(--fill);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;color:var(--fg);padding:0 12px}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.park{background:var(--park);color:#fff}
+.btn.danger{color:var(--danger)}
+.btn.danger.armed{background:var(--danger);color:#fff}
+.btn.full{grid-column:1/-1}
+.txtbtn{border:0;background:none;color:var(--accent);font-weight:600;padding:6px 8px;border-radius:8px}
+.txtbtn.bold{font-weight:700}
+
+label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.inp{width:100%;border:1px solid var(--line);background:var(--solid);border-radius:10px;padding:9px 11px;font-size:15px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--fg)}
+textarea.inp{resize:vertical;min-height:64px;line-height:1.4}
+.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.err{color:var(--danger);font-size:13px;text-transform:none;letter-spacing:0;font-weight:500}
+.catpick{display:flex;flex-wrap:wrap;gap:6px}
+.catpick .chip{cursor:pointer}
+.catpick .chip.on{background:var(--c);border-color:var(--c);color:#fff}
+.catpick .chip.on .dot{background:#fff}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--solid);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.toggle span{font-weight:500}
+.toggle small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.sw{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:var(--fill);position:relative;flex:none;transition:background .2s;margin:0;cursor:pointer}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.sw:checked{background:#34c759}
+.sw:checked::after{transform:translateX(18px)}
+
+.mode{padding:16px;display:flex;flex-direction:column;gap:12px}
+.mode .big{font-size:16px;font-weight:600;display:flex;gap:10px;align-items:center}
+.pulse{width:12px;height:12px;border-radius:50%;background:var(--accent);flex:none;box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 60%,transparent);animation:pulse 1.6s infinite}
+@keyframes pulse{to{box-shadow:0 0 0 12px transparent}}
+
+/* ---------- Kartensteuerung ---------- */
+#ctrl{position:absolute;z-index:1000;top:12px;right:12px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.seg{display:flex;padding:2px;border-radius:10px;gap:2px}
+.seg button{border:0;background:none;height:32px;padding:0 14px;border-radius:8px;font-weight:600;font-size:13px;color:var(--fg)}
+.seg button.on{background:var(--solid);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.stack{display:flex;flex-direction:column;border-radius:10px;overflow:hidden}
+.stack button{width:40px;height:40px;border:0;background:none;display:grid;place-items:center;color:var(--fg)}
+.stack button+button{border-top:1px solid var(--line)}
+.stack button.on{color:var(--accent)}
+.stack button[disabled]{opacity:.35;cursor:default}
+
+/* ---------- Marker ---------- */
+.pin{width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--c);border:2.5px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.35);display:grid;place-items:center;transition:transform .15s}
+.pin svg{transform:rotate(45deg);color:#fff}
+.sel .pin{transform:rotate(-45deg) scale(1.25)}
+.draft .pin{animation:bob 1s ease-in-out infinite alternate}
+@keyframes bob{to{transform:rotate(-45deg) translate(2px,-2px)}}
+.pk{width:24px;height:24px;border-radius:7px;background:var(--park);color:#fff;border:2px solid #fff;font:800 13px/20px var(--font);text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.sel .pk,.draft .pk{transform:scale(1.15)}
+.me{width:18px;height:18px;border-radius:50%;background:#0a7cff;border:3px solid #fff;box-shadow:0 0 0 6px rgba(10,124,255,.25),0 2px 6px rgba(0,0,0,.3)}
+
+.leaflet-container{font:inherit}
+.leaflet-control-attribution{font-size:10px;background:var(--glass)!important;color:var(--muted)!important;border-radius:6px 0 0 0}
+.leaflet-control-attribution a{color:var(--muted)!important}
+.leaflet-bar{border:1px solid var(--line)!important;box-shadow:var(--shadow)!important;border-radius:10px!important;overflow:hidden}
+.leaflet-bar a{background:var(--glass)!important;color:var(--fg)!important;border-bottom-color:var(--line)!important;width:40px!important;height:40px!important;line-height:40px!important;backdrop-filter:blur(20px)}
+.leaflet-top.leaflet-right{top:152px}
+.leaflet-top.leaflet-right .leaflet-control{margin-right:12px}
+.leaflet-control-scale-line{background:var(--glass);border-color:var(--fg);color:var(--fg)}
+
+/* ---------- Modal & Toast ---------- */
+#modal{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.35);display:grid;place-items:center;padding:16px}
+.dlg{width:100%;max-width:420px;max-height:85vh;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;background:var(--solid);box-shadow:var(--shadow)}
+.dlg .pad{padding:14px 16px 16px}
+.catrow{display:flex;align-items:center;gap:8px}
+.catrow input[type=color]{width:34px;height:34px;border:0;padding:0;background:none;border-radius:50%;flex:none;cursor:pointer}
+.catrow .inp{padding:7px 10px;font-size:14px}
+.iconsel{display:flex;gap:4px;flex-wrap:wrap}
+.iconsel button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:none;display:grid;place-items:center;color:var(--muted)}
+.iconsel button.on{background:var(--c);color:#fff;border-color:var(--c)}
+.catblock{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
+#toast{position:fixed;z-index:3000;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:10px 16px;border-radius:12px;font-weight:600;max-width:calc(100% - 32px);text-align:center}
+
+/* ---------- Handy ---------- */
+@media (max-width:640px){
+  #panel{top:auto;left:0;right:0;bottom:0;width:auto;border-radius:16px 16px 0 0;max-height:58%;padding-bottom:env(safe-area-inset-bottom,0px);border-left:0;border-right:0;border-bottom:0}
+  #panel.collapsed .pb,#panel.collapsed .pf{display:none}
+  .grab{display:block;width:38px;height:5px;border-radius:3px;background:var(--line);margin:-6px auto 0;border:0;padding:0}
+  .grabwrap{display:flex;justify-content:center;padding:6px 0 2px;margin:-8px 0 -4px}
+  #ctrl{top:calc(10px + env(safe-area-inset-top,0px));right:10px}
+  .leaflet-top.leaflet-right{top:calc(150px + env(safe-area-inset-top,0px))}
+  .leaflet-bottom.leaflet-right{bottom:auto;top:0}
+  .leaflet-control-scale{display:none}
+  #toast{bottom:auto;top:calc(16px + env(safe-area-inset-top,0px))}
+}
+#tilewarn{position:absolute;z-index:1500;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100% - 32px));border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px;line-height:1.45}
+#tilewarn strong{font-size:16px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="map" aria-label="Karte"></div>
+
+<div id="ctrl">
+  <div class="seg glass" role="tablist" aria-label="Kartenansicht">
+    <button id="v-map" role="tab">Karte</button>
+    <button id="v-sat" role="tab">Satellit</button>
+  </div>
+  <div class="stack glass">
+    <button id="b-labels" title="Beschriftung auf Satellitenbild" aria-label="Beschriftung ein/aus"></button>
+    <button id="b-locate" title="Mein Standort" aria-label="Mein Standort"></button>
+  </div>
+</div>
+
+<aside id="panel" class="glass collapsed">
+  <!-- Liste -->
+  <section class="view" id="listView">
+    <div class="ph">
+      <div class="grabwrap"><button class="grab" id="grab" aria-label="Panel auf- oder zuklappen"></button></div>
+      <div class="row between">
+        <div class="row"><h1>Meine Spots</h1><span class="count" id="count"></span></div>
+        <button class="icon-btn accent" id="addBtn" aria-label="Spot hinzufügen" title="Spot hinzufügen"></button>
+      </div>
+      <div class="search"><span id="searchIc"></span><input id="q" type="search" placeholder="Spots oder Orte suchen" autocomplete="off"></div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="pb" id="listBody"></div>
+    <div class="pf">
+      <button class="link" id="catsBtn">Kategorien</button>
+      <button class="link" id="exportBtn">Exportieren</button>
+      <button class="link" id="importBtn">Importieren</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+  </section>
+  <!-- Detail -->
+  <section class="view" id="detailView" hidden></section>
+  <!-- Bearbeiten -->
+  <section class="view" id="editView" hidden></section>
+  <!-- Platzieren -->
+  <section class="view" id="modeView" hidden></section>
+</aside>
+
+<div id="tilewarn" class="glass" hidden>
+  <strong>Kartenbilder werden nicht geladen</strong>
+  <span id="tilewarn-txt"></span>
+</div>
+<div id="modal" hidden></div>
+<div id="toast" class="glass" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(() => {
+/* ================= Daten ================= */
+const KEY = 'meine-spots-v1', PREF = 'meine-spots-prefs';
+const ICONS = {
+  mountain:'<path d="M3 19 9 9l4 6 3-4 5 8z"/>',
+  camera:'<path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  flag:'<path d="M6 21V4h11l-2 4 2 4H6"/>',
+  waves:'<path d="M3 9c3 0 3-2 6-2s3 2 6 2 3-2 6-2M3 15c3 0 3-2 6-2s3 2 6 2 3-2 6-2"/>',
+  tent:'<path d="M3 20 12 4l9 16zM9.5 20 12 15l2.5 5"/>',
+  food:'<path d="M7 3v18M5 3v5a2 2 0 0 0 4 0V3M17 21V3c-2 1.5-3 4-3 7h3"/>',
+  star:'<path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/>',
+  tree:'<path d="M12 3 6 12h3l-3 5h12l-3-5h3zM12 17v4"/>',
+  car:'<path d="M5 16v-5l2-5h10l2 5v5M3 16h18v3H3zM7 19v2M17 19v2"/>',
+  heart:'<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+  drop:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
+  pin:'<circle cx="12" cy="11" r="4"/>'
+};
+const UI = {
+  plus:'<path d="M12 5v14M5 12h14"/>', search:'<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>',
+  locate:'<path d="M3 11 21 3l-8 18-2-8z"/>', labels:'<path d="M5 7h14M12 7v12M8 19h8"/>',
+  back:'<path d="M15 5 8 12l7 7"/>', close:'<path d="M6 6l12 12M18 6 6 18"/>', copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
+  walk:'<circle cx="13" cy="4" r="1.6"/><path d="m9 21 2.5-7M14 21l-1.5-5-2-2 1-5 3 3 3 1M11.5 9 8 11v4"/>',
+  nav:'<path d="M3 11 21 3l-8 18-2-8z"/>', globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>'
+};
+const svg = (p, s = 16, w = 2.2) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const ic = (name, s) => svg(ICONS[name] || ICONS.pin, s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+const DEFAULT_CATS = [
+  {id:'aussicht', name:'Aussicht',  color:'#f08c00', icon:'mountain'},
+  {id:'foto',     name:'Fotospot',  color:'#d6336c', icon:'camera'},
+  {id:'wandern',  name:'Wandern',   color:'#2f9e44', icon:'flag'},
+  {id:'baden',    name:'Baden',     color:'#1c7ed6', icon:'waves'},
+  {id:'camping',  name:'Camping',   color:'#7048e8', icon:'tent'},
+  {id:'essen',    name:'Essen',     color:'#e8590c', icon:'food'},
+  {id:'sonstiges',name:'Sonstiges', color:'#868e96', icon:'star'}
+];
+const SAMPLE = [
+  {id:'bsp1', name:'Bastei-Aussicht', cat:'aussicht', notes:'Beispiel-Spot (Koordinaten ungefähr) – kannst du löschen.\nBlick über das Elbtal.', lat:50.9619, lng:14.0731, walk:true, parking:{lat:50.9659, lng:14.0682, note:'Parkplatz Bastei, gebührenpflichtig'}, created:Date.now()},
+  {id:'bsp2', name:'Eibsee Nordufer', cat:'baden', notes:'Beispiel-Spot (Koordinaten ungefähr) – kannst du löschen.\nRuhige Bucht, früh morgens kommen.', lat:47.4603, lng:10.9745, walk:true, parking:{lat:47.4569, lng:10.9921, note:'Großer Parkplatz am Eibsee'}, created:Date.now()-1}
+];
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){ const d = JSON.parse(raw); if(d && Array.isArray(d.spots) && Array.isArray(d.cats)) return d; }
+  }catch(e){}
+  return {cats: structuredClone(DEFAULT_CATS), spots: structuredClone(SAMPLE)};
+}
+let data = load();
+let storageOk = true;
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(data)); }
+  catch(e){ if(storageOk){ storageOk = false; toast('Speichern im Browser nicht möglich – nutze „Exportieren“ als Sicherung.'); } }
+}
+let prefs = {view:'map', labels:true};
+try{ Object.assign(prefs, JSON.parse(localStorage.getItem(PREF) || '{}')); }catch(e){}
+const savePrefs = () => { try{ localStorage.setItem(PREF, JSON.stringify(prefs)); }catch(e){} };
+
+const catById = id => data.cats.find(c => c.id === id) || data.cats[data.cats.length - 1] || {id:'?', name:'Ohne', color:'#868e96', icon:'pin'};
+
+/* ================= Geo ================= */
+function dist(a, b){
+  const R = 6371000, r = x => x * Math.PI / 180;
+  const dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng);
+  const h = Math.sin(dLat/2)**2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+const fmtDist = m => m < 1000 ? `${Math.round(m/10)*10} m` : `${(m/1000).toFixed(1).replace('.', ',')} km`;
+const walkMin = m => Math.max(1, Math.round(m / 75)); // ~4,5 km/h
+const fmtMin = n => n < 60 ? `${n} Min` : `${Math.floor(n/60)} h ${n%60} Min`;
+const fmtCoord = p => `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`;
+
+/* ================= Karte ================= */
+const map = L.map('map', {zoomControl:false, attributionControl:true, worldCopyJump:true}).setView([51.1, 10.4], 6);
+L.control.zoom({position:'topright', zoomInTitle:'Hineinzoomen', zoomOutTitle:'Herauszoomen'}).addTo(map);
+L.control.scale({position:'bottomright', imperial:false}).addTo(map);
+map.attributionControl.setPrefix('');
+
+const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+const carto = style => L.tileLayer(`https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`, {subdomains:'abcd', maxZoom:20, attribution:'© OpenStreetMap-Mitwirkende · © CARTO'});
+const layers = {
+  mapLight: carto('rastertiles/voyager'),
+  mapDark: carto('dark_all'),
+  sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:20, maxNativeZoom:19, attribution:'Bilder © Esri, Maxar, Earthstar Geographics'}),
+  satLabels: L.layerGroup([
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {maxZoom:20, maxNativeZoom:19, opacity:.75}),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {maxZoom:20, maxNativeZoom:19})
+  ])
+};
+function isDark(){
+  const t = document.documentElement.dataset.theme;
+  return t ? t === 'dark' : darkMQ.matches;
+}
+function applyView(){
+  Object.values(layers).forEach(l => map.hasLayer(l) && map.removeLayer(l));
+  if(prefs.view === 'sat'){ layers.sat.addTo(map); if(prefs.labels) layers.satLabels.addTo(map); }
+  else (isDark() ? layers.mapDark : layers.mapLight).addTo(map);
+  $('#v-map').classList.toggle('on', prefs.view === 'map');
+  $('#v-sat').classList.toggle('on', prefs.view === 'sat');
+  $('#v-map').setAttribute('aria-selected', prefs.view === 'map');
+  $('#v-sat').setAttribute('aria-selected', prefs.view === 'sat');
+  const lb = $('#b-labels');
+  lb.disabled = prefs.view !== 'sat';
+  lb.classList.toggle('on', prefs.view === 'sat' && prefs.labels);
+}
+darkMQ.addEventListener?.('change', applyView);
+
+/* Erkennen, wenn keine Kacheln laden (z. B. Vorschau mit blockierten Bildern oder offline) */
+let tilesOk = 0, tilesBad = 0;
+[layers.mapLight, layers.mapDark, layers.sat].forEach(l => {
+  l.on('tileload', () => { tilesOk++; document.getElementById('tilewarn').hidden = true; });
+  l.on('tileerror', () => {
+    tilesBad++;
+    if(tilesOk === 0 && tilesBad >= 4){
+      const inPreview = window.self !== window.top || location.protocol === 'blob:';
+      document.getElementById('tilewarn-txt').textContent = inPreview
+        ? 'Diese Vorschau blockiert Kartenbilder. Lade die Datei herunter und öffne sie direkt im Browser (Doppelklick auf die Datei).'
+        : 'Prüfe deine Internetverbindung. Firmennetze oder Werbeblocker können Kartenserver (cartocdn.com, arcgisonline.com) sperren.';
+      document.getElementById('tilewarn').hidden = false;
+    }
+  });
+});
+
+const markerLayer = L.layerGroup().addTo(map);
+const draftLayer = L.layerGroup().addTo(map);
+let meMarker = null;
+
+function spotIcon(cat, cls = ''){
+  return L.divIcon({className:cls, html:`<div class="pin" style="--c:${cat.color}">${ic(cat.icon, 16)}</div>`, iconSize:[34,34], iconAnchor:[17,41], popupAnchor:[0,-38]});
+}
+const parkIcon = (cls = '') => L.divIcon({className:cls, html:'<div class="pk">P</div>', iconSize:[24,24], iconAnchor:[12,12]});
+
+/* ================= Zustand ================= */
+const $ = s => document.querySelector(s);
+let filter = new Set();          // leer = alle
+let selected = null;             // Spot-ID
+let draft = null;                // Spot in Bearbeitung
+let mode = null;                 // 'spot' | 'parking' | null
+let view = 'list';
+let geoResults = [], geoState = 'idle';
+let editError = '';
+
+function visibleSpots(){
+  return data.spots.filter(s => !filter.size || filter.has(s.cat));
+}
+
+function renderMarkers(){
+  markerLayer.clearLayers();
+  for(const s of visibleSpots()){
+    if(draft && draft.id === s.id) continue;
+    const cat = catById(s.cat), sel = s.id === selected;
+    const m = L.marker([s.lat, s.lng], {icon:spotIcon(cat, sel ? 'sel' : ''), title:s.name, zIndexOffset: sel ? 1000 : 0, riseOnHover:true});
+    m.on('click', () => { if(!mode) openDetail(s.id); });
+    markerLayer.addLayer(m);
+    if(s.walk && s.parking){
+      L.polyline([[s.parking.lat, s.parking.lng], [s.lat, s.lng]], {color: sel ? '#2b6cb0' : '#5a7fa8', weight: sel ? 4 : 2.5, opacity: sel ? .95 : .6, dashArray:'2 8', lineCap:'round', interactive:false}).addTo(markerLayer);
+      const pm = L.marker([s.parking.lat, s.parking.lng], {icon:parkIcon(sel ? 'sel' : ''), title:'Parkplatz: ' + s.name, zIndexOffset: sel ? 900 : -100});
+      pm.on('click', () => { if(!mode) openDetail(s.id); });
+      markerLayer.addLayer(pm);
+    }
+  }
+}
+
+function renderDraftMarkers(){
+  draftLayer.clearLayers();
+  if(!draft || draft.lat == null) return;
+  const cat = catById(draft.cat);
+  const m = L.marker([draft.lat, draft.lng], {icon:spotIcon(cat, 'draft'), draggable:true, zIndexOffset:2000});
+  m.on('drag', e => { const p = e.target.getLatLng(); draft.lat = p.lat; draft.lng = p.lng; updateLine(); });
+  m.on('dragend', () => view === 'edit' && refreshEditLive());
+  draftLayer.addLayer(m);
+  let line = null;
+  if(draft.walk && draft.parking){
+    line = L.polyline([[draft.parking.lat, draft.parking.lng], [draft.lat, draft.lng]], {color:'#2b6cb0', weight:4, opacity:.9, dashArray:'2 8', lineCap:'round', interactive:false}).addTo(draftLayer);
+    const pm = L.marker([draft.parking.lat, draft.parking.lng], {icon:parkIcon('draft'), draggable:true, zIndexOffset:1900});
+    pm.on('drag', e => { const p = e.target.getLatLng(); draft.parking.lat = p.lat; draft.parking.lng = p.lng; updateLine(); });
+    pm.on('dragend', () => view === 'edit' && refreshEditLive());
+    draftLayer.addLayer(pm);
+  }
+  function updateLine(){ if(line) line.setLatLngs([[draft.parking.lat, draft.parking.lng], [draft.lat, draft.lng]]); }
+}
+
+/* ================= Panel-Ansichten ================= */
+const panel = $('#panel');
+const mobile = () => matchMedia('(max-width:640px)').matches;
+function show(v){
+  view = v;
+  for(const id of ['listView','detailView','editView','modeView']) $('#' + id).hidden = id !== v + 'View';
+  if(mobile()) panel.classList.toggle('collapsed', v === 'mode');
+}
+$('#grab').addEventListener('click', () => panel.classList.toggle('collapsed'));
+
+function renderChips(){
+  const counts = {};
+  data.spots.forEach(s => counts[s.cat] = (counts[s.cat] || 0) + 1);
+  const all = `<button class="chip ${filter.size ? '' : 'on'}" data-f="">Alle <span class="n">${data.spots.length}</span></button>`;
+  $('#chips').innerHTML = all + data.cats.map(c =>
+    `<button class="chip ${filter.has(c.id) ? 'on' : ''}" data-f="${c.id}" style="--c:${c.color}"><span class="dot"></span>${esc(c.name)} <span class="n">${counts[c.id] || 0}</span></button>`).join('');
+  $('#count').textContent = '';
+}
+$('#chips').addEventListener('click', e => {
+  const b = e.target.closest('[data-f]'); if(!b) return;
+  const f = b.dataset.f;
+  if(!f) filter.clear(); else filter.has(f) ? filter.delete(f) : filter.add(f);
+  renderChips(); renderList(); renderMarkers();
+});
+
+function itemHTML(s){
+  const cat = catById(s.cat);
+  let sub = esc(cat.name);
+  if(s.walk && s.parking) sub = `<span class="tag-p">P</span>${fmtDist(dist(s.parking, s))} zu Fuß · ` + sub;
+  else if(s.walk) sub = 'Parkplatz fehlt · ' + sub;
+  return `<button class="item" data-id="${s.id}"><span class="ic" style="--c:${cat.color}">${ic(cat.icon, 16)}</span><span class="tx"><span class="t">${esc(s.name)}</span><span class="s">${sub}</span></span></button>`;
+}
+
+function renderList(){
+  const q = $('#q').value.trim().toLowerCase();
+  const body = $('#listBody');
+  if(!q){
+    const list = visibleSpots().slice().sort((a,b) => (b.created||0) - (a.created||0));
+    if(!data.spots.length){
+      body.innerHTML = `<div class="empty"><b>Noch keine Spots</b>Tippe auf <strong>+</strong> und dann auf die Karte, um deinen ersten Spot zu setzen.</div>`;
+    } else if(!list.length){
+      body.innerHTML = `<div class="empty">Keine Spots in dieser Kategorie.</div>`;
+    } else body.innerHTML = list.map(itemHTML).join('');
+    return;
+  }
+  const own = data.spots.filter(s => (s.name + ' ' + (s.notes||'') + ' ' + catById(s.cat).name).toLowerCase().includes(q));
+  let html = `<div class="sec">Deine Spots</div>` + (own.length ? own.map(itemHTML).join('') : `<div class="empty" style="padding:8px">Kein eigener Spot passt.</div>`);
+  html += `<div class="sec">Orte</div>`;
+  if(geoState === 'loading') html += `<div class="empty" style="padding:8px">Suche läuft …</div>`;
+  else if(geoState === 'error') html += `<div class="empty" style="padding:8px">Ortssuche nicht erreichbar. Prüfe deine Internetverbindung.</div>`;
+  else if(geoState === 'done' && !geoResults.length) html += `<div class="empty" style="padding:8px">Kein Ort gefunden.</div>`;
+  else if(geoState === 'done') html += geoResults.map((r,i) => `<button class="item" data-geo="${i}"><span class="ic" style="--c:#8e8e93">${svg(UI.globe,16)}</span><span class="tx"><span class="t">${esc(r.name)}</span><span class="s">${esc(r.sub)}</span></span></button>`).join('');
+  else html += `<button class="item" data-geosearch="1"><span class="ic" style="--c:var(--accent)">${svg(UI.search,16)}</span><span class="tx"><span class="t">„${esc($('#q').value.trim())}“ als Ort suchen</span><span class="s">oder Enter drücken</span></span></button>`;
+  body.innerHTML = html;
+}
+
+let qTimer;
+$('#q').addEventListener('input', () => { geoState = 'idle'; geoResults = []; clearTimeout(qTimer); qTimer = setTimeout(renderList, 80); if(mobile()) panel.classList.remove('collapsed'); });
+$('#q').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); geoSearch(); } });
+async function geoSearch(){
+  const q = $('#q').value.trim(); if(!q) return;
+  geoState = 'loading'; renderList();
+  try{
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=de&q=${encodeURIComponent(q)}`);
+    if(!r.ok) throw 0;
+    const j = await r.json();
+    geoResults = j.map(x => {
+      const parts = x.display_name.split(', ');
+      return {name: x.name || parts[0], sub: parts.slice(1, 4).join(', '), lat:+x.lat, lng:+x.lon, bb:x.boundingbox};
+    });
+    geoState = 'done';
+  }catch(e){ geoState = 'error'; }
+  renderList();
+}
+$('#listBody').addEventListener('click', e => {
+  const it = e.target.closest('button'); if(!it) return;
+  if(it.dataset.id) return openDetail(it.dataset.id, true);
+  if(it.dataset.geosearch) return geoSearch();
+  if(it.dataset.geo != null){
+    const r = geoResults[+it.dataset.geo];
+    if(r.bb) map.flyToBounds([[+r.bb[0], +r.bb[2]], [+r.bb[1], +r.bb[3]]], {maxZoom:16, duration:.8, paddingTopLeft: mobile() ? [0,0] : [360,0]});
+    else map.flyTo([r.lat, r.lng], 15);
+    if(mobile()) panel.classList.add('collapsed');
+  }
+});
+
+/* ----- Detail ----- */
+let delArmed = null;
+function openDetail(id, fly){
+  const s = data.spots.find(x => x.id === id); if(!s) return;
+  selected = id; delArmed = null;
+  renderDetail(s); show('detail'); renderMarkers();
+  if(mobile()) panel.classList.remove('collapsed');
+  if(fly){
+    const pts = [[s.lat, s.lng]]; if(s.walk && s.parking) pts.push([s.parking.lat, s.parking.lng]);
+    const pad = mobile() ? {paddingTopLeft:[40,60], paddingBottomRight:[40, innerHeight*.55]} : {paddingTopLeft:[380,60], paddingBottomRight:[80,60]};
+    map.flyToBounds(pts, {maxZoom:16, duration:.8, ...pad});
+  }
+}
+function navLinks(p, label){
+  const ll = `${p.lat},${p.lng}`;
+  return `<a class="btn primary" href="https://www.google.com/maps/dir/?api=1&destination=${ll}" target="_blank" rel="noopener">${svg(UI.nav,15)}${label} (Google)</a>
+          <a class="btn" href="https://maps.apple.com/?daddr=${ll}" target="_blank" rel="noopener">Apple Karten</a>`;
+}
+function renderDetail(s){
+  const cat = catById(s.cat);
+  let park = '';
+  if(s.walk && s.parking){
+    const d = dist(s.parking, s);
+    park = `<div class="card">
+      <div class="h"><span class="pmark">P</span>Parkplatz</div>
+      <div class="stats"><div><b>${fmtDist(d)}</b><span>Luftlinie</span></div><div><b>ca. ${fmtMin(walkMin(d))}</b><span>zu Fuß</span></div></div>
+      ${s.parking.note ? `<div>${esc(s.parking.note)}</div>` : ''}
+      <div class="coords"><span>${fmtCoord(s.parking)}</span><button class="txtbtn" data-copy="${fmtCoord(s.parking)}">Kopieren</button></div>
+      <div class="btns">${navLinks(s.parking, 'Zum Parkplatz')}</div>
+    </div>`;
+  } else if(s.walk){
+    park = `<div class="card"><div class="h"><span class="pmark">P</span>Kein Parkplatz gesetzt</div><div class="muted">Bearbeite den Spot, um einen Parkplatz auf der Karte zu markieren.</div></div>`;
+  }
+  $('#detailView').innerHTML = `
+    <div class="top"><button class="txtbtn" data-act="back">${svg(UI.back,14)} Spots</button><button class="icon-btn" data-act="back" aria-label="Schließen">${svg(UI.close,14)}</button></div>
+    <div class="pad">
+      <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${cat.color}"><span class="ic">${ic(cat.icon,13)}</span>${esc(cat.name)}</span><h2>${esc(s.name)}</h2></div>
+      ${s.notes ? `<p class="notes">${esc(s.notes)}</p>` : ''}
+      ${park}
+      <div class="card">
+        <div class="h">${s.walk ? 'Spot' : 'Mit dem Auto erreichbar'}</div>
+        <div class="coords"><span>${fmtCoord(s)}</span><button class="txtbtn" data-copy="${fmtCoord(s)}">Kopieren</button></div>
+        ${s.walk ? '' : `<div class="btns">${navLinks(s, 'Navigation')}</div>`}
+      </div>
+      <div class="btns"><button class="btn" data-act="edit">Bearbeiten</button><button class="btn danger" data-act="del">Löschen</button></div>
+    </div>`;
+}
+$('#detailView').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.dataset.copy) return copy(b.dataset.copy);
+  const a = b.dataset.act;
+  if(a === 'back'){ selected = null; show('list'); renderMarkers(); }
+  if(a === 'edit') startEdit(selected);
+  if(a === 'del'){
+    if(delArmed === selected){
+      const s = data.spots.find(x => x.id === selected);
+      data.spots = data.spots.filter(x => x.id !== selected); save();
+      selected = null; show('list'); refreshAll(); toast(`„${s.name}“ gelöscht`);
+    } else {
+      delArmed = selected; b.classList.add('armed'); b.textContent = 'Wirklich löschen?';
+      setTimeout(() => { if(b.isConnected){ delArmed = null; b.classList.remove('armed'); b.textContent = 'Löschen'; } }, 3500);
+    }
+  }
+});
+
+/* ----- Platzieren ----- */
+function enterMode(m){
+  mode = m;
+  $('#map').classList.add('placing');
+  const txt = m === 'spot' ? 'Tippe auf die Karte, um den Spot zu setzen.' : 'Tippe auf die Karte, wo du parkst.';
+  const tip = m === 'spot' ? 'Tipp: Rein­zoomen oder auf Satellit wechseln für mehr Genauigkeit.' : 'Zum Beispiel Wanderparkplatz oder Straßenrand am Wegbeginn.';
+  $('#modeView').innerHTML = `<div class="mode">
+      <div class="big"><span class="pulse"></span>${txt}</div>
+      <div class="muted">${tip}</div>
+      <div class="btns"><button class="btn" data-act="cancel">Abbrechen</button><button class="btn primary" data-act="center">Kartenmitte nehmen</button></div>
+    </div>`;
+  show('mode');
+}
+function exitMode(){ mode = null; $('#map').classList.remove('placing'); }
+$('#modeView').addEventListener('click', e => {
+  const a = e.target.closest('button')?.dataset.act;
+  if(a === 'cancel'){
+    const was = mode; exitMode();
+    if(was === 'spot' && draft && draft.lat == null){ draft = null; renderDraftMarkers(); renderMarkers(); show(selected ? 'detail' : 'list'); }
+    else showEdit();
+  }
+  if(a === 'center') place(map.getCenter());
+});
+map.on('click', e => {
+  if(mode) return place(e.latlng);
+  if(view === 'detail'){ selected = null; show('list'); renderMarkers(); }
+});
+map.on('contextmenu', e => { if(!mode && view !== 'edit'){ newDraft(); place(e.latlng); } });
+function place(ll){
+  const p = {lat:ll.lat, lng:ll.lng};
+  if(mode === 'spot'){ draft.lat = p.lat; draft.lng = p.lng; }
+  else if(mode === 'parking'){ draft.parking = {...p, note: draft.parking?.note || ''}; }
+  exitMode(); showEdit();
+}
+
+/* ----- Bearbeiten ----- */
+function newDraft(){
+  const c = filter.size === 1 ? [...filter][0] : data.cats[0]?.id;
+  draft = {id:uid(), isNew:true, name:'', cat:c, notes:'', lat:null, lng:null, walk:false, parking:null, created:Date.now()};
+  selected = null; editError = '';
+}
+$('#addBtn').addEventListener('click', () => { newDraft(); renderMarkers(); enterMode('spot'); });
+function startEdit(id){
+  const s = data.spots.find(x => x.id === id); if(!s) return;
+  draft = structuredClone(s); draft.isNew = false; editError = '';
+  renderMarkers(); showEdit();
+}
+function showEdit(){
+  renderEdit(); show('edit'); renderDraftMarkers(); renderMarkers();
+  if(mobile()) panel.classList.remove('collapsed');
+}
+function syncForm(){
+  const n = $('#f-name'); if(!n) return;
+  draft.name = n.value; draft.notes = $('#f-notes').value;
+  const pn = $('#f-pnote'); if(pn && draft.parking) draft.parking.note = pn.value;
+}
+function refreshEditLive(){ syncForm(); renderEdit(); }
+function renderEdit(){
+  const d = draft;
+  let park = '';
+  if(d.walk){
+    if(d.parking){
+      const m = dist(d.parking, d);
+      park = `<div class="card">
+        <div class="h"><span class="pmark">P</span>Parkplatz gesetzt</div>
+        <div class="stats"><div><b>${fmtDist(m)}</b><span>Luftlinie</span></div><div><b>ca. ${fmtMin(walkMin(m))}</b><span>zu Fuß</span></div></div>
+        <label class="f">Notiz zum Parkplatz<input class="inp" id="f-pnote" value="${esc(d.parking.note)}" placeholder="z. B. kostenlos, max. 2 h"></label>
+        <div class="muted">Den P-Marker kannst du auf der Karte ziehen.</div>
+        <div class="btns"><button class="btn" data-act="park">Neu setzen</button><button class="btn danger" data-act="unpark">Entfernen</button></div>
+      </div>`;
+    } else park = `<button class="btn park" data-act="park">${svg(UI.car,16)} Parkplatz auf Karte setzen</button>`;
+  }
+  $('#editView').innerHTML = `
+    <div class="top"><button class="txtbtn" data-act="cancel">Abbrechen</button><strong>${d.isNew ? 'Neuer Spot' : 'Spot bearbeiten'}</strong><button class="txtbtn bold" data-act="save">Sichern</button></div>
+    <div class="pad">
+      <label class="f">Name<input class="inp" id="f-name" value="${esc(d.name)}" placeholder="z. B. Sonnenuntergang am Hang" maxlength="80">${editError ? `<span class="err">${editError}</span>` : ''}</label>
+      <div class="f" style="display:flex;flex-direction:column;gap:6px"><label class="f" style="margin:0">Kategorie</label>
+        <div class="catpick">${data.cats.map(c => `<button type="button" class="chip ${c.id === d.cat ? 'on' : ''}" data-cat="${c.id}" style="--c:${c.color}"><span class="dot"></span>${esc(c.name)}</button>`).join('')}</div>
+      </div>
+      <label class="f">Notiz<textarea class="inp" id="f-notes" rows="3" placeholder="Was macht den Spot aus? Beste Uhrzeit, Weg, …">${esc(d.notes)}</textarea></label>
+      <div class="card"><div class="coords"><span>Position: ${fmtCoord(d)}</span><button class="txtbtn" data-act="move">Neu setzen</button></div><div class="muted">Oder den Marker auf der Karte ziehen.</div></div>
+      <div class="toggle"><span>Nicht direkt mit dem Auto erreichbar<small>Dann markierst du, wo du parkst.</small></span><input type="checkbox" class="sw" id="f-walk" ${d.walk ? 'checked' : ''} aria-label="Nicht direkt mit dem Auto erreichbar"></div>
+      ${park}
+    </div>`;
+}
+$('#editView').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.dataset.cat){ syncForm(); draft.cat = b.dataset.cat; renderEdit(); renderDraftMarkers(); return; }
+  const a = b.dataset.act;
+  if(a === 'cancel'){ const back = draft.isNew ? null : draft.id; draft = null; renderDraftMarkers(); if(back) openDetail(back); else { show('list'); renderMarkers(); } }
+  if(a === 'save') saveDraft();
+  if(a === 'move'){ syncForm(); enterMode('spot'); }
+  if(a === 'park'){ syncForm(); enterMode('parking'); }
+  if(a === 'unpark'){ syncForm(); draft.parking = null; renderEdit(); renderDraftMarkers(); }
+});
+$('#editView').addEventListener('change', e => {
+  if(e.target.id === 'f-walk'){ syncForm(); draft.walk = e.target.checked; renderEdit(); renderDraftMarkers(); }
+});
+function saveDraft(){
+  syncForm();
+  if(!draft.name.trim()){ editError = 'Gib dem Spot einen Namen.'; renderEdit(); $('#f-name').focus(); return; }
+  const s = {...draft, name:draft.name.trim(), notes:draft.notes.trim()}; delete s.isNew;
+  if(!s.walk) s.parking = null;
+  if(s.parking) s.parking.note = (s.parking.note || '').trim();
+  const i = data.spots.findIndex(x => x.id === s.id);
+  if(i >= 0) data.spots[i] = s; else data.spots.push(s);
+  if(filter.size && !filter.has(s.cat)) filter.add(s.cat);
+  save(); draft = null; renderDraftMarkers(); refreshAll(); openDetail(s.id);
+  toast(i >= 0 ? 'Gespeichert' : `„${s.name}“ hinzugefügt`);
+}
+
+/* ----- Kategorien ----- */
+function openCats(){ renderCats(); $('#modal').hidden = false; }
+function renderCats(){
+  const used = {}; data.spots.forEach(s => used[s.cat] = (used[s.cat]||0) + 1);
+  $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Kategorien">
+    <div class="top" style="padding:12px 14px"><strong style="font-size:17px">Kategorien</strong><button class="txtbtn bold" data-act="close">Fertig</button></div>
+    <div class="pad" style="gap:0;padding-top:0">
+      ${data.cats.map(c => `<div class="catblock" data-id="${c.id}" style="--c:${c.color}">
+        <div class="catrow"><input type="color" value="${c.color}" data-k="color" aria-label="Farbe"><input class="inp" value="${esc(c.name)}" data-k="name" aria-label="Name" maxlength="30">
+        <button class="icon-btn" data-act="delcat" title="${used[c.id] ? `Wird von ${used[c.id]} Spot(s) genutzt` : 'Löschen'}" ${used[c.id] ? 'disabled style="opacity:.35;cursor:default"' : ''} aria-label="Kategorie löschen">${svg(UI.close,13)}</button></div>
+        <div class="iconsel">${Object.keys(ICONS).map(k => `<button class="${k === c.icon ? 'on' : ''}" data-icon="${k}" aria-label="Symbol ${k}">${ic(k,15)}</button>`).join('')}</div>
+      </div>`).join('')}
+      <button class="btn" style="margin-top:12px" data-act="addcat">${svg(UI.plus,14)} Kategorie hinzufügen</button>
+      <div class="muted" style="margin-top:8px">Kategorien mit Spots lassen sich erst löschen, wenn keine Spots mehr darin sind.</div>
+    </div></div>`;
+}
+$('#catsBtn').addEventListener('click', openCats);
+$('#modal').addEventListener('click', e => {
+  if(e.target.id === 'modal') return closeCats();
+  const b = e.target.closest('button'); if(!b) return;
+  const blk = b.closest('.catblock'), cat = blk && data.cats.find(c => c.id === blk.dataset.id);
+  if(b.dataset.icon && cat){ cat.icon = b.dataset.icon; save(); renderCats(); return; }
+  const a = b.dataset.act;
+  if(a === 'close') closeCats();
+  if(a === 'delcat' && cat){ data.cats = data.cats.filter(c => c !== cat); filter.delete(cat.id); save(); renderCats(); }
+  if(a === 'addcat'){
+    const pal = ['#0ca678','#f59f00','#ae3ec9','#4263eb','#e03131','#5c940d'];
+    data.cats.push({id:uid(), name:'Neue Kategorie', color:pal[data.cats.length % pal.length], icon:'pin'}); save(); renderCats();
+    const inputs = $('#modal').querySelectorAll('[data-k="name"]'); const last = inputs[inputs.length-1]; last.focus(); last.select();
+  }
+});
+$('#modal').addEventListener('input', e => {
+  const blk = e.target.closest('.catblock'); if(!blk) return;
+  const cat = data.cats.find(c => c.id === blk.dataset.id);
+  if(e.target.dataset.k === 'name') cat.name = e.target.value.trim() || 'Ohne Namen';
+  if(e.target.dataset.k === 'color'){ cat.color = e.target.value; blk.style.setProperty('--c', cat.color); }
+  save();
+});
+function closeCats(){ $('#modal').hidden = true; refreshAll(); if(view === 'detail' && selected) renderDetail(data.spots.find(s => s.id === selected)); if(view === 'edit') refreshEditLive(); }
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#modal').hidden) closeCats(); });
+
+/* ----- Export / Import ----- */
+$('#exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify({app:'meine-spots', version:1, exported:new Date().toISOString(), ...data}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `meine-spots-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast(`${data.spots.length} Spots exportiert`);
+});
+$('#importBtn').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+  try{
+    const j = JSON.parse(await f.text());
+    if(!Array.isArray(j.spots)) throw 0;
+    (j.cats || []).forEach(c => { if(c && c.id && !data.cats.some(x => x.id === c.id)) data.cats.push(c); });
+    let n = 0;
+    j.spots.forEach(s => {
+      if(!s || typeof s.lat !== 'number' || typeof s.lng !== 'number') return;
+      const i = data.spots.findIndex(x => x.id === s.id);
+      if(i >= 0) data.spots[i] = s; else data.spots.push({...s, id: s.id || uid()});
+      n++;
+    });
+    save(); refreshAll(); fitAll(); toast(`${n} Spots importiert`);
+  }catch(err){ toast('Datei konnte nicht gelesen werden. Erwartet wird ein Export aus „Meine Spots“.'); }
+});
+
+/* ----- Standort ----- */
+$('#b-locate').addEventListener('click', () => {
+  if(!navigator.geolocation) return toast('Standort wird von diesem Browser nicht unterstützt.');
+  toast('Standort wird ermittelt …');
+  navigator.geolocation.getCurrentPosition(p => {
+    const ll = [p.coords.latitude, p.coords.longitude];
+    if(meMarker) meMarker.setLatLng(ll);
+    else meMarker = L.marker(ll, {icon:L.divIcon({className:'', html:'<div class="me"></div>', iconSize:[18,18], iconAnchor:[9,9]}), interactive:false, zIndexOffset:3000}).addTo(map);
+    map.flyTo(ll, Math.max(map.getZoom(), 15), {duration:.8});
+    hideToast();
+  }, () => toast('Standort nicht verfügbar. Erlaube den Zugriff in den Browser-Einstellungen.'), {enableHighAccuracy:true, timeout:10000});
+});
+
+/* ----- Ansicht ----- */
+$('#v-map').addEventListener('click', () => { prefs.view = 'map'; savePrefs(); applyView(); });
+$('#v-sat').addEventListener('click', () => { prefs.view = 'sat'; savePrefs(); applyView(); });
+$('#b-labels').addEventListener('click', () => { prefs.labels = !prefs.labels; savePrefs(); applyView(); });
+
+/* ----- Helfer ----- */
+let tt;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(hideToast, 2800); }
+function hideToast(){ $('#toast').hidden = true; }
+function copy(text){
+  const done = () => toast('Koordinaten kopiert');
+  if(navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+  function fallback(){ const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){ toast(text); } ta.remove(); }
+}
+function refreshAll(){ renderChips(); renderList(); renderMarkers(); }
+function fitAll(){
+  const pts = data.spots.flatMap(s => s.walk && s.parking ? [[s.lat,s.lng],[s.parking.lat,s.parking.lng]] : [[s.lat,s.lng]]);
+  if(!pts.length) return;
+  const pad = mobile() ? {paddingTopLeft:[30,80], paddingBottomRight:[60, innerHeight*.3]} : {paddingTopLeft:[380,40], paddingBottomRight:[80,40]};
+  map.fitBounds(pts, {maxZoom:14, ...pad});
+}
+
+/* ----- Start ----- */
+$('#addBtn').innerHTML = svg(UI.plus, 16, 2.6);
+$('#searchIc').innerHTML = svg(UI.search, 15);
+$('#b-locate').innerHTML = svg(UI.locate, 17);
+$('#b-labels').innerHTML = svg(UI.labels, 17);
+applyView(); refreshAll(); fitAll();
+if(!mobile()) panel.classList.remove('collapsed');
+})();
+</script>
+</body>
+</html>
