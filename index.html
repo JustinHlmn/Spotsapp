@@ -166,7 +166,7 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.4}
 .leaflet-control-attribution a{color:var(--muted)!important}
 .leaflet-bar{border:1px solid var(--line)!important;box-shadow:var(--shadow)!important;border-radius:10px!important;overflow:hidden}
 .leaflet-bar a{background:var(--glass)!important;color:var(--fg)!important;border-bottom-color:var(--line)!important;width:40px!important;height:40px!important;line-height:40px!important;backdrop-filter:blur(20px)}
-.leaflet-top.leaflet-right{top:152px}
+.leaflet-top.leaflet-right{top:100px}
 .leaflet-top.leaflet-right .leaflet-control{margin-right:12px}
 .leaflet-control-scale-line{background:var(--glass);border-color:var(--fg);color:var(--fg)}
 
@@ -190,11 +190,23 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.4}
   .grab{display:block;width:38px;height:5px;border-radius:3px;background:var(--line);margin:-6px auto 0;border:0;padding:0}
   .grabwrap{display:flex;justify-content:center;padding:6px 0 2px;margin:-8px 0 -4px}
   #ctrl{top:calc(10px + env(safe-area-inset-top,0px));right:10px}
-  .leaflet-top.leaflet-right{top:calc(150px + env(safe-area-inset-top,0px))}
+  .leaflet-top.leaflet-right{top:calc(98px + env(safe-area-inset-top,0px))}
   .leaflet-bottom.leaflet-right{bottom:auto;top:0}
   .leaflet-control-scale{display:none}
   #toast{bottom:auto;top:calc(16px + env(safe-area-inset-top,0px))}
 }
+#near{position:absolute;z-index:1000;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;height:44px;padding:0 14px 0 6px;border-radius:22px;max-width:calc(100% - 140px);color:var(--fg);text-align:left}
+#near .ic{width:32px;height:32px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;flex:none}
+#near .tx{min-width:0;display:flex;flex-direction:column;line-height:1.2}
+#near .l{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+#near .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#near .d{font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);white-space:nowrap;margin-left:auto;padding-left:6px}
+@media (min-width:641px){#near{left:calc(50% + 180px)}}
+@media (max-width:640px){#near{top:calc(10px + env(safe-area-inset-top,0px));left:10px;transform:none;max-width:calc(100% - 76px)}}
+.me{position:relative}
+.me::before{content:"";position:absolute;inset:-9px;border-radius:50%;background:rgba(10,124,255,.35);animation:mepulse 2s ease-out infinite}
+@keyframes mepulse{from{transform:scale(.5);opacity:1}to{transform:scale(1.6);opacity:0}}
+.item .me-d{color:var(--accent);font-weight:600;font-variant-numeric:tabular-nums}
 #tilewarn{position:absolute;z-index:1500;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100% - 32px));border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px;line-height:1.45}
 #tilewarn strong{font-size:16px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -204,10 +216,6 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.4}
 <div id="map" aria-label="Karte"></div>
 
 <div id="ctrl">
-  <div class="seg glass" role="tablist" aria-label="Kartenansicht">
-    <button id="v-map" role="tab">Karte</button>
-    <button id="v-sat" role="tab">Satellit</button>
-  </div>
   <div class="stack glass">
     <button id="b-labels" title="Beschriftung auf Satellitenbild" aria-label="Beschriftung ein/aus"></button>
     <button id="b-locate" title="Mein Standort" aria-label="Mein Standort"></button>
@@ -242,6 +250,7 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.4}
   <section class="view" id="modeView" hidden></section>
 </aside>
 
+<button id="near" class="glass" hidden aria-live="polite"></button>
 <div id="tilewarn" class="glass" hidden>
   <strong>Kartenbilder werden nicht geladen</strong>
   <span id="tilewarn-txt"></span>
@@ -307,7 +316,7 @@ function save(){
   try{ localStorage.setItem(KEY, JSON.stringify(data)); }
   catch(e){ if(storageOk){ storageOk = false; toast('Speichern im Browser nicht möglich – nutze „Exportieren“ als Sicherung.'); } }
 }
-let prefs = {view:'map', labels:true};
+let prefs = {labels:true, gps:false};
 try{ Object.assign(prefs, JSON.parse(localStorage.getItem(PREF) || '{}')); }catch(e){}
 const savePrefs = () => { try{ localStorage.setItem(PREF, JSON.stringify(prefs)); }catch(e){} };
 
@@ -332,10 +341,7 @@ L.control.scale({position:'bottomright', imperial:false}).addTo(map);
 map.attributionControl.setPrefix('');
 
 const darkMQ = matchMedia('(prefers-color-scheme: dark)');
-const carto = style => L.tileLayer(`https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`, {subdomains:'abcd', maxZoom:20, attribution:'© OpenStreetMap-Mitwirkende · © CARTO'});
 const layers = {
-  mapLight: carto('rastertiles/voyager'),
-  mapDark: carto('dark_all'),
   sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:20, maxNativeZoom:19, attribution:'Bilder © Esri, Maxar, Earthstar Geographics'}),
   satLabels: L.layerGroup([
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {maxZoom:20, maxNativeZoom:19, opacity:.75}),
@@ -348,21 +354,14 @@ function isDark(){
 }
 function applyView(){
   Object.values(layers).forEach(l => map.hasLayer(l) && map.removeLayer(l));
-  if(prefs.view === 'sat'){ layers.sat.addTo(map); if(prefs.labels) layers.satLabels.addTo(map); }
-  else (isDark() ? layers.mapDark : layers.mapLight).addTo(map);
-  $('#v-map').classList.toggle('on', prefs.view === 'map');
-  $('#v-sat').classList.toggle('on', prefs.view === 'sat');
-  $('#v-map').setAttribute('aria-selected', prefs.view === 'map');
-  $('#v-sat').setAttribute('aria-selected', prefs.view === 'sat');
-  const lb = $('#b-labels');
-  lb.disabled = prefs.view !== 'sat';
-  lb.classList.toggle('on', prefs.view === 'sat' && prefs.labels);
+  layers.sat.addTo(map); if(prefs.labels) layers.satLabels.addTo(map);
+  $('#b-labels').classList.toggle('on', prefs.labels);
 }
 darkMQ.addEventListener?.('change', applyView);
 
 /* Erkennen, wenn keine Kacheln laden (z. B. Vorschau mit blockierten Bildern oder offline) */
 let tilesOk = 0, tilesBad = 0;
-[layers.mapLight, layers.mapDark, layers.sat].forEach(l => {
+[layers.sat].forEach(l => {
   l.on('tileload', () => { tilesOk++; document.getElementById('tilewarn').hidden = true; });
   l.on('tileerror', () => {
     tilesBad++;
@@ -370,7 +369,7 @@ let tilesOk = 0, tilesBad = 0;
       const inPreview = window.self !== window.top || location.protocol === 'blob:';
       document.getElementById('tilewarn-txt').textContent = inPreview
         ? 'Diese Vorschau blockiert Kartenbilder. Lade die Datei herunter und öffne sie direkt im Browser (Doppelklick auf die Datei).'
-        : 'Prüfe deine Internetverbindung. Firmennetze oder Werbeblocker können Kartenserver (cartocdn.com, arcgisonline.com) sperren.';
+        : 'Prüfe deine Internetverbindung. Firmennetze oder Werbeblocker können den Kartenserver (arcgisonline.com) sperren.';
       document.getElementById('tilewarn').hidden = false;
     }
   });
@@ -457,7 +456,7 @@ $('#chips').addEventListener('click', e => {
   const b = e.target.closest('[data-f]'); if(!b) return;
   const f = b.dataset.f;
   if(!f) filter.clear(); else filter.has(f) ? filter.delete(f) : filter.add(f);
-  renderChips(); renderList(); renderMarkers();
+  renderChips(); renderList(); renderMarkers(); renderNearest();
 });
 
 function itemHTML(s){
@@ -465,6 +464,7 @@ function itemHTML(s){
   let sub = esc(cat.name);
   if(s.walk && s.parking) sub = `<span class="tag-p">P</span>${fmtDist(dist(s.parking, s))} zu Fuß · ` + sub;
   else if(s.walk) sub = 'Parkplatz fehlt · ' + sub;
+  if(me) sub = `<span class="me-d">${fmtDist(dist(me, s))}</span> · ` + sub;
   return `<button class="item" data-id="${s.id}"><span class="ic" style="--c:${cat.color}">${ic(cat.icon, 16)}</span><span class="tx"><span class="t">${esc(s.name)}</span><span class="s">${sub}</span></span></button>`;
 }
 
@@ -472,7 +472,7 @@ function renderList(){
   const q = $('#q').value.trim().toLowerCase();
   const body = $('#listBody');
   if(!q){
-    const list = visibleSpots().slice().sort((a,b) => (b.created||0) - (a.created||0));
+    const list = visibleSpots().slice().sort(me ? (a,b) => dist(me, a) - dist(me, b) : (a,b) => (b.created||0) - (a.created||0));
     if(!data.spots.length){
       body.innerHTML = `<div class="empty"><b>Noch keine Spots</b>Tippe auf <strong>+</strong> und dann auf die Karte, um deinen ersten Spot zu setzen.</div>`;
     } else if(!list.length){
@@ -558,6 +558,7 @@ function renderDetail(s){
     <div class="top"><button class="txtbtn" data-act="back">${svg(UI.back,14)} Spots</button><button class="icon-btn" data-act="back" aria-label="Schließen">${svg(UI.close,14)}</button></div>
     <div class="pad">
       <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${cat.color}"><span class="ic">${ic(cat.icon,13)}</span>${esc(cat.name)}</span><h2>${esc(s.name)}</h2></div>
+      ${me ? `<div class="stats"><div><b>${fmtDist(dist(me, s))}</b><span>von dir entfernt (Luftlinie)</span></div></div>` : ''}
       ${s.notes ? `<p class="notes">${esc(s.notes)}</p>` : ''}
       ${park}
       <div class="card">
@@ -766,22 +767,51 @@ $('#importFile').addEventListener('change', async e => {
   }catch(err){ toast('Datei konnte nicht gelesen werden. Erwartet wird ein Export aus „Meine Spots“.'); }
 });
 
-/* ----- Standort ----- */
-$('#b-locate').addEventListener('click', () => {
-  if(!navigator.geolocation) return toast('Standort wird von diesem Browser nicht unterstützt.');
-  toast('Standort wird ermittelt …');
-  navigator.geolocation.getCurrentPosition(p => {
-    const ll = [p.coords.latitude, p.coords.longitude];
-    if(meMarker) meMarker.setLatLng(ll);
-    else meMarker = L.marker(ll, {icon:L.divIcon({className:'', html:'<div class="me"></div>', iconSize:[18,18], iconAnchor:[9,9]}), interactive:false, zIndexOffset:3000}).addTo(map);
-    map.flyTo(ll, Math.max(map.getZoom(), 15), {duration:.8});
-    hideToast();
-  }, () => toast('Standort nicht verfügbar. Erlaube den Zugriff in den Browser-Einstellungen.'), {enableHighAccuracy:true, timeout:10000});
-});
+/* ----- Standort (live) ----- */
+let me = null, meAcc = null, watchId = null, centerOnFix = false, lastListPos = null;
+function startGPS(center){
+  if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
+  centerOnFix = center;
+  if(watchId != null){ if(center && me) map.flyTo([me.lat, me.lng], Math.max(map.getZoom(), 15), {duration:.8}); return; }
+  if(center) toast('Standort wird ermittelt …');
+  watchId = navigator.geolocation.watchPosition(onPos, err => {
+    navigator.geolocation.clearWatch(watchId); watchId = null;
+    if(center || err.code !== 1) toast(err.code === 1 ? 'Standortzugriff verweigert. Erlaube ihn in den Einstellungen für Safari/Chrome.' : 'Standort gerade nicht verfügbar.');
+    prefs.gps = false; savePrefs();
+  }, {enableHighAccuracy:true, maximumAge:5000, timeout:20000});
+}
+function onPos(p){
+  me = {lat:p.coords.latitude, lng:p.coords.longitude};
+  const ll = [me.lat, me.lng], acc = p.coords.accuracy || 0;
+  if(!meMarker){
+    meAcc = L.circle(ll, {radius:acc, color:'#0a7cff', weight:1, opacity:.5, fillColor:'#0a7cff', fillOpacity:.12, interactive:false}).addTo(map);
+    meMarker = L.marker(ll, {icon:L.divIcon({className:'', html:'<div class="me"></div>', iconSize:[18,18], iconAnchor:[9,9]}), interactive:false, zIndexOffset:3000}).addTo(map);
+  } else { meMarker.setLatLng(ll); meAcc.setLatLng(ll).setRadius(acc); }
+  $('#b-locate').classList.add('on');
+  if(!prefs.gps){ prefs.gps = true; savePrefs(); }
+  if(centerOnFix){ centerOnFix = false; hideToast(); map.flyTo(ll, Math.max(map.getZoom(), 15), {duration:.8}); }
+  renderNearest();
+  if(!lastListPos || dist(lastListPos, me) > 25){
+    lastListPos = me;
+    if(view === 'list') renderList();
+    if(view === 'detail' && selected){ const s = data.spots.find(x => x.id === selected); if(s) renderDetail(s); }
+  }
+}
+function renderNearest(){
+  const el = $('#near');
+  const list = visibleSpots();
+  if(!me || !list.length){ el.hidden = true; return; }
+  let best = null, bd = Infinity;
+  for(const s of list){ const d = dist(me, s); if(d < bd){ bd = d; best = s; } }
+  const cat = catById(best.cat);
+  el.dataset.id = best.id;
+  el.innerHTML = `<span class="ic" style="--c:${cat.color}">${ic(cat.icon,15)}</span><span class="tx"><span class="l">Nächster Spot</span><span class="t">${esc(best.name)}</span></span><span class="d">${fmtDist(bd)}</span>`;
+  el.hidden = false;
+}
+$('#near').addEventListener('click', e => { const id = e.currentTarget.dataset.id; if(id && !mode && view !== 'edit') openDetail(id, true); });
+$('#b-locate').addEventListener('click', () => startGPS(true));
 
 /* ----- Ansicht ----- */
-$('#v-map').addEventListener('click', () => { prefs.view = 'map'; savePrefs(); applyView(); });
-$('#v-sat').addEventListener('click', () => { prefs.view = 'sat'; savePrefs(); applyView(); });
 $('#b-labels').addEventListener('click', () => { prefs.labels = !prefs.labels; savePrefs(); applyView(); });
 
 /* ----- Helfer ----- */
@@ -793,7 +823,7 @@ function copy(text){
   if(navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
   function fallback(){ const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){ toast(text); } ta.remove(); }
 }
-function refreshAll(){ renderChips(); renderList(); renderMarkers(); }
+function refreshAll(){ renderChips(); renderList(); renderMarkers(); renderNearest(); }
 function fitAll(){
   const pts = data.spots.flatMap(s => s.walk && s.parking ? [[s.lat,s.lng],[s.parking.lat,s.parking.lng]] : [[s.lat,s.lng]]);
   if(!pts.length) return;
@@ -808,6 +838,12 @@ $('#b-locate').innerHTML = svg(UI.locate, 17);
 $('#b-labels').innerHTML = svg(UI.labels, 17);
 applyView(); refreshAll(); fitAll();
 if(!mobile()) panel.classList.remove('collapsed');
+// Live-Standort automatisch starten, wenn er schon einmal erlaubt wurde
+(async () => {
+  let granted = prefs.gps;
+  try{ const st = await navigator.permissions?.query({name:'geolocation'}); if(st) granted = st.state === 'granted' || (st.state === 'prompt' && prefs.gps); }catch(e){}
+  if(granted) startGPS(false);
+})();
 })();
 </script>
 </body>
