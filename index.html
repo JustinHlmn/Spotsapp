@@ -108,6 +108,49 @@ body.cockpit #panel,body.cockpit #near,body.cockpit #recbar,body.cockpit #ctrl,b
 body.cockpit #ckTop,body.cockpit #ckSpeed{display:flex}
 body.cockpit #ckStats{display:grid}
 body.cockpit #ckRecenter:not([hidden]){display:inline-flex}
+/* ---------- Beschleunigung ---------- */
+#perf{position:fixed;inset:0;z-index:60;background:rgba(9,10,12,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#f2f2f7;overflow-y:auto;overscroll-behavior:contain;
+  padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:16px;animation:fadein .25s;color-scheme:dark}
+#perf .wrap{width:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.pf-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pf-top b{font-size:20px;font-weight:700;display:block}
+.pf-gps{font-size:12.5px;color:#9d9da6;font-variant-numeric:tabular-nums}
+.pf-gps.bad{color:#ff9f0a}
+.pf-x{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center;flex:none}
+.pf-chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.pf-chips::-webkit-scrollbar{display:none}
+.pf-chip{flex:none;height:36px;padding:0 14px;border-radius:18px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#f2f2f7;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;transition:background-color .2s,color .2s}
+.pf-chip.on{background:#fff;color:#111;border-color:#fff}
+.pf-chip[disabled]{opacity:.4}
+.pf-custom{display:flex;gap:10px}
+.pf-custom label{flex:1;display:flex;flex-direction:column;gap:4px;font-size:12px;color:#9d9da6;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.pf-custom input{height:42px;border-radius:11px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;font-size:18px;padding:0 12px;font-variant-numeric:tabular-nums}
+.pf-main{display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 0}
+.pf-speed{display:flex;align-items:baseline;gap:8px}
+.pf-speed b{font-size:min(30vw,132px);font-weight:800;line-height:.9;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.pf-speed span{font-size:18px;font-weight:700;color:#9d9da6}
+.pf-bar{position:relative;width:100%;height:10px;border-radius:5px;background:rgba(255,255,255,.12);overflow:hidden}
+.pf-bar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:5px;background:#0a84ff;transition:width .25s linear}
+.pf-scale{width:100%;display:flex;justify-content:space-between;font-size:12px;color:#9d9da6;font-variant-numeric:tabular-nums;margin-top:-8px}
+.pf-time{font-size:52px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1}
+.pf-time.done{color:#30d158}
+.pf-time.fail{color:#ff453a}
+.pf-msg{font-size:15px;color:#c7c7cc;text-align:center;min-height:1.4em;text-wrap:balance}
+.pf-msg b{color:#fff}
+.pf-best{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:10px;background:#ffd60a;color:#111;font-size:12px;font-weight:800}
+.pf-go{height:56px;border-radius:16px;border:0;background:#30d158;color:#062b12;font-size:17px;font-weight:800;transition:transform .18s var(--ease),background-color .2s}
+.pf-go:active{transform:scale(.98)}
+.pf-go.abort{background:rgba(255,255,255,.14);color:#fff}
+.pf-h{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#9d9da6}
+.pf-h button{border:0;background:none;color:#0a84ff;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0}
+.pf-list{display:flex;flex-direction:column}
+.pf-row{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid rgba(255,255,255,.08);font-variant-numeric:tabular-nums}
+.pf-row .k{font-weight:700;min-width:96px}
+.pf-row .v{font-weight:800;font-size:17px}
+.pf-row .d{margin-left:auto;color:#9d9da6;font-size:12.5px;text-align:right}
+.pf-empty{color:#9d9da6;font-size:14px;padding:8px 2px}
+.pf-safe{color:#8e8e93;font-size:12px;line-height:1.45;text-align:center}
+.rb.txt{width:auto!important;padding:0 12px;border-radius:20px;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
 body.cockpit #attrib{transform:none!important;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 1px);right:12px}
 #ckTop{position:absolute;z-index:20;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);align-items:center;gap:10px;height:52px;padding:0 6px 0 16px;border-radius:26px;color:var(--fg);animation:fadein .3s}
 #ckTop .dot{width:10px;height:10px;border-radius:50%;background:#ff3b30;flex:none;animation:recblink 1.4s ease-in-out infinite}
@@ -327,6 +370,27 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
   <div><b data-ck="max">0</b><span>Max km/h</span></div>
 </div>
 <button id="ckRecenter" class="glass" hidden></button>
+<div id="perf" hidden>
+  <div class="wrap">
+    <div class="pf-top"><div><b>Beschleunigung</b><span class="pf-gps" id="pfGps">Warte auf GPS …</span></div><button class="pf-x" data-pf="close" aria-label="Schließen"></button></div>
+    <div class="pf-chips" id="pfChips"></div>
+    <div class="pf-custom" id="pfCustom" hidden>
+      <label>Von km/h<input id="pfFrom" type="number" inputmode="numeric" min="0" max="350" value="100"></label>
+      <label>Bis km/h<input id="pfTo" type="number" inputmode="numeric" min="5" max="400" value="150"></label>
+    </div>
+    <div class="pf-main">
+      <div class="pf-speed"><b id="pfV">–</b><span>km/h</span></div>
+      <div class="pf-bar"><i id="pfBar"></i></div>
+      <div class="pf-scale"><span id="pfFromL">0</span><span id="pfToL">100</span></div>
+      <div class="pf-time" id="pfTime">0,00 s</div>
+      <div class="pf-msg" id="pfMsg">Wähle eine Messung und tippe auf Start.</div>
+    </div>
+    <button class="pf-go" id="pfGo">Messung starten</button>
+    <div class="pf-h"><span>Bisherige Messungen</span><button id="pfClear">Verlauf löschen</button></div>
+    <div class="pf-list" id="pfList"></div>
+    <div class="pf-safe">Nur auf abgesperrter Strecke oder wo es erlaubt ist. Handy in die Halterung, Augen auf die Straße – die Messung läuft von selbst.</div>
+  </div>
+</div>
 <div id="attrib">Bilder © Esri, Maxar, Earthstar Geographics · Höhen © Mapzen</div>
 
 <div id="ctrl">
@@ -408,6 +472,7 @@ const UI = {
   pause:'<path d="M8.5 5v14M15.5 5v14"/>', play:'<path d="M8 5.5v13l11-6.5z" fill="currentColor"/>',
   stop:'<rect x="6.5" y="6.5" width="11" height="11" rx="2.5" fill="currentColor" stroke="none"/>',
   gauge:'<path d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/><path d="m12 13.5 4.2-4.2"/><circle cx="12" cy="13.5" r="1.4" fill="currentColor"/>',
+  timer:'<circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.5M10 2.5h4M18.5 6.5 20 5"/>',
   share:'<path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/>',
   locate:'<path d="M3 11 21 3l-8 18-2-8z"/>', labels:'<path d="M5 7h14M12 7v12M8 19h8"/>',
   back:'<path d="M15 5 8 12l7 7"/>', close:'<path d="M6 6l12 12M18 6 6 18"/>',
@@ -1111,7 +1176,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#modal'
 
 /* ================= Export / Import ================= */
 $('#exportBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify({app:'meine-spots', version:1, exported:new Date().toISOString(), ...data, tracks}, null, 2)], {type:'application/json'});
+  const blob = new Blob([JSON.stringify({app:'meine-spots', version:1, exported:new Date().toISOString(), ...data, tracks, runs}, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = `meine-spots-${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -1122,7 +1187,7 @@ $('#importFile').addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = ''; if(!f) return;
   try{
     const j = JSON.parse(await f.text());
-    if(!Array.isArray(j.spots) && !Array.isArray(j.tracks)) throw 0;
+    if(!Array.isArray(j.spots) && !Array.isArray(j.tracks) && !Array.isArray(j.runs)) throw 0;
     (j.cats || []).forEach(c => { if(c && c.id && !data.cats.some(x => x.id === c.id)) data.cats.push(c); });
     let n = 0, nt = 0;
     if(Array.isArray(j.spots)){
@@ -1142,6 +1207,10 @@ $('#importFile').addEventListener('change', async e => {
         nt++;
       });
       tracks.sort((a, b) => b.created - a.created); saveTracks();
+    }
+    if(Array.isArray(j.runs)){
+      j.runs.forEach(r => { if(r && r.id && !runs.some(x => x.id === r.id)) runs.push(r); });
+      runs.sort((a, b) => b.date - a.date); saveRuns();
     }
     save(); refreshAll(); if(n) fitAll(); updateTrackLayers();
     toast(`${n} Spots${nt ? ` und ${nt} Strecken` : ''} importiert`);
@@ -1302,8 +1371,8 @@ function drawLive(){ setSrc('track-live', FC(rec ? segFeatures(rec.segs) : []));
 
 /* Aufzeichnung */
 async function requestWake(){ try{ if(navigator.wakeLock && !wake) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener?.('release', () => { wake = null; }); } }catch(e){ wake = null; } }
-function releaseWake(){ if(ckOn || (rec && rec.runFrom)) return; try{ wake && wake.release(); }catch(e){} wake = null; }
-document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && ((rec && rec.runFrom) || ckOn)) requestWake(); });
+function releaseWake(){ if(ckOn || perfOn || (rec && rec.runFrom)) return; try{ wake && wake.release(); }catch(e){} wake = null; }
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && ((rec && rec.runFrom) || ckOn || perfOn)) requestWake(); });
 function startWatch(){
   if(recWatch != null) return;
   recWatch = navigator.geolocation.watchPosition(onRecPos, err => {
@@ -1391,7 +1460,7 @@ function renderTracksHead(){
   const h = $('#tracksHead');
   if(!rec){
     h.innerHTML = `<button class="btn rec-start" data-rec="start"><span class="rdot"></span>Aufzeichnung starten</button>
-      <button class="btn ck" data-ck-open>${svg(UI.gauge, 17)} Cockpit öffnen</button>
+      <div class="btns"><button class="btn" data-ck-open>${svg(UI.gauge, 17)} Cockpit</button><button class="btn" data-pf-open>${svg(UI.timer, 17)} 0–100</button></div>
       <div class="hint">Lass den Bildschirm an. Im Hintergrund pausiert das Handy die Ortung.</div>`;
   } else if(rec.stopped){
     h.innerHTML = `<button class="btn primary" data-rec="opensave">Beendete Aufzeichnung speichern</button>`;
@@ -1602,10 +1671,12 @@ function renderCkTop(){
   h.classList.toggle('paused', !!(active && !rec.runFrom));
   h.innerHTML = active
     ? `<span class="dot"></span><div class="tx"><b data-rt></b><span data-rd></span></div>
+       <button class="rb txt" data-pf-open aria-label="Beschleunigung messen">0–100</button>
        <button class="rb" data-rec="toggle"></button>
        <button class="rb stop" data-rec="stop" aria-label="Aufzeichnung beenden">${svg(UI.stop, 16)}</button>
        <button class="rb" data-ck="close" aria-label="Cockpit schließen">${svg(UI.close, 15)}</button>`
     : `<div class="tx"><b>Cockpit</b><span>Nicht aufgezeichnet</span></div>
+       <button class="rb txt" data-pf-open aria-label="Beschleunigung messen">0–100</button>
        <button class="rb rec" data-rec="start" aria-label="Aufzeichnung starten"><span class="rdot"></span></button>
        <button class="rb" data-ck="close" aria-label="Cockpit schließen">${svg(UI.close, 15)}</button>`;
 }
@@ -1624,6 +1695,166 @@ function updateCockpitUI(){
   $('[data-ck="max"]').textContent = String(Math.round(max * 3.6));
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && ckOn) exitCockpit(); });
+
+/* ================= Beschleunigung ================= */
+const PKEY = 'meine-spots-runs';
+const PRESETS = [[0,50],[0,100],[0,200],[50,100],[80,120],[100,150],[100,200],[150,200]];
+let runs = [];
+try{ runs = JSON.parse(localStorage.getItem(PKEY) || '[]'); if(!Array.isArray(runs)) runs = []; }catch(e){ runs = []; }
+const saveRuns = () => { try{ localStorage.setItem(PKEY, JSON.stringify(runs.slice(0, 200))); }catch(e){} };
+let perfOn = false, pfWatch = null, pfRaf = null, audio = null, pfClearArmed = false;
+let pf = {from:0, to:100, custom:false, state:'idle', prev:null, v:null, acc:null, ts:[], tStart:0, wallStart:0, dist:0, maxV:0, result:null};
+if(prefs.perf && typeof prefs.perf.from === 'number'){ pf.from = prefs.perf.from; pf.to = prefs.perf.to; pf.custom = !!prefs.perf.custom; }
+const fmtS = x => x.toFixed(2).replace('.', ',') + ' s';
+const pkey = (a, b) => `${a}–${b}`;
+
+function beep(freq = 880, dur = .12, vol = .25){
+  try{
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if(audio.state === 'suspended') audio.resume();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.frequency.value = freq; o.type = 'sine';
+    g.gain.setValueAtTime(vol, audio.currentTime); g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + dur);
+    o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime + dur);
+  }catch(e){}
+}
+function openPerf(){
+  if(perfOn) return;
+  if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
+  perfOn = true; $('#perf').hidden = false;
+  pf.state = 'idle'; pf.prev = null; pf.v = null; pf.ts = []; pf.result = null;
+  pfWatch = navigator.geolocation.watchPosition(onPerfPos, err => {
+    if(err.code === 1){ toast('Standortzugriff verweigert. Die Messung braucht deinen Standort.'); closePerf(); }
+  }, {enableHighAccuracy:true, maximumAge:0, timeout:30000});
+  requestWake();
+  renderPerf();
+}
+function closePerf(){
+  if(!perfOn) return;
+  perfOn = false; $('#perf').hidden = true;
+  if(pfWatch != null){ navigator.geolocation.clearWatch(pfWatch); pfWatch = null; }
+  cancelAnimationFrame(pfRaf); releaseWake();
+}
+function setPreset(a, b, custom){
+  if(['arm','wait','run'].includes(pf.state)) return;
+  pf.from = a; pf.to = b; pf.custom = custom; pf.state = 'idle'; pf.result = null;
+  prefs.perf = {from:a, to:b, custom}; savePrefs();
+  renderPerf();
+}
+function interp(prev, cur, target){
+  if(!prev || cur.v === prev.v) return cur.t;
+  const f = Math.min(1, Math.max(0, (target - prev.v) / (cur.v - prev.v)));
+  return prev.t + f * (cur.t - prev.t);
+}
+function onPerfPos(p){
+  if(!perfOn) return;
+  const c = p.coords, t = p.timestamp || Date.now(), pt = {lat:c.latitude, lng:c.longitude};
+  let v = (c.speed != null && !isNaN(c.speed) && c.speed >= 0) ? c.speed * 3.6 : null;
+  if(v == null && pf.prev && t - pf.prev.t >= 500) v = dist(pf.prev, pt) / ((t - pf.prev.t) / 1000) * 3.6;
+  if(v == null) v = pf.prev ? pf.prev.v : 0;
+  pf.v = v; pf.acc = c.accuracy;
+  pf.ts.push(t); if(pf.ts.length > 6) pf.ts.shift();
+  const cur = {v, t, ...pt}, prev = pf.prev;
+
+  if(pf.state === 'arm'){
+    if(pf.from === 0 ? v < 3 : v < pf.from - 3){ pf.state = 'wait'; beep(660, .1); }
+  } else if(pf.state === 'wait'){
+    if(pf.from === 0){
+      if(v >= 3){ pf.tStart = prev && prev.v < 3 ? interp(prev, cur, 1) : (prev ? prev.t : t); startRun(); }
+    } else if(prev && prev.v < pf.from && v >= pf.from){ pf.tStart = interp(prev, cur, pf.from); startRun(); }
+  } else if(pf.state === 'run'){
+    if(prev) pf.dist += dist(prev, cur);
+    pf.maxV = Math.max(pf.maxV, v);
+    if(v >= pf.to){
+      const tEnd = interp(prev, cur, pf.to), sec = (tEnd - pf.tStart) / 1000;
+      const k = pkey(pf.from, pf.to), best = runs.filter(r => pkey(r.from, r.to) === k).reduce((m, r) => Math.min(m, r.time), Infinity);
+      const r = {id:uid(), from:pf.from, to:pf.to, time:Math.round(sec * 100) / 100, dist:Math.round(pf.dist), date:Date.now(), hz:+hzNow().toFixed(1), acc:Math.round(pf.acc || 0)};
+      runs.unshift(r); saveRuns();
+      pf.result = {...r, best: sec < best};
+      pf.state = 'done'; cancelAnimationFrame(pfRaf);
+      beep(1046, .18, .3); setTimeout(() => beep(1318, .25, .3), 160);
+    } else if(v < pf.maxV - 8 || t - pf.tStart > 90000){
+      pf.state = 'fail'; cancelAnimationFrame(pfRaf); beep(300, .3);
+    }
+  }
+  pf.prev = cur;
+  renderPerf();
+}
+function startRun(){
+  pf.state = 'run'; pf.dist = 0; pf.maxV = pf.v; pf.wallStart = Date.now() - Math.max(0, Date.now() - pf.tStart);
+  beep(990, .15, .3);
+  const loop = () => { if(pf.state !== 'run') return; $('#pfTime').textContent = fmtS(Math.max(0, (Date.now() - pf.tStart) / 1000)); pfRaf = requestAnimationFrame(loop); };
+  cancelAnimationFrame(pfRaf); pfRaf = requestAnimationFrame(loop);
+}
+function hzNow(){ const ts = pf.ts; return ts.length > 1 ? (ts.length - 1) / ((ts[ts.length - 1] - ts[0]) / 1000) : 0; }
+function renderPerf(){
+  if(!perfOn) return;
+  const busy = ['arm','wait','run'].includes(pf.state);
+  // Chips
+  const chips = PRESETS.map(([a, b]) => `<button class="pf-chip ${!pf.custom && pf.from === a && pf.to === b ? 'on' : ''}" data-pp="${a}-${b}" ${busy ? 'disabled' : ''}>${a}–${b}</button>`).join('')
+    + `<button class="pf-chip ${pf.custom ? 'on' : ''}" data-pp="custom" ${busy ? 'disabled' : ''}>Eigene</button>`;
+  if($('#pfChips')._h !== chips){ $('#pfChips').innerHTML = chips; $('#pfChips')._h = chips; }
+  $('#pfCustom').hidden = !pf.custom;
+  // GPS
+  const g = $('#pfGps'), hz = hzNow();
+  if(pf.acc == null) { g.textContent = 'Warte auf GPS …'; g.classList.add('bad'); }
+  else { g.textContent = `GPS ±${Math.round(pf.acc)} m · ${hz ? hz.toFixed(1).replace('.', ',') : '–'} Hz`; g.classList.toggle('bad', pf.acc > 15 || (hz && hz < .8)); }
+  // Tempo + Balken
+  $('#pfV').textContent = pf.v == null ? '–' : String(Math.round(pf.v < 1 ? 0 : pf.v));
+  $('#pfFromL').textContent = pf.from; $('#pfToL').textContent = pf.to;
+  const prog = pf.v == null ? 0 : Math.max(0, Math.min(1, (pf.v - pf.from) / (pf.to - pf.from)));
+  $('#pfBar').style.width = (pf.state === 'done' ? 100 : prog * 100) + '%';
+  $('#pfBar').style.background = pf.state === 'done' ? '#30d158' : pf.state === 'fail' ? '#ff453a' : '#0a84ff';
+  // Zeit + Text
+  const tm = $('#pfTime'), msg = $('#pfMsg');
+  tm.classList.toggle('done', pf.state === 'done'); tm.classList.toggle('fail', pf.state === 'fail');
+  const label = `${pf.from}–${pf.to} km/h`;
+  if(pf.state === 'idle'){ tm.textContent = '0,00 s'; msg.innerHTML = `Messung <b>${label}</b>. Tippe auf Start.`; }
+  if(pf.state === 'arm'){ tm.textContent = '0,00 s'; msg.innerHTML = pf.v == null ? 'Warte auf GPS …' : pf.from === 0 ? 'Halte an. Die Messung startet, sobald du stehst.' : `Werde langsamer als <b>${pf.from - 3} km/h</b>.`; }
+  if(pf.state === 'wait'){ tm.textContent = '0,00 s'; msg.innerHTML = pf.from === 0 ? '<b>Bereit.</b> Fahr los – die Zeit startet automatisch.' : `<b>Bereit.</b> Beschleunige – die Zeit startet bei ${pf.from} km/h.`; }
+  if(pf.state === 'run'){ msg.innerHTML = `Läuft … Ziel <b>${pf.to} km/h</b>`; }
+  if(pf.state === 'done'){ const r = pf.result; tm.textContent = fmtS(r.time); msg.innerHTML = `<b>${label}</b> in ${fmtS(r.time)} · ${r.dist} m${r.best ? '<span class="pf-best">Bestzeit</span>' : ''}`; }
+  if(pf.state === 'fail'){ tm.textContent = 'Abbruch'; msg.innerHTML = 'Das Tempo ist gefallen oder es hat zu lange gedauert. Nochmal?'; }
+  // Button
+  const go = $('#pfGo');
+  go.textContent = busy ? 'Abbrechen' : pf.state === 'idle' ? 'Messung starten' : 'Nochmal';
+  go.classList.toggle('abort', busy);
+  renderRuns();
+}
+function renderRuns(){
+  const bests = {};
+  runs.forEach(r => { const k = pkey(r.from, r.to); if(!bests[k] || r.time < bests[k].time) bests[k] = r; });
+  const html = runs.length ? runs.slice(0, 30).map(r => `<div class="pf-row"><span class="k">${r.from}–${r.to}</span><span class="v">${fmtS(r.time)}</span>${bests[pkey(r.from, r.to)] === r ? '<span class="pf-best">Best</span>' : ''}<span class="d">${fmtDate(r.date)}<br>${r.dist} m · ±${r.acc} m</span></div>`).join('')
+    : '<div class="pf-empty">Noch keine Messungen.</div>';
+  const l = $('#pfList'); if(l._h !== html){ l.innerHTML = html; l._h = html; }
+  $('#pfClear').hidden = !runs.length;
+}
+$('#pfGo').addEventListener('click', () => {
+  beep(0, .01, .001); // Audio im Klick freischalten
+  if(['arm','wait','run'].includes(pf.state)){ pf.state = 'idle'; cancelAnimationFrame(pfRaf); renderPerf(); return; }
+  if(pf.custom){
+    const a = Math.max(0, Math.round(+$('#pfFrom').value || 0)), b = Math.round(+$('#pfTo').value || 0);
+    if(!(b > a + 4)){ toast('„Bis“ muss mindestens 5 km/h über „Von“ liegen.'); return; }
+    pf.from = a; pf.to = b; prefs.perf = {from:a, to:b, custom:true}; savePrefs();
+  }
+  pf.state = 'arm'; pf.result = null; pf.prev = null;
+  renderPerf();
+});
+$('#pfChips').addEventListener('click', e => {
+  const b = e.target.closest('[data-pp]'); if(!b || b.disabled) return;
+  if(b.dataset.pp === 'custom'){ setPreset(+$('#pfFrom').value || 100, +$('#pfTo').value || 150, true); return; }
+  const [a, z] = b.dataset.pp.split('-').map(Number); setPreset(a, z, false);
+});
+$('#pfClear').addEventListener('click', e => {
+  if(!pfClearArmed){ pfClearArmed = true; e.target.textContent = 'Wirklich löschen?'; e.target.style.color = '#ff453a'; setTimeout(() => { pfClearArmed = false; e.target.textContent = 'Verlauf löschen'; e.target.style.color = ''; }, 3500); return; }
+  runs = []; saveRuns(); pfClearArmed = false; e.target.textContent = 'Verlauf löschen'; e.target.style.color = ''; renderRuns();
+});
+document.addEventListener('click', e => {
+  if(e.target.closest('[data-pf-open]')) return openPerf();
+  if(e.target.closest('[data-pf="close"]')) return closePerf();
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && perfOn) closePerf(); });
+if(pf.custom){ $('#pfFrom').value = pf.from; $('#pfTo').value = pf.to; }
 
 /* Unterbrochene Aufzeichnung wiederherstellen */
 try{
@@ -1645,6 +1876,7 @@ $('#recbar [data-rec="stop"]').innerHTML = svg(UI.stop, 16);
 $('#recbar [data-ck-open]').innerHTML = svg(UI.gauge, 18);
 $('#b-cockpit').innerHTML = svg(UI.gauge, 19);
 $('#ckRecenter').innerHTML = svg(UI.locate, 15) + 'Zentrieren';
+$('#perf [data-pf="close"]').innerHTML = svg(UI.close, 15);
 applyLabels(); refreshAll();
 if(rec){
   setTab('tracks'); renderTracksHead(); updateRecUI(); renderNearest();
