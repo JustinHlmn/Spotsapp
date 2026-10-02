@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Meine Spots</title>
+<title>Jamsis Spots</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -194,6 +194,21 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 .me .d{grid-area:1/1;width:20px;height:20px;border-radius:50%;background:#0a7cff;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 @keyframes mepulse{from{transform:scale(.4);opacity:1}to{transform:scale(1.5);opacity:0}}
 
+.mk-cluster{display:grid;place-items:center;border-radius:50%;cursor:pointer;color:#fff;font-weight:800;font-variant-numeric:tabular-nums;background:radial-gradient(circle at 35% 30%,#4aa3ff,#0a6be0);border:3px solid #fff;box-shadow:0 0 0 6px rgba(10,124,255,.28),0 4px 12px rgba(0,0,0,.45);transition:transform .25s var(--ease)}
+.mk-cluster:active{transform:scale(.92)}
+.mk-cluster.new{animation:pop .45s var(--ease) both}
+@keyframes pop{from{opacity:0;transform:scale(.4)}}
+.stack button.t3d{font:800 13px/1 var(--font);letter-spacing:.02em}
+
+/* ---------- Startbildschirm ---------- */
+#splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(120% 80% at 50% 35%,#16314f 0%,#0b0d10 60%);color:#fff;transition:opacity .6s var(--ease),transform .6s var(--ease)}
+#splash.out{opacity:0;transform:scale(1.06);pointer-events:none}
+#splash .logo{width:96px;height:96px;border-radius:24px;background:linear-gradient(180deg,#1e8cff,#0a6be0);display:grid;place-items:center;box-shadow:0 18px 40px rgba(10,124,255,.35);animation:logoin .7s var(--ease) both}
+#splash .name{font-size:30px;font-weight:800;letter-spacing:-.02em;animation:textin .7s .12s var(--ease) both}
+#splash .sub{font-size:14px;color:rgba(255,255,255,.6);margin-top:-10px;animation:textin .7s .22s var(--ease) both}
+@keyframes logoin{from{opacity:0;transform:scale(.6) translateY(10px)}}
+@keyframes textin{from{opacity:0;transform:translateY(10px)}}
+
 /* ---------- Modal & Hinweise ---------- */
 #modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.35);display:grid;place-items:center;padding:16px;animation:fadein .2s}
 @keyframes fadein{from{opacity:0}}
@@ -236,12 +251,18 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 </style>
 </head>
 <body>
+<div id="splash" aria-hidden="true">
+  <div class="logo"><svg viewBox="0 0 24 24" width="50" height="50" aria-hidden="true"><path d="M12 2.5c-4 0-7 3-7 7 0 5.2 7 12 7 12s7-6.8 7-12c0-4-3-7-7-7z" fill="#fff"/><circle cx="12" cy="9.5" r="2.8" fill="#0a7cff"/></svg></div>
+  <div class="name">Jamsis Spots</div>
+  <div class="sub">Lädt Satellitenbilder …</div>
+</div>
 <div id="map" aria-label="Karte"></div>
 
 <div id="ctrl">
   <div class="stack glass">
     <button id="b-labels" title="Straßen und Orte einblenden" aria-label="Beschriftung ein/aus"></button>
     <button id="b-locate" title="Mein Standort" aria-label="Mein Standort"></button>
+    <button id="b-3d" class="t3d" title="3D-Gelände" aria-label="3D-Gelände ein/aus">3D</button>
   </div>
 </div>
 
@@ -337,7 +358,7 @@ function save(){
   try{ localStorage.setItem(KEY, JSON.stringify(data)); }
   catch(e){ if(storageOk){ storageOk = false; toast('Speichern im Browser nicht möglich – nutze „Exportieren“ als Sicherung.'); } }
 }
-let prefs = {labels:true, gps:false};
+let prefs = {labels:true, gps:false, terrain:false};
 try{ Object.assign(prefs, JSON.parse(localStorage.getItem(PREF) || '{}')); }catch(e){}
 const savePrefs = () => { try{ localStorage.setItem(PREF, JSON.stringify(prefs)); }catch(e){} };
 const catById = id => data.cats.find(c => c.id === id) || data.cats[data.cats.length - 1] || {id:'?', name:'Ohne', color:'#868e96', icon:'pin'};
@@ -373,7 +394,8 @@ const map = new maplibregl.Map({
     sources:{
       sat:{type:'raster', tiles:[ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize:256, maxzoom:19, attribution:'Bilder © Esri, Maxar, Earthstar Geographics'},
       roads:{type:'raster', tiles:[ESRI + 'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}'], tileSize:256, maxzoom:19},
-      places:{type:'raster', tiles:[ESRI + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'], tileSize:256, maxzoom:19}
+      places:{type:'raster', tiles:[ESRI + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'], tileSize:256, maxzoom:19},
+      dem:{type:'raster-dem', tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'], encoding:'terrarium', tileSize:256, maxzoom:15, attribution:'Höhendaten © Mapzen, AWS Terrain Tiles'}
     },
     layers:[
       {id:'bg', type:'background', paint:{'background-color':'#1b1d1f'}},
@@ -383,11 +405,11 @@ const map = new maplibregl.Map({
     ]
   },
   center:[10.4, 51.1], zoom:5.2, maxZoom:20.5,
-  attributionControl:false, pitchWithRotate:false, touchPitch:false,
+  attributionControl:false, pitchWithRotate:true, touchPitch:true,
   dragRotate:true, maxPitch:0, fadeDuration:150, renderWorldCopies:true
 });
 map.touchZoomRotate.enableRotation();
-map.addControl(new maplibregl.NavigationControl({showCompass:true, visualizePitch:false}), 'top-right');
+map.addControl(new maplibregl.NavigationControl({showCompass:true, visualizePitch:true}), 'top-right');
 map.addControl(new maplibregl.AttributionControl({compact:true}), 'bottom-right');
 map.addControl(new maplibregl.ScaleControl({unit:'metric'}), 'bottom-right');
 
@@ -401,6 +423,8 @@ map.on('load', () => {
   map.addSource('links', {type:'geojson', data:FC([])});
   map.addSource('draftlink', {type:'geojson', data:FC([])});
   map.addSource('acc', {type:'geojson', data:FC([])});
+  map.addSource('spots', {type:'geojson', data:FC([]), cluster:true, clusterRadius:52, clusterMaxZoom:14});
+  map.addLayer({id:'spots-q', type:'circle', source:'spots', paint:{'circle-radius':0, 'circle-opacity':0}});
   map.addLayer({id:'acc-fill', type:'fill', source:'acc', paint:{'fill-color':'#0a7cff', 'fill-opacity':.14}});
   map.addLayer({id:'acc-line', type:'line', source:'acc', paint:{'line-color':'#0a7cff', 'line-opacity':.5, 'line-width':1}});
   const lineLayout = {'line-cap':'round', 'line-join':'round'};
@@ -412,8 +436,38 @@ map.on('load', () => {
   map.addLayer({id:'draftlink', type:'line', source:'draftlink', layout:lineLayout, paint:{'line-color':'#5cb0ff', 'line-width':4.5, 'line-dasharray':[0.1, 2]}});
   mapReady = true;
   for(const id in pendingSrc) map.getSource(id)?.setData(pendingSrc[id]);
-  applyLabels();
+  applyLabels(); apply3D(false);
+  renderMarkers();
+  hideSplash();
 });
+map.on('render', scheduleMarkers);
+map.on('sourcedata', e => { if(e.sourceId === 'spots' && e.isSourceLoaded) scheduleMarkers(); });
+
+/* 3D-Gelände */
+function apply3D(animate = true){
+  $('#b-3d').classList.toggle('on', !!prefs.terrain);
+  if(!mapReady) return;
+  if(prefs.terrain){
+    map.setMaxPitch(80);
+    try{ map.setTerrain({source:'dem', exaggeration:1.4}); }catch(e){}
+    try{ map.setSky && map.setSky({'sky-color':'#7fb2e6', 'horizon-color':'#cfe3f5', 'sky-horizon-blend':.6, 'horizon-fog-blend':.6, 'fog-color':'#cfe3f5', 'fog-ground-blend':.3}); }catch(e){}
+    if(animate) map.easeTo({pitch:60, zoom:Math.max(map.getZoom(), 13), duration:1200});
+  } else {
+    const off = () => { try{ map.setTerrain(null); }catch(e){} map.setMaxPitch(0); };
+    if(animate && map.getPitch() > 0){ map.easeTo({pitch:0, duration:900}); map.once('moveend', off); } else off();
+  }
+}
+$('#b-3d').addEventListener('click', () => { prefs.terrain = !prefs.terrain; savePrefs(); apply3D(true); if(prefs.terrain) toast('3D an – mit zwei Fingern nach oben wischen zum Kippen'); });
+
+/* Startbildschirm */
+const splashStart = performance.now();
+let splashGone = false;
+function hideSplash(){
+  if(splashGone) return; splashGone = true;
+  const el = $('#splash'); if(!el) return;
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 700); }, Math.max(0, 900 - (performance.now() - splashStart)));
+}
+setTimeout(hideSplash, 3500);
 function applyLabels(){
   if(mapReady) for(const l of ['roads','places']) map.setLayoutProperty(l, 'visibility', prefs.labels ? 'visible' : 'none');
   $('#b-labels').classList.toggle('on', prefs.labels);
@@ -467,20 +521,60 @@ function upsert(key, kind, id, pos, html, sel, z){
   el.style.zIndex = z;
 }
 function renderMarkers(){
+  const feats = visibleSpots().filter(s => !(draft && draft.id === s.id))
+    .map(s => ({type:'Feature', properties:{id:s.id}, geometry:{type:'Point', coordinates:LL(s)}}));
+  if(mapReady) map.getSource('spots')?.setData(FC(feats));
+  scheduleMarkers();
+}
+let markerQueued = false;
+function scheduleMarkers(){
+  if(markerQueued) return; markerQueued = true;
+  requestAnimationFrame(() => { markerQueued = false; updateMarkers(); });
+}
+function updateMarkers(){
+  if(!mapReady || !map.getSource('spots')) return;
   const want = new Set(), lines = [];
-  for(const s of visibleSpots()){
-    if(draft && draft.id === s.id) continue;
-    const cat = catById(s.cat), sel = s.id === selected;
-    want.add('s:' + s.id);
-    upsert('s:' + s.id, 'spot', s.id, s, `<div class="pin" style="--c:${cat.color}">${ic(cat.icon, 16)}</div>`, sel, sel ? 4 : 2);
-    if(s.walk && s.parking){
-      want.add('p:' + s.id);
-      upsert('p:' + s.id, 'park', s.id, s.parking, '<div class="pk">P</div>', sel, sel ? 3 : 1);
-      lines.push({type:'Feature', properties:{sel}, geometry:{type:'LineString', coordinates:[LL(s.parking), LL(s)]}});
+  const vis = new Set(visibleSpots().map(s => s.id));
+  for(const f of map.querySourceFeatures('spots')){
+    const p = f.properties;
+    if(p.cluster){
+      const key = 'c:' + p.cluster_id;
+      if(want.has(key)) continue; want.add(key);
+      upsertCluster(key, p.cluster_id, f.geometry.coordinates, p.point_count);
+    } else {
+      const s = data.spots.find(x => x.id === p.id);
+      if(!s || !vis.has(s.id) || want.has('s:' + s.id) || (draft && draft.id === s.id)) continue;
+      const cat = catById(s.cat), sel = s.id === selected;
+      want.add('s:' + s.id);
+      upsert('s:' + s.id, 'spot', s.id, s, `<div class="pin" style="--c:${cat.color}">${ic(cat.icon, 16)}</div>`, sel, sel ? 4 : 2);
+      if(s.walk && s.parking){
+        want.add('p:' + s.id);
+        upsert('p:' + s.id, 'park', s.id, s.parking, '<div class="pk">P</div>', sel, sel ? 3 : 1);
+        lines.push({type:'Feature', properties:{sel}, geometry:{type:'LineString', coordinates:[LL(s.parking), LL(s)]}});
+      }
     }
   }
   for(const [k, m] of markers) if(!want.has(k)){ m.remove(); markers.delete(k); }
   setSrc('links', FC(lines));
+}
+function upsertCluster(key, cid, coords, count){
+  let m = markers.get(key);
+  if(!m){
+    const el = document.createElement('div');
+    el.className = 'mk-cluster new';
+    el.addEventListener('animationend', () => el.classList.remove('new'), {once:true});
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      Promise.resolve(map.getSource('spots').getClusterExpansionZoom(cid))
+        .then(z => map.easeTo({center:coords, zoom:Math.min((z || map.getZoom() + 2) + .4, 18), duration:800}))
+        .catch(() => map.easeTo({center:coords, zoom:map.getZoom() + 2, duration:800}));
+    });
+    m = new maplibregl.Marker({element:el, anchor:'center'}).setLngLat(coords).addTo(map);
+    markers.set(key, m);
+  } else m.setLngLat(coords);
+  const el = m.getElement(), size = Math.min(58, 36 + count * 3);
+  if(el._n !== count){ el._n = count; el.textContent = count; el.style.width = el.style.height = size + 'px'; el.style.fontSize = (count > 99 ? 13 : 16) + 'px'; }
+  el.style.zIndex = 3;
 }
 
 let draftSpotM = null, draftParkM = null;
@@ -1029,6 +1123,7 @@ $('#hereBtn').innerHTML = svg(UI.locate, 14) + 'Hier speichern';
 $('#searchIc').innerHTML = svg(UI.search, 15);
 $('#b-locate').innerHTML = svg(UI.locate, 18);
 $('#b-labels').innerHTML = svg(UI.labels, 18);
+$('#b-3d').classList.toggle('on', !!prefs.terrain);
 applyLabels(); refreshAll();
 if(mobile()) setSnap('peek', false);
 requestAnimationFrame(() => fitAll(false));
