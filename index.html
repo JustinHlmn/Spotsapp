@@ -185,8 +185,7 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 .mk-spot .pin{width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);transform-origin:50% 50%;background:var(--c);border:2.5px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.4);display:grid;place-items:center;transition:transform .3s var(--ease)}
 .mk-spot .pin svg{transform:rotate(45deg);color:#fff}
 .mk-spot.sel .pin{transform:rotate(-45deg) scale(1.22)}
-.mk-spot.new .pin,.mk-park.new .pk{animation:drop .5s var(--ease) both}
-@keyframes drop{from{opacity:0;translate:0 -14px}}
+.mk-spot.new .pin,.mk-park.new .pk{animation:fadein .25s ease both}
 .mk-spot.draft .pin{animation:bob .9s ease-in-out infinite alternate}
 @keyframes bob{to{translate:0 -4px}}
 .mk-park{cursor:pointer}
@@ -197,10 +196,9 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 .me .d{grid-area:1/1;width:20px;height:20px;border-radius:50%;background:#0a7cff;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 @keyframes mepulse{from{transform:scale(.4);opacity:1}to{transform:scale(1.5);opacity:0}}
 
-.mk-cluster{display:grid;place-items:center;border-radius:50%;cursor:pointer;color:#fff;font-weight:800;font-variant-numeric:tabular-nums;background:radial-gradient(circle at 35% 30%,#4aa3ff,#0a6be0);border:3px solid #fff;box-shadow:0 0 0 6px rgba(10,124,255,.28),0 4px 12px rgba(0,0,0,.45);transition:transform .25s var(--ease)}
-.mk-cluster:active{transform:scale(.92)}
-.mk-cluster.new{animation:pop .45s var(--ease) both}
-@keyframes pop{from{opacity:0;transform:scale(.4)}}
+.mk-cluster{display:grid;place-items:center;border-radius:50%;cursor:pointer;color:#1c1c1e;font-weight:700;font-variant-numeric:tabular-nums;background:rgba(255,255,255,.94);border:1px solid rgba(0,0,0,.08);box-shadow:0 2px 6px rgba(0,0,0,.35);transition:transform .2s var(--ease)}
+.mk-cluster:active{transform:scale(.94)}
+.mk-cluster.new{animation:fadein .25s ease both}
 .stack button.t3d{font:800 13px/1 var(--font);letter-spacing:.02em}
 
 /* ---------- Startbildschirm ---------- */
@@ -443,8 +441,8 @@ map.on('load', () => {
   renderMarkers();
   hideSplash();
 });
-map.on('render', scheduleMarkers);
-map.on('sourcedata', e => { if(e.sourceId === 'spots' && e.isSourceLoaded) scheduleMarkers(); });
+map.on('moveend', scheduleMarkers);
+map.on('sourcedata', e => { if(e.sourceId === 'spots' && e.isSourceLoaded && !map.isMoving()) scheduleMarkers(); });
 
 /* 3D-Gelände */
 function apply3D(animate = true){
@@ -538,7 +536,9 @@ function updateMarkers(){
   if(!mapReady || !map.getSource('spots')) return;
   const want = new Set(), lines = [];
   const vis = new Set(visibleSpots().map(s => s.id));
-  for(const f of map.querySourceFeatures('spots')){
+  const feats = map.querySourceFeatures('spots');
+  if(!feats.length && vis.size && map.getSource('spots') && !map.isSourceLoaded('spots')) return;
+  for(const f of feats){
     const p = f.properties;
     if(p.cluster){
       const key = 'c:' + p.cluster_id;
@@ -575,8 +575,8 @@ function upsertCluster(key, cid, coords, count){
     m = new maplibregl.Marker({element:el, anchor:'center'}).setLngLat(coords).addTo(map);
     markers.set(key, m);
   } else m.setLngLat(coords);
-  const el = m.getElement(), size = Math.min(58, 36 + count * 3);
-  if(el._n !== count){ el._n = count; el.textContent = count; el.style.width = el.style.height = size + 'px'; el.style.fontSize = (count > 99 ? 13 : 16) + 'px'; }
+  const el = m.getElement(), size = Math.min(42, 32 + count * 2);
+  if(el._n !== count){ el._n = count; el.textContent = count; el.style.width = el.style.height = size + 'px'; el.style.fontSize = (count > 99 ? 12 : 14) + 'px'; }
   el.style.zIndex = 3;
 }
 
