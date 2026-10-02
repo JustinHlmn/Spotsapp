@@ -165,7 +165,7 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 @media (min-width:641px){#near{left:calc(50% + 182px)}}
 
 /* MapLibre-Steuerelemente im Glas-Look */
-.maplibregl-ctrl-top-right{top:100px}
+.maplibregl-ctrl-top-right{top:152px}
 .maplibregl-ctrl-top-right .maplibregl-ctrl{margin:0 12px 0 0}
 .maplibregl-ctrl-group{background:var(--glass)!important;backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border:1px solid var(--line);border-radius:12px!important;box-shadow:var(--shadow)!important;overflow:hidden}
 .maplibregl-ctrl-group button{width:42px!important;height:42px!important}
@@ -176,6 +176,9 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 .maplibregl-ctrl-attrib{background:var(--glass)!important;color:var(--muted)}
 .maplibregl-ctrl-attrib a{color:var(--muted)!important}
 .maplibregl-ctrl-scale{background:var(--glass);border-color:var(--fg);color:var(--fg)}
+
+#attrib{position:absolute;z-index:4;right:12px;bottom:6px;font-size:9.5px;line-height:1.2;color:rgba(255,255,255,.75);text-shadow:0 1px 2px rgba(0,0,0,.8);pointer-events:none;white-space:nowrap}
+.maplibregl-ctrl-bottom-right{bottom:16px}
 
 /* ---------- Marker ---------- */
 .mk-spot{width:34px;height:41px;cursor:pointer}
@@ -238,10 +241,10 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
   .ph{padding-top:8px}
   .chips{touch-action:pan-x}
   #ctrl{top:calc(10px + env(safe-area-inset-top,0px));right:10px}
-  .maplibregl-ctrl-top-right{top:calc(104px + env(safe-area-inset-top,0px))}
+  .maplibregl-ctrl-top-right{top:calc(148px + env(safe-area-inset-top,0px))}
   .maplibregl-ctrl-top-right .maplibregl-ctrl{margin-right:10px}
-  .maplibregl-ctrl-bottom-right{bottom:auto;top:calc(196px + env(safe-area-inset-top,0px))}
-  .maplibregl-ctrl-bottom-right .maplibregl-ctrl{margin:0 10px 0 0}
+  #attrib{position:fixed;right:10px;bottom:0;transition:transform .5s var(--ease)}
+  #attrib.dragging{transition:none}
   .maplibregl-ctrl-scale{display:none}
   #near{top:calc(10px + env(safe-area-inset-top,0px));left:10px;transform:none;max-width:calc(100% - 76px)}
   #near:active{transform:scale(.97)}
@@ -257,6 +260,7 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
   <div class="sub">Lädt Satellitenbilder …</div>
 </div>
 <div id="map" aria-label="Karte"></div>
+<div id="attrib">Bilder © Esri, Maxar, Earthstar Geographics · Höhen © Mapzen</div>
 
 <div id="ctrl">
   <div class="stack glass">
@@ -410,7 +414,6 @@ const map = new maplibregl.Map({
 });
 map.touchZoomRotate.enableRotation();
 map.addControl(new maplibregl.NavigationControl({showCompass:true, visualizePitch:true}), 'top-right');
-map.addControl(new maplibregl.AttributionControl({compact:true}), 'bottom-right');
 map.addControl(new maplibregl.ScaleControl({unit:'metric'}), 'bottom-right');
 
 let mapReady = false;
@@ -627,6 +630,9 @@ function setSheetY(y, animate){
   sheetY = y;
   panel.classList.toggle('dragging', !animate);
   panel.style.transform = `translateY(${y}px)`;
+  const at = $('#attrib');
+  at.classList.toggle('dragging', !animate);
+  at.style.transform = `translateY(${-(panel.offsetHeight - y) - 4}px)`;
 }
 function setSnap(name, animate = true){
   if(!mobile()) return;
@@ -689,7 +695,7 @@ function camPad(){
   panel.addEventListener('click', e => { if(moved){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
 })();
 $('#grab').addEventListener('click', () => setSnap(snap === 'peek' ? 'half' : 'peek'));
-mqMobile.addEventListener?.('change', () => { if(mobile()) setSnap(snap, false); else { panel.style.transform = ''; panel.classList.remove('full'); } });
+mqMobile.addEventListener?.('change', () => { if(mobile()) setSnap(snap, false); else { panel.style.transform = ''; $('#attrib').style.transform = ''; panel.classList.remove('full'); } });
 addEventListener('resize', () => mobile() && setSnap(snap, false));
 
 function show(v, snapTo){
