@@ -71,6 +71,34 @@ h2{font-size:22px;font-weight:700;margin:0;letter-spacing:-.015em;text-wrap:bala
 .icon-btn.accent{background:var(--accent);color:var(--accent-fg)}
 .here-btn{height:32px;border-radius:16px;border:0;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;gap:5px;padding:0 12px 0 9px;white-space:nowrap}
 .here-btn[disabled]{opacity:.6}
+.tabs{display:flex;gap:16px;align-items:baseline}
+.tabs button{border:0;background:none;padding:0;font-size:22px;font-weight:700;letter-spacing:-.015em;color:var(--muted);transition:color .2s}
+.tabs button.on{color:var(--fg)}
+.phbody{display:flex;flex-direction:column;gap:10px}
+.rec-start{width:100%;height:46px;background:#ff3b30;color:#fff;font-size:15px}
+.rec-start .rdot{width:10px;height:10px;border-radius:50%;background:#fff}
+.reccard{display:flex;align-items:center;gap:10px;background:var(--solid);border:1px solid var(--line);border-radius:14px;padding:10px 10px 10px 14px}
+.reccard .tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.reccard .big{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em;line-height:1.1}
+.reccard .sm{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.rb{width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--fill);color:var(--fg);flex:none;transition:transform .18s var(--ease)}
+.rb:active{transform:scale(.92)}
+.rb.stop{background:#ff3b30;color:#fff}
+.hint{color:var(--muted);font-size:12px;line-height:1.4}
+.weak{color:#ff9f0a}
+.tstats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tstats div{background:var(--solid);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;font-variant-numeric:tabular-nums}
+.tstats b{font-size:18px}
+.tstats span{color:var(--muted);font-size:12px}
+#recbar{position:absolute;z-index:6;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;height:52px;padding:0 6px 0 16px;border-radius:26px;color:var(--fg)}
+#recbar .dot{width:10px;height:10px;border-radius:50%;background:#ff3b30;flex:none;animation:recblink 1.4s ease-in-out infinite}
+#recbar.paused .dot{background:var(--muted);animation:none}
+#recbar .tx{display:flex;flex-direction:column;line-height:1.15;font-variant-numeric:tabular-nums;min-width:78px}
+#recbar b{font-size:16px}
+#recbar .tx span{font-size:12px;color:var(--muted)}
+#recbar .rb{width:40px;height:40px}
+@keyframes recblink{50%{opacity:.25}}
+@media (min-width:641px){#recbar{left:calc(50% + 182px)}}
 .search{display:flex;align-items:center;gap:6px;background:var(--fill);border-radius:11px;padding:0 10px;height:38px;color:var(--muted)}
 .search input{flex:1;min-width:0;border:0;background:none;outline:none;height:100%;color:var(--fg);font-size:16px}
 .search input::placeholder{color:var(--muted)}
@@ -245,6 +273,9 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
   #attrib.dragging{transition:none}
   .maplibregl-ctrl-scale{display:none}
   #near{top:calc(10px + env(safe-area-inset-top,0px));left:10px;transform:none;max-width:calc(100% - 76px)}
+  #recbar{top:calc(10px + env(safe-area-inset-top,0px));left:10px;transform:none}
+  .tabs{gap:14px}
+  .tabs button{font-size:21px}
   #near:active{transform:scale(.97)}
   #toast{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px))}
 }
@@ -269,17 +300,26 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 </div>
 
 <button id="near" class="glass" hidden aria-live="polite"></button>
+<div id="recbar" class="glass" hidden>
+  <span class="dot"></span>
+  <div class="tx"><b data-rt>0:00</b><span data-rd>0 m</span></div>
+  <button class="rb" data-rec="toggle" aria-label="Pause"></button>
+  <button class="rb stop" data-rec="stop" aria-label="Aufzeichnung beenden"></button>
+</div>
 
 <aside id="panel" class="glass">
   <div class="grabwrap"><button class="grab" id="grab" aria-label="Panel auf- oder zuklappen"></button></div>
   <section class="view" id="listView">
     <div class="ph">
       <div class="row between">
-        <h1>Meine Spots</h1>
-        <div class="row"><button class="here-btn press" id="hereBtn" title="Spot an deinem aktuellen Standort speichern"></button><button class="icon-btn accent press" id="addBtn" aria-label="Spot auf der Karte setzen" title="Spot auf der Karte setzen"></button></div>
+        <div class="tabs" role="tablist"><button class="on" data-tab="spots" role="tab">Spots</button><button data-tab="tracks" role="tab">Strecken</button></div>
+        <div class="row" id="spotActions"><button class="here-btn press" id="hereBtn" title="Spot an deinem aktuellen Standort speichern"></button><button class="icon-btn accent press" id="addBtn" aria-label="Spot auf der Karte setzen" title="Spot auf der Karte setzen"></button></div>
       </div>
-      <div class="search"><span id="searchIc"></span><input id="q" type="search" placeholder="Spots oder Orte suchen" autocomplete="off" enterkeyhint="search"></div>
-      <div class="chips" id="chips"></div>
+      <div class="phbody" id="spotsHead">
+        <div class="search"><span id="searchIc"></span><input id="q" type="search" placeholder="Spots oder Orte suchen" autocomplete="off" enterkeyhint="search"></div>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="phbody" id="tracksHead" hidden></div>
     </div>
     <div class="pb" id="listBody"></div>
     <div class="pf">
@@ -292,6 +332,8 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
   <section class="view" id="detailView" hidden></section>
   <section class="view" id="editView" hidden></section>
   <section class="view" id="modeView" hidden></section>
+  <section class="view" id="trackView" hidden></section>
+  <section class="view" id="trackSaveView" hidden></section>
 </aside>
 
 <div id="tilewarn" class="glass" hidden>
@@ -322,6 +364,10 @@ const ICONS = {
 };
 const UI = {
   plus:'<path d="M12 5v14M5 12h14"/>', search:'<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>',
+  route:'<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/>',
+  pause:'<path d="M8.5 5v14M15.5 5v14"/>', play:'<path d="M8 5.5v13l11-6.5z" fill="currentColor"/>',
+  stop:'<rect x="6.5" y="6.5" width="11" height="11" rx="2.5" fill="currentColor" stroke="none"/>',
+  share:'<path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/>',
   locate:'<path d="M3 11 21 3l-8 18-2-8z"/>', labels:'<path d="M5 7h14M12 7v12M8 19h8"/>',
   back:'<path d="M15 5 8 12l7 7"/>', close:'<path d="M6 6l12 12M18 6 6 18"/>',
   car:'<path d="M5 16v-5l2-5h10l2 5v5M3 16h18v3H3zM7 19v2M17 19v2"/>',
@@ -428,6 +474,15 @@ map.on('load', () => {
   map.addLayer({id:'spots-q', type:'circle', source:'spots', paint:{'circle-radius':0, 'circle-opacity':0}});
   map.addLayer({id:'acc-fill', type:'fill', source:'acc', paint:{'fill-color':'#0a7cff', 'fill-opacity':.14}});
   map.addLayer({id:'acc-line', type:'line', source:'acc', paint:{'line-color':'#0a7cff', 'line-opacity':.5, 'line-width':1}});
+  for(const id of ['track-all','track-view','track-live','track-ends']) map.addSource(id, {type:'geojson', data:FC([])});
+  const rl = {'line-cap':'round', 'line-join':'round'};
+  map.addLayer({id:'track-all-line', type:'line', source:'track-all', layout:rl, paint:{'line-color':'#ff9f0a', 'line-width':3, 'line-opacity':.6}});
+  map.addLayer({id:'track-all-hit', type:'line', source:'track-all', layout:rl, paint:{'line-color':'#000', 'line-width':20, 'line-opacity':0}});
+  map.addLayer({id:'track-view-case', type:'line', source:'track-view', layout:rl, paint:{'line-color':'#ffffff', 'line-width':8, 'line-opacity':.9}});
+  map.addLayer({id:'track-view-line', type:'line', source:'track-view', layout:rl, paint:{'line-color':'#ff9f0a', 'line-width':5}});
+  map.addLayer({id:'track-live-case', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ffffff', 'line-width':8, 'line-opacity':.9}});
+  map.addLayer({id:'track-live-line', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ff3b30', 'line-width':5}});
+  map.addLayer({id:'track-ends', type:'circle', source:'track-ends', paint:{'circle-radius':6.5, 'circle-color':['match', ['get','k'], 'start', '#30d158', '#ff3b30'], 'circle-stroke-color':'#ffffff', 'circle-stroke-width':2.5}});
   const lineLayout = {'line-cap':'round', 'line-join':'round'};
   map.addLayer({id:'links', type:'line', source:'links', layout:lineLayout, paint:{
     'line-color':['case', ['get','sel'], '#5cb0ff', '#ffffff'],
@@ -438,6 +493,7 @@ map.on('load', () => {
   mapReady = true;
   for(const id in pendingSrc) map.getSource(id)?.setData(pendingSrc[id]);
   applyLabels(); apply3D(false);
+  updateTrackLayers(); drawLive();
   renderMarkers();
   hideSplash();
 });
@@ -701,12 +757,13 @@ addEventListener('resize', () => mobile() && setSnap(snap, false));
 function show(v, snapTo){
   const changed = v !== view;
   view = v;
-  for(const id of ['listView','detailView','editView','modeView']){
+  for(const id of ['listView','detailView','editView','modeView','trackView','trackSaveView']){
     const el = $('#' + id), on = id === v + 'View';
     el.hidden = !on;
     if(on && changed){ el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter'); }
   }
   if(snapTo) setSnap(snapTo); else if(mobile()) setSnap(snap);
+  updateTrackLayers();
 }
 
 /* ================= Liste ================= */
@@ -733,6 +790,7 @@ function itemHTML(s){
   return `<button class="item" data-id="${s.id}"><span class="ic" style="--c:${cat.color}">${ic(cat.icon, 16)}</span><span class="tx"><span class="t">${esc(s.name)}</span><span class="s">${sub}</span></span></button>`;
 }
 function renderList(){
+  if(tab === 'tracks') return renderTrackList();
   const q = $('#q').value.trim().toLowerCase();
   const body = $('#listBody');
   if(!q){
@@ -879,6 +937,11 @@ $('#modeView').addEventListener('click', e => {
 });
 map.on('click', e => {
   if(mode) return place(e.lngLat);
+  if(mapReady && (tab === 'tracks' || view === 'track') && view !== 'edit' && view !== 'trackSave'){
+    const hit = map.queryRenderedFeatures(e.point, {layers:['track-all-hit']});
+    if(hit.length){ openTrack(hit[0].properties.id, false); return; }
+  }
+  if(view === 'track'){ closeTrack(); return; }
   if(view === 'detail') closeDetail();
   else if(mobile() && view === 'list' && snap !== 'peek'){ $('#q').blur(); setSnap('peek'); }
 });
@@ -1006,7 +1069,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#modal'
 
 /* ================= Export / Import ================= */
 $('#exportBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify({app:'meine-spots', version:1, exported:new Date().toISOString(), ...data}, null, 2)], {type:'application/json'});
+  const blob = new Blob([JSON.stringify({app:'meine-spots', version:1, exported:new Date().toISOString(), ...data, tracks}, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = `meine-spots-${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -1017,17 +1080,29 @@ $('#importFile').addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = ''; if(!f) return;
   try{
     const j = JSON.parse(await f.text());
-    if(!Array.isArray(j.spots)) throw 0;
+    if(!Array.isArray(j.spots) && !Array.isArray(j.tracks)) throw 0;
     (j.cats || []).forEach(c => { if(c && c.id && !data.cats.some(x => x.id === c.id)) data.cats.push(c); });
-    let n = 0;
-    if(j.spots.some(s => s && !String(s.id).startsWith('bsp'))) data.spots = data.spots.filter(s => !String(s.id).startsWith('bsp'));
-    j.spots.forEach(s => {
-      if(!s || typeof s.lat !== 'number' || typeof s.lng !== 'number') return;
-      const i = data.spots.findIndex(x => x.id === s.id);
-      if(i >= 0) data.spots[i] = s; else data.spots.push({...s, id: s.id || uid()});
-      n++;
-    });
-    save(); refreshAll(); fitAll(); toast(`${n} Spots importiert`);
+    let n = 0, nt = 0;
+    if(Array.isArray(j.spots)){
+      if(j.spots.some(s => s && !String(s.id).startsWith('bsp'))) data.spots = data.spots.filter(s => !String(s.id).startsWith('bsp'));
+      j.spots.forEach(s => {
+        if(!s || typeof s.lat !== 'number' || typeof s.lng !== 'number') return;
+        const i = data.spots.findIndex(x => x.id === s.id);
+        if(i >= 0) data.spots[i] = s; else data.spots.push({...s, id: s.id || uid()});
+        n++;
+      });
+    }
+    if(Array.isArray(j.tracks)){
+      j.tracks.forEach(t => {
+        if(!t || !t.id || !Array.isArray(t.segs)) return;
+        const i = tracks.findIndex(x => x.id === t.id);
+        if(i >= 0) tracks[i] = t; else tracks.push(t);
+        nt++;
+      });
+      tracks.sort((a, b) => b.created - a.created); saveTracks();
+    }
+    save(); refreshAll(); if(n) fitAll(); updateTrackLayers();
+    toast(`${n} Spots${nt ? ` und ${nt} Strecken` : ''} importiert`);
   }catch(err){ toast('Datei konnte nicht gelesen werden. Erwartet wird ein Export aus „Meine Spots“.'); }
 });
 
@@ -1094,7 +1169,7 @@ function onPos(p){
 function renderNearest(){
   const el = $('#near');
   const list = visibleSpots();
-  if(!me || !list.length){ el.hidden = true; return; }
+  if(!me || !list.length || (rec && !rec.stopped)){ el.hidden = true; return; }
   let best = null, bd = Infinity;
   for(const s of list){ const d = dist(me, s); if(d < bd){ bd = d; best = s; } }
   const cat = catById(best.cat);
@@ -1103,7 +1178,7 @@ function renderNearest(){
   el.hidden = false;
 }
 $('#near').addEventListener('click', e => { const id = e.currentTarget.dataset.id; if(id && !mode && view !== 'edit') openDetail(id, true); });
-$('#b-locate').addEventListener('click', () => startGPS(true));
+$('#b-locate').addEventListener('click', () => { if(rec && !rec.stopped) followMe = true; startGPS(true); });
 $('#b-labels').addEventListener('click', () => { prefs.labels = !prefs.labels; savePrefs(); applyLabels(); });
 
 /* ================= Helfer ================= */
@@ -1123,6 +1198,285 @@ function fitAll(animate){
   map.fitBounds(b, {padding:camPad(), maxZoom:14, duration: animate === false ? 0 : 1200});
 }
 
+/* ================= Strecken ================= */
+const TKEY = 'meine-spots-tracks', RKEY = 'meine-spots-rec';
+let tracks = [];
+try{ tracks = JSON.parse(localStorage.getItem(TKEY) || '[]'); if(!Array.isArray(tracks)) tracks = []; }catch(e){ tracks = []; }
+let rec = null, recWatch = null, recTick = null, wake = null, followMe = true, lastPersist = 0;
+let tab = 'spots', selTrack = null, trackRenaming = false, trackDelArmed = false, discardArmed = false;
+
+function saveTracks(){
+  try{ localStorage.setItem(TKEY, JSON.stringify(tracks)); return true; }
+  catch(e){ toast('Speicher voll. Exportiere deine Daten und lösche alte Strecken.'); return false; }
+}
+function persistRec(force){
+  if(!rec) { try{ localStorage.removeItem(RKEY); }catch(e){} return; }
+  if(!force && Date.now() - lastPersist < 4000) return;
+  lastPersist = Date.now(); rec.lastSeen = Date.now();
+  try{ localStorage.setItem(RKEY, JSON.stringify(rec)); }catch(e){}
+}
+const recElapsed = () => rec ? rec.active + (rec.runFrom ? Date.now() - rec.runFrom : 0) : 0;
+const fmtKm = m => m < 1000 ? `${Math.round(m)} m` : `${(m/1000).toFixed(2).replace('.', ',')} km`;
+const fmtDur = ms => { const t = Math.floor(ms/1000), h = Math.floor(t/3600), m = Math.floor(t%3600/60), sec = t%60;
+  return h ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}` : `${m}:${String(sec).padStart(2,'0')}`; };
+const fmtDurLong = ms => { const m = Math.round(ms/60000); return m < 60 ? `${m} Min` : `${Math.floor(m/60)} h ${m%60} Min`; };
+const fmtSpd = v => `${(v*3.6).toFixed(1).replace('.', ',')} km/h`;
+const fmtDate = ts => new Date(ts).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+const segFeatures = (segs, props = {}) => segs.filter(sg => sg.length > 1).map(sg => ({type:'Feature', properties:props, geometry:{type:'LineString', coordinates:sg.map(q => [q[0], q[1]])}}));
+
+/* Tabs */
+function setTab(t){
+  tab = t;
+  document.querySelectorAll('.tabs button').forEach(b => { b.classList.toggle('on', b.dataset.tab === t); b.setAttribute('aria-selected', b.dataset.tab === t); });
+  $('#spotsHead').hidden = t !== 'spots';
+  $('#tracksHead').hidden = t !== 'tracks';
+  $('#spotActions').hidden = t !== 'spots';
+  if(t === 'tracks') renderTracksHead();
+  renderList(); updateTrackLayers();
+  if(mobile()) setSnap(snap);
+}
+document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if(b && b.dataset.tab !== tab) setTab(b.dataset.tab); });
+
+/* Kartenlinien */
+function updateTrackLayers(){
+  if(!mapReady) return;
+  const showAll = (tab === 'tracks' && view === 'list') || view === 'track';
+  setSrc('track-all', FC(showAll ? tracks.filter(t => t.id !== selTrack).flatMap(t => segFeatures(t.segs, {id:t.id})) : []));
+  const t = view === 'track' && tracks.find(x => x.id === selTrack);
+  if(t){
+    const segs = t.segs.filter(sg => sg.length);
+    const first = segs[0][0], lastSeg = segs[segs.length - 1], last = lastSeg[lastSeg.length - 1];
+    setSrc('track-view', FC(segFeatures(t.segs)));
+    setSrc('track-ends', FC([{type:'Feature', properties:{k:'start'}, geometry:{type:'Point', coordinates:[first[0], first[1]]}},
+                             {type:'Feature', properties:{k:'end'}, geometry:{type:'Point', coordinates:[last[0], last[1]]}}]));
+  } else { setSrc('track-view', FC([])); setSrc('track-ends', FC([])); }
+}
+function drawLive(){ setSrc('track-live', FC(rec ? segFeatures(rec.segs) : [])); }
+
+/* Aufzeichnung */
+async function requestWake(){ try{ if(navigator.wakeLock && !wake) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener?.('release', () => { wake = null; }); } }catch(e){ wake = null; } }
+function releaseWake(){ try{ wake && wake.release(); }catch(e){} wake = null; }
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && rec && rec.runFrom) requestWake(); });
+function startWatch(){
+  if(recWatch != null) return;
+  recWatch = navigator.geolocation.watchPosition(onRecPos, err => {
+    if(err.code === 1){ toast('Standortzugriff verweigert. Ohne Standort kann nichts aufgezeichnet werden.'); pauseRec(); }
+  }, {enableHighAccuracy:true, maximumAge:0, timeout:30000});
+}
+function stopWatch(){ if(recWatch != null){ navigator.geolocation.clearWatch(recWatch); recWatch = null; } }
+function startTick(){ clearInterval(recTick); recTick = setInterval(updateRecUI, 1000); }
+
+function startRec(){
+  if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
+  if(rec && rec.stopped){ openTrackSave(); return; }
+  if(rec) return;
+  rec = {id:uid(), start:Date.now(), segs:[[]], dist:0, active:0, runFrom:Date.now(), maxSpd:0, last:null, weak:false};
+  followMe = true;
+  startWatch(); startGPS(false); requestWake(); startTick();
+  persistRec(true); renderTracksHead(); updateRecUI(); renderNearest();
+  if(mobile()) setSnap('peek');
+  toast('Aufzeichnung läuft');
+}
+function pauseRec(){
+  if(!rec || !rec.runFrom) return;
+  rec.active += Date.now() - rec.runFrom; rec.runFrom = null; rec.last = null;
+  stopWatch(); releaseWake();
+  persistRec(true); renderTracksHead(); updateRecUI();
+}
+function resumeRec(){
+  if(!rec || rec.runFrom || rec.stopped) return;
+  if(rec.segs[rec.segs.length - 1].length) rec.segs.push([]);
+  rec.runFrom = Date.now(); rec.last = null; followMe = true;
+  startWatch(); requestWake(); startTick();
+  persistRec(true); renderTracksHead(); updateRecUI();
+}
+function stopRec(){
+  if(!rec || rec.stopped) return;
+  if(rec.runFrom){ rec.active += Date.now() - rec.runFrom; rec.runFrom = null; }
+  stopWatch(); releaseWake(); clearInterval(recTick);
+  const pts = rec.segs.reduce((n, sg) => n + sg.length, 0);
+  if(pts < 2){
+    rec = null; persistRec(true); drawLive();
+    toast('Strecke zu kurz – nichts gespeichert.');
+  } else {
+    rec.stopped = true; persistRec(true);
+    if(view !== 'edit' && !mode) openTrackSave(); else toast('Aufzeichnung beendet – speichere sie unter „Strecken“.');
+  }
+  renderTracksHead(); updateRecUI(); renderNearest();
+}
+function onRecPos(p){
+  if(!rec || !rec.runFrom) return;
+  const c = p.coords, ts = p.timestamp || Date.now();
+  if(c.accuracy > 35){ if(!rec.weak){ rec.weak = true; updateRecUI(); } return; }
+  if(rec.weak){ rec.weak = false; updateRecUI(); }
+  const pt = {lat:c.latitude, lng:c.longitude};
+  if(rec.last){
+    const d = dist(rec.last, pt), dt = (ts - rec.last.ts) / 1000;
+    if(d < Math.max(5, c.accuracy * .4)) return;
+    if(dt > 0 && d / dt > 70) return; // GPS-Sprung
+    rec.dist += d;
+    const spd = (c.speed != null && c.speed >= 0) ? c.speed : (dt >= 2 ? d / dt : 0);
+    if(spd > rec.maxSpd && c.accuracy <= 20) rec.maxSpd = spd;
+  }
+  rec.segs[rec.segs.length - 1].push([+pt.lng.toFixed(6), +pt.lat.toFixed(6), Math.round((ts - rec.start) / 100) / 10]);
+  rec.last = {...pt, ts};
+  drawLive(); persistRec(); updateRecUI();
+  if(followMe && mapReady && !map.isMoving()) map.easeTo({center:LL(pt), padding:camPad(), duration:900});
+}
+map.on('dragstart', () => { followMe = false; });
+map.on('zoomstart', e => { if(e.originalEvent) followMe = false; });
+
+function updateRecUI(){
+  const bar = $('#recbar'), active = rec && !rec.stopped;
+  bar.hidden = !active;
+  if(!active) return;
+  bar.classList.toggle('paused', !rec.runFrom);
+  const t = fmtDur(recElapsed()), d = fmtKm(rec.dist);
+  document.querySelectorAll('[data-rt]').forEach(el => el.textContent = t);
+  document.querySelectorAll('[data-rd]').forEach(el => el.textContent = rec.runFrom ? (rec.weak ? 'GPS schwach …' : d) : `${d} · Pause`);
+  document.querySelectorAll('[data-rec="toggle"]').forEach(b => {
+    const st = rec.runFrom ? 'run' : 'pause';
+    if(b.dataset.st !== st){ b.dataset.st = st; b.innerHTML = svg(st === 'run' ? UI.pause : UI.play, 18, 2.6); b.setAttribute('aria-label', st === 'run' ? 'Pause' : 'Fortsetzen'); }
+  });
+}
+function renderTracksHead(){
+  const h = $('#tracksHead');
+  if(!rec){
+    h.innerHTML = `<button class="btn rec-start" data-rec="start"><span class="rdot"></span>Aufzeichnung starten</button>
+      <div class="hint">Lass den Bildschirm an. Im Hintergrund pausiert das Handy die Ortung.</div>`;
+  } else if(rec.stopped){
+    h.innerHTML = `<button class="btn primary" data-rec="opensave">Beendete Aufzeichnung speichern</button>`;
+  } else {
+    h.innerHTML = `<div class="reccard"><div class="tx"><span class="big" data-rt></span><span class="sm" data-rd></span></div>
+      <button class="rb" data-rec="toggle"></button><button class="rb stop" data-rec="stop" aria-label="Aufzeichnung beenden">${svg(UI.stop, 18)}</button></div>
+      <div class="hint">Lass den Bildschirm an. Im Hintergrund pausiert das Handy die Ortung.</div>`;
+  }
+  updateRecUI();
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-rec]'); if(!b) return;
+  const a = b.dataset.rec;
+  if(a === 'start') startRec();
+  if(a === 'toggle') rec && rec.runFrom ? pauseRec() : resumeRec();
+  if(a === 'stop') stopRec();
+  if(a === 'opensave') openTrackSave();
+});
+
+/* Speichern */
+function openTrackSave(){
+  if(!rec || !rec.stopped) return;
+  discardArmed = false;
+  if(tab !== 'tracks') setTab('tracks');
+  const def = `Strecke ${new Date(rec.start).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}, ${new Date(rec.start).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})}`;
+  const avg = rec.active > 0 ? rec.dist / (rec.active / 1000) : 0;
+  $('#trackSaveView').innerHTML = `
+    <div class="top"><button class="txtbtn" data-ts="discard">Verwerfen</button><strong>Strecke speichern</strong><button class="txtbtn bold" data-ts="save">Sichern</button></div>
+    <div class="pad">
+      <label class="f">Name<input class="inp" id="t-name" value="${esc(def)}" maxlength="80"></label>
+      <div class="tstats">
+        <div><b>${fmtKm(rec.dist)}</b><span>Distanz</span></div>
+        <div><b>${fmtDur(rec.active)}</b><span>Dauer</span></div>
+        <div><b>${fmtSpd(avg)}</b><span>Ø Tempo</span></div>
+        <div><b>${fmtSpd(rec.maxSpd)}</b><span>Max. Tempo</span></div>
+      </div>
+      <div class="muted">Die Strecke wird nur auf diesem Gerät gespeichert.</div>
+    </div>`;
+  show('trackSave', 'full');
+  const segs = rec.segs.filter(sg => sg.length);
+  if(segs.length) fitTrack(segs);
+}
+$('#trackSaveView').addEventListener('click', e => {
+  const b = e.target.closest('[data-ts]'); if(!b || !rec) return;
+  if(b.dataset.ts === 'save'){
+    const t = {id:rec.id, name:($('#t-name').value.trim() || 'Strecke'), created:rec.start, dist:Math.round(rec.dist), dur:rec.active, maxSpd:rec.maxSpd,
+               segs:rec.segs.filter(sg => sg.length)};
+    tracks.unshift(t);
+    if(!saveTracks()){ tracks.shift(); return; }
+    rec = null; persistRec(true); drawLive(); renderTracksHead();
+    renderList(); toast('Strecke gespeichert'); openTrack(t.id, false);
+  } else {
+    if(!discardArmed){ discardArmed = true; b.textContent = 'Wirklich verwerfen?'; b.style.color = 'var(--danger)'; setTimeout(() => { if(b.isConnected){ discardArmed = false; b.textContent = 'Verwerfen'; b.style.color = ''; } }, 3500); return; }
+    rec = null; persistRec(true); drawLive(); renderTracksHead(); renderNearest();
+    show('list', 'half'); renderList(); toast('Aufzeichnung verworfen');
+  }
+});
+
+/* Liste & Detail */
+function renderTrackList(){
+  const body = $('#listBody');
+  if(!tracks.length){ body.innerHTML = `<div class="empty"><b>Noch keine Strecken</b>Tippe auf „Aufzeichnung starten“ und los geht’s.</div>`; return; }
+  body.innerHTML = tracks.map(t => `<button class="item" data-track="${t.id}"><span class="ic" style="--c:#ff9f0a">${svg(UI.route, 16)}</span><span class="tx"><span class="t">${esc(t.name)}</span><span class="s">${fmtKm(t.dist)} · ${fmtDurLong(t.dur)} · ${fmtDate(t.created)}</span></span></button>`).join('');
+}
+$('#listBody').addEventListener('click', e => { const b = e.target.closest('[data-track]'); if(b) openTrack(b.dataset.track, true); });
+function fitTrack(segs){
+  const pts = segs.flat(); if(!pts.length) return;
+  const b = pts.reduce((b, q) => b.extend([q[0], q[1]]), new maplibregl.LngLatBounds([pts[0][0], pts[0][1]], [pts[0][0], pts[0][1]]));
+  requestAnimationFrame(() => map.fitBounds(b, {padding:camPad(), maxZoom:17, duration:1200}));
+}
+function openTrack(id, fly = true){
+  const t = tracks.find(x => x.id === id); if(!t) return;
+  selTrack = id; trackRenaming = false; trackDelArmed = false;
+  if(tab !== 'tracks') setTab('tracks');
+  renderTrackView(); show('track', mobile() && snap === 'full' ? 'full' : 'half');
+  fitTrack(t.segs);
+}
+function closeTrack(){ selTrack = null; renderList(); show('list', 'half'); }
+function renderTrackView(){
+  const t = tracks.find(x => x.id === selTrack); if(!t) return;
+  const avg = t.dur > 0 ? t.dist / (t.dur / 1000) : 0;
+  $('#trackView').innerHTML = `
+    <div class="top"><button class="txtbtn" data-tv="back">${svg(UI.back,14)} Strecken</button><button class="icon-btn press" data-tv="back" aria-label="Schließen">${svg(UI.close,14)}</button></div>
+    <div class="pad">
+      ${trackRenaming
+        ? `<div class="row"><input class="inp" id="tv-name" value="${esc(t.name)}" maxlength="80"><button class="txtbtn bold" data-tv="renamesave">Fertig</button></div>`
+        : `<div style="display:flex;flex-direction:column;gap:4px"><span class="badge" style="--c:#ff9f0a"><span class="ic">${svg(UI.route,13)}</span>Strecke</span><h2>${esc(t.name)}</h2><span class="muted">${fmtDate(t.created)}</span></div>`}
+      <div class="tstats">
+        <div><b>${fmtKm(t.dist)}</b><span>Distanz</span></div>
+        <div><b>${fmtDur(t.dur)}</b><span>Dauer</span></div>
+        <div><b>${fmtSpd(avg)}</b><span>Ø Tempo</span></div>
+        <div><b>${fmtSpd(t.maxSpd || 0)}</b><span>Max. Tempo</span></div>
+      </div>
+      <button class="btn" data-tv="gpx">${svg(UI.share,15)} Als GPX exportieren</button>
+      <div class="btns"><button class="btn" data-tv="rename">Umbenennen</button><button class="btn danger" data-tv="del">Löschen</button></div>
+    </div>`;
+  if(trackRenaming) setTimeout(() => { const i = $('#tv-name'); if(i){ i.focus(); i.select(); } }, 50);
+}
+$('#trackView').addEventListener('click', e => {
+  const b = e.target.closest('[data-tv]'); if(!b) return;
+  const t = tracks.find(x => x.id === selTrack); if(!t) return;
+  const a = b.dataset.tv;
+  if(a === 'back') closeTrack();
+  if(a === 'rename'){ trackRenaming = true; renderTrackView(); }
+  if(a === 'renamesave'){ t.name = $('#tv-name').value.trim() || t.name; saveTracks(); trackRenaming = false; renderTrackView(); }
+  if(a === 'gpx') downloadText(`${t.name.replace(/[^\wäöüÄÖÜß -]+/g, '').trim() || 'strecke'}.gpx`, toGPX(t), 'application/gpx+xml');
+  if(a === 'del'){
+    if(!trackDelArmed){ trackDelArmed = true; b.classList.add('armed'); b.textContent = 'Wirklich löschen?'; setTimeout(() => { if(b.isConnected){ trackDelArmed = false; b.classList.remove('armed'); b.textContent = 'Löschen'; } }, 3500); return; }
+    tracks = tracks.filter(x => x.id !== t.id); saveTracks(); selTrack = null;
+    show('list', 'half'); renderList(); toast(`„${t.name}“ gelöscht`);
+  }
+});
+$('#trackView').addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.id === 'tv-name'){ e.preventDefault(); $('#trackView [data-tv="renamesave"]').click(); } });
+function toGPX(t){
+  const x = s => String(s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Jamsis Spots" xmlns="http://www.topografix.com/GPX/1/1">\n<trk><name>${x(t.name)}</name>\n` +
+    t.segs.map(sg => '<trkseg>\n' + sg.map(q => `<trkpt lat="${q[1]}" lon="${q[0]}"><time>${new Date(t.created + q[2] * 1000).toISOString()}</time></trkpt>`).join('\n') + '\n</trkseg>').join('\n') +
+    `\n</trk>\n</gpx>\n`;
+}
+function downloadText(name, text, type){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+/* Unterbrochene Aufzeichnung wiederherstellen */
+try{
+  const r = JSON.parse(localStorage.getItem(RKEY) || 'null');
+  if(r && Array.isArray(r.segs)){
+    rec = r; rec.last = null;
+    if(!rec.stopped && rec.runFrom){ rec.active += Math.max(0, (rec.lastSeen || rec.runFrom) - rec.runFrom); rec.runFrom = null; }
+  }
+}catch(e){ rec = null; }
+
 /* ================= Start ================= */
 $('#addBtn').innerHTML = svg(UI.plus, 16, 2.6);
 $('#hereBtn').innerHTML = svg(UI.locate, 14) + 'Hier speichern';
@@ -1130,7 +1484,12 @@ $('#searchIc').innerHTML = svg(UI.search, 15);
 $('#b-locate').innerHTML = svg(UI.locate, 18);
 $('#b-labels').innerHTML = svg(UI.labels, 18);
 $('#b-3d').classList.toggle('on', !!prefs.terrain);
+$('#recbar [data-rec="stop"]').innerHTML = svg(UI.stop, 16);
 applyLabels(); refreshAll();
+if(rec){
+  setTab('tracks'); renderTracksHead(); updateRecUI(); renderNearest();
+  if(rec.stopped) setTimeout(openTrackSave, 300); else toast('Aufzeichnung wiederhergestellt – pausiert. Tippe ▶ zum Fortsetzen.');
+}
 if(mobile()) setSnap('peek', false);
 requestAnimationFrame(() => fitAll(false));
 (async () => {
