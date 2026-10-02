@@ -98,6 +98,33 @@ h2{font-size:22px;font-weight:700;margin:0;letter-spacing:-.015em;text-wrap:bala
 #recbar .tx span{font-size:12px;color:var(--muted)}
 #recbar .rb{width:40px;height:40px}
 @keyframes recblink{50%{opacity:.25}}
+.rb.rec{background:#ff3b30}
+.rb.rec .rdot{width:14px;height:14px;border-radius:50%;background:#fff}
+.btn.ck{width:100%}
+
+/* ---------- Cockpit ---------- */
+#ckTop,#ckSpeed,#ckStats,#ckRecenter{display:none}
+body.cockpit #panel,body.cockpit #near,body.cockpit #recbar,body.cockpit #ctrl,body.cockpit .maplibregl-ctrl-top-right,body.cockpit .maplibregl-ctrl-bottom-right{display:none!important}
+body.cockpit #ckTop,body.cockpit #ckSpeed{display:flex}
+body.cockpit #ckStats{display:grid}
+body.cockpit #ckRecenter:not([hidden]){display:inline-flex}
+body.cockpit #attrib{transform:none!important;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 1px);right:12px}
+#ckTop{position:absolute;z-index:20;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);align-items:center;gap:10px;height:52px;padding:0 6px 0 16px;border-radius:26px;color:var(--fg);animation:fadein .3s}
+#ckTop .dot{width:10px;height:10px;border-radius:50%;background:#ff3b30;flex:none;animation:recblink 1.4s ease-in-out infinite}
+#ckTop.paused .dot{background:var(--muted);animation:none}
+#ckTop .tx{display:flex;flex-direction:column;line-height:1.15;font-variant-numeric:tabular-nums;min-width:86px}
+#ckTop b{font-size:16px}
+#ckTop .tx span{font-size:12px;color:var(--muted)}
+#ckTop .rb{width:40px;height:40px}
+#ckSpeed{position:absolute;z-index:20;left:14px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:108px;height:108px;border-radius:50%;background:#fff;color:#111;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px rgba(0,0,0,.06);animation:viewin .4s var(--ease)}
+#ckSpeed b{font-size:46px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+#ckSpeed span{font-size:12px;font-weight:700;color:#6c6c74;margin-top:2px;letter-spacing:.04em}
+#ckStats{position:absolute;z-index:20;left:136px;right:14px;bottom:calc(18px + env(safe-area-inset-bottom,0px));min-height:72px;border-radius:18px;padding:10px 14px;grid-template-columns:repeat(4,1fr);gap:6px 12px;align-items:center;animation:viewin .4s var(--ease)}
+#ckStats div{display:flex;flex-direction:column;min-width:0}
+#ckStats b{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+#ckStats span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+#ckRecenter{position:absolute;z-index:20;right:14px;bottom:calc(102px + env(safe-area-inset-bottom,0px));height:40px;padding:0 14px;border-radius:20px;align-items:center;gap:6px;font-weight:600;color:var(--accent);border:1px solid var(--line)}
+@media (max-width:560px){#ckStats{grid-template-columns:1fr 1fr}#ckStats b{font-size:17px}#ckRecenter{bottom:calc(150px + env(safe-area-inset-bottom,0px))}}
 @media (min-width:641px){#recbar{left:calc(50% + 182px)}}
 .search{display:flex;align-items:center;gap:6px;background:var(--fill);border-radius:11px;padding:0 10px;height:38px;color:var(--muted)}
 .search input{flex:1;min-width:0;border:0;background:none;outline:none;height:100%;color:var(--fg);font-size:16px}
@@ -219,7 +246,9 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 .mk-park{cursor:pointer}
 .mk-park .pk{width:24px;height:24px;border-radius:7px;background:var(--park);color:#fff;border:2px solid #fff;font:800 13px/20px var(--font);text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.4);transition:transform .3s var(--ease)}
 .mk-park.sel .pk,.mk-park.draft .pk{transform:scale(1.15)}
-.me{width:40px;height:40px;display:grid;place-items:center;pointer-events:none}
+.me{width:40px;height:40px;display:grid;place-items:center;pointer-events:none;position:relative}
+.me .h{position:absolute;left:50%;top:-6px;width:0;height:0;margin-left:-8px;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:13px solid #0a7cff;filter:drop-shadow(0 -1px 0 #fff) drop-shadow(0 1px 2px rgba(0,0,0,.4));opacity:0;transition:opacity .3s}
+.me.dir .h{opacity:1}
 .me .p{grid-area:1/1;width:40px;height:40px;border-radius:50%;background:rgba(10,124,255,.35);animation:mepulse 2.2s ease-out infinite}
 .me .d{grid-area:1/1;width:20px;height:20px;border-radius:50%;background:#0a7cff;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 @keyframes mepulse{from{transform:scale(.4);opacity:1}to{transform:scale(1.5);opacity:0}}
@@ -289,6 +318,15 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
   <div class="sub">Lädt Satellitenbilder …</div>
 </div>
 <div id="map" aria-label="Karte"></div>
+<div id="ckTop" class="glass"></div>
+<div id="ckSpeed" aria-live="off"><b data-ck="v">–</b><span>KM/H</span></div>
+<div id="ckStats" class="glass">
+  <div><b data-ck="dist">0 m</b><span>Distanz</span></div>
+  <div><b data-ck="time">0:00</b><span>Zeit</span></div>
+  <div><b data-ck="avg">0</b><span>Ø km/h</span></div>
+  <div><b data-ck="max">0</b><span>Max km/h</span></div>
+</div>
+<button id="ckRecenter" class="glass" hidden></button>
 <div id="attrib">Bilder © Esri, Maxar, Earthstar Geographics · Höhen © Mapzen</div>
 
 <div id="ctrl">
@@ -296,6 +334,7 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
     <button id="b-labels" title="Straßen und Orte einblenden" aria-label="Beschriftung ein/aus"></button>
     <button id="b-locate" title="Mein Standort" aria-label="Mein Standort"></button>
     <button id="b-3d" class="t3d" title="3D-Gelände" aria-label="3D-Gelände ein/aus">3D</button>
+    <button id="b-cockpit" data-ck-open title="Cockpit (Fahrmodus)" aria-label="Cockpit öffnen"></button>
   </div>
 </div>
 
@@ -303,6 +342,7 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 <div id="recbar" class="glass" hidden>
   <span class="dot"></span>
   <div class="tx"><b data-rt>0:00</b><span data-rd>0 m</span></div>
+  <button class="rb" data-ck-open aria-label="Cockpit öffnen"></button>
   <button class="rb" data-rec="toggle" aria-label="Pause"></button>
   <button class="rb stop" data-rec="stop" aria-label="Aufzeichnung beenden"></button>
 </div>
@@ -367,6 +407,7 @@ const UI = {
   route:'<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/>',
   pause:'<path d="M8.5 5v14M15.5 5v14"/>', play:'<path d="M8 5.5v13l11-6.5z" fill="currentColor"/>',
   stop:'<rect x="6.5" y="6.5" width="11" height="11" rx="2.5" fill="currentColor" stroke="none"/>',
+  gauge:'<path d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/><path d="m12 13.5 4.2-4.2"/><circle cx="12" cy="13.5" r="1.4" fill="currentColor"/>',
   share:'<path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/>',
   locate:'<path d="M3 11 21 3l-8 18-2-8z"/>', labels:'<path d="M5 7h14M12 7v12M8 19h8"/>',
   back:'<path d="M15 5 8 12l7 7"/>', close:'<path d="M6 6l12 12M18 6 6 18"/>',
@@ -562,7 +603,7 @@ function markerEl(kind, id){
   el.className = (kind === 'spot' ? 'mk-spot' : 'mk-park') + ' new';
   el.dataset.id = id;
   el.addEventListener('animationend', () => el.classList.remove('new'), {once:true});
-  el.addEventListener('click', e => { e.stopPropagation(); if(!mode && view !== 'edit') openDetail(id, true); });
+  el.addEventListener('click', e => { e.stopPropagation(); if(!mode && view !== 'edit' && !ckOn) openDetail(id, true); });
   return el;
 }
 function upsert(key, kind, id, pos, html, sel, z){
@@ -936,6 +977,7 @@ $('#modeView').addEventListener('click', e => {
   if(a === 'here') getHere().then(p => { if(p && mode) place(p); });
 });
 map.on('click', e => {
+  if(ckOn) return;
   if(mode) return place(e.lngLat);
   if(mapReady && (tab === 'tracks' || view === 'track') && view !== 'edit' && view !== 'trackSave'){
     const hit = map.queryRenderedFeatures(e.point, {layers:['track-all-hit']});
@@ -1152,10 +1194,15 @@ function onPos(p){
   me = {lat:p.coords.latitude, lng:p.coords.longitude}; meTime = Date.now(); meAccM = p.coords.accuracy || 0;
   const acc = p.coords.accuracy || 0;
   if(!meMarker){
-    const el = document.createElement('div'); el.className = 'me'; el.innerHTML = '<span class="p"></span><span class="d"></span>';
+    const el = document.createElement('div'); el.className = 'me'; el.innerHTML = '<span class="p"></span><span class="h"></span><span class="d"></span>';
     meMarker = new maplibregl.Marker({element:el, anchor:'center'}).setLngLat(LL(me)).addTo(map);
   } else meMarker.setLngLat(LL(me));
   setSrc('acc', FC(acc > 5 ? [circlePoly(me, acc)] : []));
+  if(!ckOn){
+    const hd = p.coords.heading, sp = p.coords.speed;
+    if(hd != null && !isNaN(hd) && sp != null && sp > 1.5) setMeHeading(hd);
+    else if(sp != null && sp < .5) setMeHeading(null);
+  }
   $('#b-locate').classList.add('on');
   if(!prefs.gps){ prefs.gps = true; savePrefs(); }
   if(centerOnFix){ centerOnFix = false; hideToast(); map.flyTo({center:LL(me), zoom:Math.max(map.getZoom(), 15), padding:camPad(), duration:1400}); }
@@ -1255,8 +1302,8 @@ function drawLive(){ setSrc('track-live', FC(rec ? segFeatures(rec.segs) : []));
 
 /* Aufzeichnung */
 async function requestWake(){ try{ if(navigator.wakeLock && !wake) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener?.('release', () => { wake = null; }); } }catch(e){ wake = null; } }
-function releaseWake(){ try{ wake && wake.release(); }catch(e){} wake = null; }
-document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && rec && rec.runFrom) requestWake(); });
+function releaseWake(){ if(ckOn || (rec && rec.runFrom)) return; try{ wake && wake.release(); }catch(e){} wake = null; }
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && ((rec && rec.runFrom) || ckOn)) requestWake(); });
 function startWatch(){
   if(recWatch != null) return;
   recWatch = navigator.geolocation.watchPosition(onRecPos, err => {
@@ -1292,6 +1339,7 @@ function resumeRec(){
 }
 function stopRec(){
   if(!rec || rec.stopped) return;
+  if(ckOn) exitCockpit();
   if(rec.runFrom){ rec.active += Date.now() - rec.runFrom; rec.runFrom = null; }
   stopWatch(); releaseWake(); clearInterval(recTick);
   const pts = rec.segs.reduce((n, sg) => n + sg.length, 0);
@@ -1321,7 +1369,7 @@ function onRecPos(p){
   rec.segs[rec.segs.length - 1].push([+pt.lng.toFixed(6), +pt.lat.toFixed(6), Math.round((ts - rec.start) / 100) / 10]);
   rec.last = {...pt, ts};
   drawLive(); persistRec(); updateRecUI();
-  if(followMe && mapReady && !map.isMoving()) map.easeTo({center:LL(pt), padding:camPad(), duration:900});
+  if(followMe && !ckOn && mapReady && !map.isMoving()) map.easeTo({center:LL(pt), padding:camPad(), duration:900});
 }
 map.on('dragstart', () => { followMe = false; });
 map.on('zoomstart', e => { if(e.originalEvent) followMe = false; });
@@ -1343,14 +1391,16 @@ function renderTracksHead(){
   const h = $('#tracksHead');
   if(!rec){
     h.innerHTML = `<button class="btn rec-start" data-rec="start"><span class="rdot"></span>Aufzeichnung starten</button>
+      <button class="btn ck" data-ck-open>${svg(UI.gauge, 17)} Cockpit öffnen</button>
       <div class="hint">Lass den Bildschirm an. Im Hintergrund pausiert das Handy die Ortung.</div>`;
   } else if(rec.stopped){
     h.innerHTML = `<button class="btn primary" data-rec="opensave">Beendete Aufzeichnung speichern</button>`;
   } else {
     h.innerHTML = `<div class="reccard"><div class="tx"><span class="big" data-rt></span><span class="sm" data-rd></span></div>
-      <button class="rb" data-rec="toggle"></button><button class="rb stop" data-rec="stop" aria-label="Aufzeichnung beenden">${svg(UI.stop, 18)}</button></div>
+      <button class="rb" data-ck-open aria-label="Cockpit öffnen">${svg(UI.gauge, 18)}</button><button class="rb" data-rec="toggle"></button><button class="rb stop" data-rec="stop" aria-label="Aufzeichnung beenden">${svg(UI.stop, 18)}</button></div>
       <div class="hint">Lass den Bildschirm an. Im Hintergrund pausiert das Handy die Ortung.</div>`;
   }
+  renderCkTop();
   updateRecUI();
 }
 document.addEventListener('click', e => {
@@ -1360,6 +1410,10 @@ document.addEventListener('click', e => {
   if(a === 'toggle') rec && rec.runFrom ? pauseRec() : resumeRec();
   if(a === 'stop') stopRec();
   if(a === 'opensave') openTrackSave();
+});
+document.addEventListener('click', e => {
+  if(e.target.closest('[data-ck-open]')) return enterCockpit();
+  if(e.target.closest('[data-ck="close"]')) return exitCockpit();
 });
 
 /* Speichern */
@@ -1468,6 +1522,109 @@ function downloadText(name, text, type){
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 
+/* ================= Cockpit ================= */
+let ckOn = false, ck = null, ckWatch = null, ckTick = null, ckFollow = true, ckUserZoom = null;
+function setMeHeading(h){
+  if(!meMarker) return;
+  const el = meMarker.getElement();
+  if(h == null){ el.classList.remove('dir'); return; }
+  el.classList.add('dir');
+  meMarker.setRotationAlignment('map'); meMarker.setPitchAlignment('map'); meMarker.setRotation(h);
+}
+function bearing(a, b){
+  const r = x => x * Math.PI / 180, y = Math.sin(r(b.lng - a.lng)) * Math.cos(r(b.lat));
+  const x = Math.cos(r(a.lat)) * Math.sin(r(b.lat)) - Math.sin(r(a.lat)) * Math.cos(r(b.lat)) * Math.cos(r(b.lng - a.lng));
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+const ckPad = () => ({top:Math.round(innerHeight * .42), bottom:110, left:20, right:20});
+function ckZoom(v){ const k = (v || 0) * 3.6; return k < 15 ? 17.2 : k < 40 ? 16.6 : k < 70 ? 16 : k < 110 ? 15.3 : 14.6; }
+function moveCam(pt, dur = 1000){
+  if(!mapReady || !pt) return;
+  map.easeTo({center:LL(pt), bearing:ck.h != null ? ck.h : map.getBearing(), pitch:55, zoom:ckUserZoom != null ? ckUserZoom : ckZoom(ck.v),
+              padding:ckPad(), duration:dur, easing:t => t});
+}
+function enterCockpit(){
+  if(ckOn) return;
+  if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
+  if(mode || view === 'edit'){ toast('Erst den Spot fertig bearbeiten.'); return; }
+  ckOn = true; document.body.classList.add('cockpit');
+  ck = {start:Date.now(), dist:0, max:0, v:null, h:null, last:null, ts:0};
+  ckFollow = true; ckUserZoom = null; $('#ckRecenter').hidden = true;
+  $('#q').blur();
+  map.setMaxPitch(70);
+  ckWatch = navigator.geolocation.watchPosition(onDrivePos, err => {
+    if(err.code === 1){ toast('Standortzugriff verweigert. Das Cockpit braucht deinen Standort.'); exitCockpit(); }
+  }, {enableHighAccuracy:true, maximumAge:0, timeout:30000});
+  requestWake();
+  clearInterval(ckTick); ckTick = setInterval(updateCockpitUI, 1000);
+  renderCkTop(); updateRecUI(); updateCockpitUI();
+  if(me) moveCam(me, 1400);
+}
+function exitCockpit(){
+  if(!ckOn) return;
+  ckOn = false; document.body.classList.remove('cockpit');
+  if(ckWatch != null){ navigator.geolocation.clearWatch(ckWatch); ckWatch = null; }
+  clearInterval(ckTick); releaseWake();
+  setMeHeading(null);
+  map.easeTo({pitch:prefs.terrain ? map.getPitch() : 0, bearing:0, padding:camPad(), duration:900});
+  if(!prefs.terrain) map.once('moveend', () => { if(!ckOn && !prefs.terrain) map.setMaxPitch(0); });
+  renderNearest(); updateRecUI();
+  if(mobile()) setSnap(snap, false);
+}
+function onDrivePos(p){
+  if(!ckOn) return;
+  const c = p.coords, ts = p.timestamp || Date.now(), pt = {lat:c.latitude, lng:c.longitude};
+  let v = (c.speed != null && !isNaN(c.speed) && c.speed >= 0) ? c.speed : null;
+  let d = 0, dt = 0;
+  if(ck.last){ d = dist(ck.last, pt); dt = (ts - ck.last.ts) / 1000; }
+  if(v == null && ck.last && dt >= .8) v = d / dt;
+  if(v != null) ck.v = ck.v == null ? v : ck.v * .35 + v * .65;
+  let h = (c.heading != null && !isNaN(c.heading) && (ck.v || 0) > 1.4) ? c.heading : null;
+  if(h == null && ck.last && d > 4 && (ck.v || 0) > 1.4) h = bearing(ck.last, pt);
+  if(h != null) ck.h = h;
+  if(ck.last && c.accuracy <= 35 && d >= 3 && (dt <= 0 || d / dt < 70)) ck.dist += d;
+  if(ck.v != null && c.accuracy <= 25 && ck.v > ck.max && ck.v < 70) ck.max = ck.v;
+  if(!ck.last || d >= 3 || dt > 5) ck.last = {...pt, ts};
+  ck.ts = Date.now();
+  onPos(p);
+  setMeHeading((ck.v || 0) > 1.4 ? ck.h : null);
+  updateCockpitUI();
+  if(ckFollow) moveCam(pt);
+}
+map.on('dragstart', () => { if(ckOn){ ckFollow = false; $('#ckRecenter').hidden = false; } });
+map.on('zoomend', e => { if(ckOn && e.originalEvent) ckUserZoom = map.getZoom(); });
+$('#ckRecenter').addEventListener('click', () => {
+  ckFollow = true; ckUserZoom = null; $('#ckRecenter').hidden = true;
+  moveCam(ck.last || me, 900);
+});
+function renderCkTop(){
+  const h = $('#ckTop'), active = rec && !rec.stopped;
+  h.classList.toggle('paused', !!(active && !rec.runFrom));
+  h.innerHTML = active
+    ? `<span class="dot"></span><div class="tx"><b data-rt></b><span data-rd></span></div>
+       <button class="rb" data-rec="toggle"></button>
+       <button class="rb stop" data-rec="stop" aria-label="Aufzeichnung beenden">${svg(UI.stop, 16)}</button>
+       <button class="rb" data-ck="close" aria-label="Cockpit schließen">${svg(UI.close, 15)}</button>`
+    : `<div class="tx"><b>Cockpit</b><span>Nicht aufgezeichnet</span></div>
+       <button class="rb rec" data-rec="start" aria-label="Aufzeichnung starten"><span class="rdot"></span></button>
+       <button class="rb" data-ck="close" aria-label="Cockpit schließen">${svg(UI.close, 15)}</button>`;
+}
+function updateCockpitUI(){
+  if(!ckOn) return;
+  const stale = !ck.ts || Date.now() - ck.ts > 6000;
+  const kmh = ck.v == null ? null : ck.v * 3.6;
+  $('[data-ck="v"]').textContent = stale || kmh == null ? '–' : String(kmh < 1 ? 0 : Math.round(kmh));
+  let dst, time, max;
+  if(rec && !rec.stopped){ dst = rec.dist; time = recElapsed(); max = rec.maxSpd; }
+  else { dst = ck.dist; time = Date.now() - ck.start; max = ck.max; }
+  const avg = time > 0 ? dst / (time / 1000) : 0;
+  $('[data-ck="dist"]').textContent = fmtKm(dst);
+  $('[data-ck="time"]').textContent = fmtDur(time);
+  $('[data-ck="avg"]').textContent = String(Math.round(avg * 3.6));
+  $('[data-ck="max"]').textContent = String(Math.round(max * 3.6));
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && ckOn) exitCockpit(); });
+
 /* Unterbrochene Aufzeichnung wiederherstellen */
 try{
   const r = JSON.parse(localStorage.getItem(RKEY) || 'null');
@@ -1485,6 +1642,9 @@ $('#b-locate').innerHTML = svg(UI.locate, 18);
 $('#b-labels').innerHTML = svg(UI.labels, 18);
 $('#b-3d').classList.toggle('on', !!prefs.terrain);
 $('#recbar [data-rec="stop"]').innerHTML = svg(UI.stop, 16);
+$('#recbar [data-ck-open]').innerHTML = svg(UI.gauge, 18);
+$('#b-cockpit').innerHTML = svg(UI.gauge, 19);
+$('#ckRecenter').innerHTML = svg(UI.locate, 15) + 'Zentrieren';
 applyLabels(); refreshAll();
 if(rec){
   setTab('tracks'); renderTracksHead(); updateRecUI(); renderNearest();
