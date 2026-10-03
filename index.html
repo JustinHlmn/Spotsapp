@@ -30,7 +30,18 @@
   --r-xl:24px; --r-lg:18px; --r-md:14px;
   --ease:cubic-bezier(.22,1,.36,1);
   --font:"Geist",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --on-fg:#0b0d10; --inp:rgba(0,0,0,.28); --gauge:#11141a; --gauge-track:rgba(255,255,255,.14); --gridline:rgba(255,255,255,.07);
   color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --page:#e9ecf1; --glass:rgba(255,255,255,.88); --glass-strong:rgba(255,255,255,.95);
+  --solid:rgba(15,20,30,.04); --solid-2:#ffffff;
+  --fg:#101318; --muted:#5f6774; --line:rgba(15,20,30,.10);
+  --fill:rgba(15,20,30,.06); --fill-2:rgba(15,20,30,.11);
+  --shadow:0 14px 40px rgba(20,30,50,.16),0 2px 6px rgba(20,30,50,.10);
+  --hi:inset 0 1px 0 rgba(255,255,255,.7);
+  --on-fg:#ffffff; --inp:#ffffff; --gauge:#ffffff; --gauge-track:rgba(15,20,30,.12); --gridline:rgba(15,20,30,.08);
+  color-scheme:light;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{position:fixed;inset:0;margin:0;overflow:hidden;overscroll-behavior:none}
@@ -361,24 +372,24 @@ h2{font-size:23px}
 .icon-btn:hover{background:var(--fill-2)}
 .icon-btn:active{transform:scale(.94)}
 .icon-btn[disabled]{opacity:.45}
-.icon-btn.accent{background:var(--accent);color:#fff}
+.icon-btn.accent{background:var(--accent);color:var(--accent-fg)}
 .search{flex:1;min-width:0;height:40px;border-radius:12px;background:var(--fill)}
 #searchCancel{flex:none}
 #searchRow{gap:10px}
 .pb{padding:8px 8px 10px}
 .pb .chips{margin:2px -8px 8px;padding:0 12px}
 .chip{height:30px;border-radius:15px;border:1px solid var(--line);background:transparent;color:var(--fg);font-weight:500}
-.chip.on{background:var(--fg);color:#0b0d10;border-color:var(--fg)}
+.chip.on{background:var(--fg);color:var(--on-fg);border-color:var(--fg)}
 .item{padding:9px 8px;border-radius:14px;gap:12px}
 .item .ic{width:38px;height:38px;border-radius:12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 .item .t{font-size:15px}
 .card{background:var(--solid);border-radius:16px;padding:14px}
 .btn{height:44px;border-radius:14px;background:var(--fill)}
 .btn:hover{background:var(--fill-2)}
-.btn.primary{background:var(--accent);color:#fff}
-.btn.primary:hover{background:#63afff}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.primary:hover{filter:brightness(1.08)}
 .btn.wide{width:100%}
-.inp{background:rgba(0,0,0,.28);border-radius:12px}
+.inp{background:var(--inp);border-radius:12px}
 .toggle{background:var(--solid);border-radius:16px}
 .sw{background:var(--fill-2)}
 .sw:checked{background:var(--accent)}
@@ -427,12 +438,12 @@ h2{font-size:23px}
 
 /* Marker im neuen Look */
 .me .d{background:var(--accent)}
-.me .p{background:rgba(77,163,255,.32)}
+.me .p{background:color-mix(in srgb,var(--accent) 32%,transparent)}
 .me .h{border-bottom-color:var(--accent)}
 .mk-cluster{background:rgba(18,20,25,.88);color:#fff;border:1.5px solid rgba(255,255,255,.7);box-shadow:0 4px 12px rgba(0,0,0,.45)}
 
 /* Tacho als Ring */
-#ckSpeed{background:radial-gradient(closest-side,#11141a 83%,transparent 84.5%),conic-gradient(from 225deg,var(--accent) 0 calc(var(--p,0)*270deg),rgba(255,255,255,.14) 0 270deg,transparent 0);color:#fff;box-shadow:0 14px 34px rgba(0,0,0,.5)}
+#ckSpeed{background:radial-gradient(closest-side,var(--gauge) 83%,transparent 84.5%),conic-gradient(from 225deg,var(--accent) 0 calc(var(--p,0)*270deg),var(--gauge-track) 0 270deg,transparent 0);color:var(--fg);box-shadow:0 14px 34px rgba(0,0,0,.5)}
 #ckSpeed b{font-weight:700}
 #ckSpeed span{color:var(--muted)}
 
@@ -478,7 +489,7 @@ h2{font-size:23px}
 .st-chart .bar.on{opacity:1}
 .st-chart .hit{fill:transparent;cursor:pointer}
 .st-chart .ax{fill:var(--muted);font-size:9.5px;font-family:var(--font)}
-.st-chart .grid{stroke:rgba(255,255,255,.07);stroke-width:1}
+.st-chart .grid{stroke:var(--gridline);stroke-width:1}
 .st-list{background:var(--solid);border:1px solid var(--line);border-radius:16px;padding:4px 14px}
 .st-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
 .st-row:last-child{border-bottom:0}
@@ -498,7 +509,7 @@ body.cockpit.car3d .me{visibility:hidden}
 body.cockpit #ckLimit.show{display:grid}
 #ckLimit.none{border-color:#fff;background:repeating-linear-gradient(135deg,#fff 0 6px,#5b6068 6px 8px);color:transparent}
 #ckLimit.small{font-size:18px}
-#ckSpeed.over{background:radial-gradient(closest-side,#11141a 83%,transparent 84.5%),conic-gradient(from 225deg,var(--danger) 0 calc(var(--p,0)*270deg),rgba(255,255,255,.14) 0 270deg,transparent 0)}
+#ckSpeed.over{background:radial-gradient(closest-side,var(--gauge) 83%,transparent 84.5%),conic-gradient(from 225deg,var(--danger) 0 calc(var(--p,0)*270deg),var(--gauge-track) 0 270deg,transparent 0)}
 #ckSpeed.over b{color:#ff8a8e}
 #ckSpeed.w3 b{font-size:37px}
 
@@ -539,7 +550,7 @@ body.cockpit #ckLimit.show{display:grid}
 body.nav #ckTop,body.nav #ckStats,body.nav #ckRace{display:none!important}
 #navTop{position:absolute;z-index:22;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(460px,calc(100% - 20px));border-radius:22px;padding:14px 16px;gap:14px;align-items:center;background:var(--glass-strong);animation:viewin .35s var(--ease)}
 body.nav #navTop{display:flex}
-#navTop .mi{width:58px;height:58px;border-radius:17px;background:var(--accent);color:#fff;display:grid;place-items:center;flex:none}
+#navTop .mi{width:58px;height:58px;border-radius:17px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;flex:none}
 #navTop .mi.arr{background:#30d158}
 #navTop .tx{min-width:0;flex:1}
 #navTop .md{font-size:30px;font-weight:700;letter-spacing:-.025em;line-height:1;font-variant-numeric:tabular-nums}
@@ -554,7 +565,7 @@ body.nav #navBottom{display:flex}
 .nbtn{width:46px;height:46px;border-radius:15px;border:0;background:var(--fill);color:var(--fg);display:grid;place-items:center;flex:none;transition:transform .18s var(--ease)}
 .nbtn:active{transform:scale(.94)}
 .nbtn.end{background:var(--danger);color:#fff}
-.nbtn.done{width:auto;padding:0 18px;background:var(--accent);color:#fff;font-weight:700}
+.nbtn.done{width:auto;padding:0 18px;background:var(--accent);color:var(--accent-fg);font-weight:700}
 #navPrev{position:absolute;z-index:25;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(460px,calc(100% - 20px));border-radius:24px;padding:16px;flex-direction:column;gap:14px;background:var(--glass-strong);animation:viewin .35s var(--ease)}
 body.navprev #navPrev{display:flex}
 body.navprev #panel,body.navprev #near,body.navprev #recbar,body.navprev #panelOpen{display:none!important}
@@ -567,6 +578,74 @@ body.navprev #panel,body.navprev #near,body.navprev #recbar,body.navprev #panelO
 #navPrev .nsum b{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 #navPrev .nsum span{font-size:12px;color:var(--muted)}
 @media (max-width:560px){#navBottom{left:130px;padding:8px 8px 8px 12px}#navBottom .eta b{font-size:19px}#navTop .md{font-size:26px}#navTop .mi{width:50px;height:50px}}
+
+/* ---------- Strecken-Details ---------- */
+:root{--trk:#ff9f0a}
+:root[data-theme="light"]{--trk:#cf7000}
+.tv-chart{background:var(--solid);border:1px solid var(--line);border-radius:16px;padding:10px 8px 4px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair}
+.tv-chart svg{display:block;width:100%;height:auto;overflow:visible}
+.tv-chart .ln{fill:none;stroke:var(--trk);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.tv-chart .ar{fill:var(--trk);opacity:.14}
+.tv-chart .grid{stroke:var(--gridline);stroke-width:1}
+.tv-chart .sb{stroke:var(--fill-2);stroke-width:1;stroke-dasharray:3 3}
+.tv-chart .ax{fill:var(--muted);font-size:9.5px;font-family:var(--font);font-variant-numeric:tabular-nums}
+.tv-chart .sl{fill:var(--muted);font-size:9.5px;font-weight:600;font-family:var(--font);text-anchor:middle}
+.tv-chart .band{fill:var(--fg);opacity:.08}
+.tv-chart .mxd{fill:var(--trk);stroke:var(--solid-2);stroke-width:2}
+.tv-chart .mxt{fill:var(--fg);font-size:10.5px;font-weight:700;font-family:var(--font);font-variant-numeric:tabular-nums}
+.tv-chart .cx{stroke:var(--fg);stroke-width:1;opacity:.45}
+.tv-chart .cd{fill:var(--trk);stroke:var(--solid-2);stroke-width:2}
+.tv-leg{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:-6px}
+.tv-leg i{flex:1;height:6px;border-radius:3px;max-width:140px}
+.tv-tab{background:var(--solid);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.tv-head,.tv-row{display:grid;grid-template-columns:24px 1fr 56px 46px;align-items:center;gap:10px}
+.tv-head{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:9px 14px 6px}
+.tv-head span:nth-child(n+3),.tv-row>span:nth-child(n+3){text-align:right}
+.tv-row{width:100%;border:0;background:none;color:var(--fg);padding:9px 14px;text-align:left;font-variant-numeric:tabular-nums;border-top:1px solid var(--line);transition:background-color .15s}
+.tv-row:active{background:var(--fill)}
+.tv-row.on{background:var(--fill)}
+.tv-row .n{width:24px;height:24px;border-radius:8px;background:var(--fill-2);display:grid;place-items:center;font-size:12px;font-weight:700}
+.tv-row.on .n{background:var(--trk);color:#1d0f00}
+.tv-row .av{display:flex;flex-direction:column;gap:5px;min-width:0}
+.tv-row .av b{font-size:14.5px;font-weight:700;white-space:nowrap}
+.tv-row .av small{font-weight:500;color:var(--muted);font-size:11.5px}
+.tv-row .av i{display:block;height:4px;border-radius:2px;background:var(--trk);min-width:4px}
+.tv-row .tm{font-weight:600}
+.tv-row .mx{color:var(--muted);font-weight:600}
+.tv-fast{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;color:var(--fg);background:var(--fill-2);padding:1px 6px;border-radius:6px;vertical-align:1px;letter-spacing:.01em}
+
+/* ---------- Einstellungen ---------- */
+.set-sec{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px 4px 0}
+.set-card{background:var(--solid);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:50px;padding:8px 14px;border:0;background:none;color:var(--fg);text-align:left;width:100%;font-weight:500;border-radius:0}
+.set-card>*+*{border-top:1px solid var(--line)}
+.set-row small{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:1px}
+.set-row .ri{color:var(--muted);font-size:13.5px;display:flex;align-items:center;gap:6px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.set-row .chev svg{transform:scaleX(-1)}
+.set-row .tg{width:44px;height:26px;border-radius:13px;background:var(--fill-2);position:relative;flex:none;transition:background .25s}
+.set-row .tg::after{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .3s var(--ease)}
+.set-row.on .tg{background:var(--accent)}
+.set-row.on .tg::after{transform:translateX(18px)}
+.set-seg{display:flex;background:var(--fill);border-radius:11px;padding:2px;gap:2px;flex:none}
+.set-seg button{border:0;background:none;height:30px;padding:0 11px;border-radius:9px;font-weight:600;font-size:13px;color:var(--muted);transition:background-color .2s,color .2s}
+.set-seg button.on{background:var(--solid-2);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.set-row.col{flex-direction:column;align-items:stretch;gap:12px;padding:12px 14px 14px}
+.swatches{display:flex;gap:8px;justify-content:space-between}
+.swatches button{width:32px;height:32px;border-radius:50%;border:0;padding:0;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18);transition:box-shadow .2s,transform .18s var(--ease)}
+.swatches button:active{transform:scale(.9)}
+.swatches button.on{box-shadow:0 0 0 2px var(--solid-2),0 0 0 4px var(--c)}
+.set-theme{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px}
+.set-theme button{border:0;background:var(--fill);border-radius:14px;padding:7px 7px 8px;display:flex;flex-direction:column;gap:7px;align-items:stretch;font-weight:600;font-size:13px;color:var(--muted);transition:box-shadow .2s,color .2s}
+.set-theme button.on{color:var(--fg);box-shadow:inset 0 0 0 2px var(--accent)}
+.set-theme i{height:52px;border-radius:9px;display:block;box-shadow:inset 0 0 0 1px var(--line)}
+.th-dark{background:linear-gradient(180deg,transparent 62%,#1c2027 62% 78%,transparent 78%),linear-gradient(90deg,#2b3a2e,#1f2b33)}
+.th-light{background:linear-gradient(180deg,transparent 62%,#ffffff 62% 78%,transparent 78%),linear-gradient(90deg,#9fb38f,#a9c0cc)}
+.th-auto{background:linear-gradient(135deg,#ffffff 0 50%,#1c2027 50%)}
+:root[data-theme="light"] .wx-ic,:root[data-theme="light"] .wx-day .ii{color:#d18b00}
+:root[data-theme="light"] #ckSpeed.over b{color:#d92d33}
+:root[data-theme="light"] .item .ic{box-shadow:none}
+:root[data-theme="light"] .tabs button.on,:root[data-theme="light"] .seg2 button.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+:root[data-theme="light"] .sw::after,:root[data-theme="light"] .pop-row .tg::after{box-shadow:0 1px 3px rgba(0,0,0,.25)}
 
 /* ---------- Handy: ziehbares Sheet ---------- */
 @media (max-width:640px){
@@ -659,6 +738,7 @@ body.navprev #panel,body.navprev #near,body.navprev #recbar,body.navprev #panelO
     <div class="pop-sep"></div>
     <button class="pop-row" id="b-offline"><span>Offline-Karten</span><span class="ri" id="popOff"></span></button>
     <button class="pop-row" data-pf-open><span>0–100 messen</span><span class="ri" id="popTimer"></span></button>
+    <button class="pop-row" id="b-settings"><span>Einstellungen</span><span class="ri" id="popSet"></span></button>
   </div>
 </div>
 
@@ -693,8 +773,9 @@ body.navprev #panel,body.navprev #near,body.navprev #recbar,body.navprev #panelO
     <div class="pb"><div class="chips" id="chips"></div><div id="listBody"></div></div>
     <div class="pf">
       <button class="link" id="catsBtn">Kategorien</button>
-      <button class="link" id="exportBtn">Exportieren</button>
-      <button class="link" id="importBtn">Importieren</button>
+      <button class="link" id="setBtn">Einstellungen</button>
+      <button class="link" id="exportBtn" hidden>Exportieren</button>
+      <button class="link" id="importBtn" hidden>Importieren</button>
       <input type="file" id="importFile" accept=".json,application/json" hidden>
     </div>
   </section>
@@ -752,6 +833,7 @@ const UI = {
   locate:'<path d="M3 11 21 3l-8 18-2-8z"/>', labels:'<path d="M5 7h14M12 7v12M8 19h8"/>',
   back:'<path d="M15 5 8 12l7 7"/>', close:'<path d="M6 6l12 12M18 6 6 18"/>',
   car:'<path d="M5 16v-5l2-5h10l2 5v5M3 16h18v3H3zM7 19v2M17 19v2"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   nav:'<path d="M3 11 21 3l-8 18-2-8z"/>', globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>'
 };
 const svg = (p, s = 16, w = 2.2) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
@@ -882,8 +964,8 @@ function onMapStyle(){
   const rl = {'line-cap':'round', 'line-join':'round'};
   map.addLayer({id:'track-all-line', type:'line', source:'track-all', layout:rl, paint:{'line-color':'#ff9f0a', 'line-width':3, 'line-opacity':.6}});
   map.addLayer({id:'track-all-hit', type:'line', source:'track-all', layout:rl, paint:{'line-color':'#000', 'line-width':20, 'line-opacity':0}});
-  map.addLayer({id:'track-view-case', type:'line', source:'track-view', layout:rl, paint:{'line-color':'#ffffff', 'line-width':8, 'line-opacity':.9}});
-  map.addLayer({id:'track-view-line', type:'line', source:'track-view', layout:rl, paint:{'line-color':'#ff9f0a', 'line-width':5}});
+  map.addLayer({id:'track-view-case', type:'line', source:'track-view', layout:rl, paint:{'line-color':'#0b0d10', 'line-width':9, 'line-opacity':.75}});
+  map.addLayer({id:'track-view-line', type:'line', source:'track-view', layout:rl, paint:{'line-color':['interpolate', ['linear'], ['coalesce', ['get','k'], .5], 0, TRAMP[0], .5, TRAMP[1], 1, TRAMP[2]], 'line-width':5}});
   map.addLayer({id:'track-live-case', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ffffff', 'line-width':8, 'line-opacity':.9}});
   map.addLayer({id:'track-live-line', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ff3b30', 'line-width':5}});
   map.addSource('nav-route', {type:'geojson', data:FC([])});
@@ -898,6 +980,9 @@ function onMapStyle(){
   map.addLayer({id:'draw-line', type:'line', source:'draw-line', layout:rl, paint:{'line-color':'#bf5af2', 'line-width':5}});
   map.addLayer({id:'draw-pts', type:'circle', source:'draw-pts', paint:{'circle-radius':['case', ['get','end'], 7, 4.5], 'circle-color':['match', ['get','k'], 'start', '#30d158', 'end', '#ff3b30', '#ffffff'], 'circle-stroke-color':['match', ['get','k'], 'mid', '#bf5af2', '#ffffff'], 'circle-stroke-width':2.5}});
   map.addLayer({id:'course-ends', type:'circle', source:'course-ends', paint:{'circle-radius':7.5, 'circle-color':['match', ['get','k'], 'start', '#30d158', '#ff3b30'], 'circle-stroke-color':'#ffffff', 'circle-stroke-width':3}});
+  map.addSource('track-secs', {type:'geojson', data:FC([])}); map.addSource('track-cur', {type:'geojson', data:FC([])});
+  map.addLayer({id:'track-secs', type:'circle', source:'track-secs', paint:{'circle-radius':3.5, 'circle-color':'#ffffff', 'circle-stroke-color':'#0b0d10', 'circle-stroke-width':1.5}});
+  map.addLayer({id:'track-cur', type:'circle', source:'track-cur', paint:{'circle-radius':7, 'circle-color':'#ff9f0a', 'circle-stroke-color':'#ffffff', 'circle-stroke-width':3}});
   map.addLayer({id:'track-ends', type:'circle', source:'track-ends', paint:{'circle-radius':6.5, 'circle-color':['match', ['get','k'], 'start', '#30d158', '#ff3b30'], 'circle-stroke-color':'#ffffff', 'circle-stroke-width':2.5}});
   const lineLayout = {'line-cap':'round', 'line-join':'round'};
   map.addLayer({id:'links', type:'line', source:'links', layout:lineLayout, paint:{
@@ -906,7 +991,7 @@ function onMapStyle(){
     'line-opacity':['case', ['get','sel'], 1, .7],
     'line-dasharray':[0.1, 2]}});
   map.addLayer({id:'draftlink', type:'line', source:'draftlink', layout:lineLayout, paint:{'line-color':'#5cb0ff', 'line-width':4.5, 'line-dasharray':[0.1, 2]}});
-  mapReady = true;
+  mapReady = true; applyTheme();
   for(const id in pendingSrc) map.getSource(id)?.setData(pendingSrc[id]);
   applyLabels(); apply3D(false);
   updateTrackLayers(); drawLive();
@@ -1138,7 +1223,7 @@ function camPad(){
   let start = null, dragging = false, moved = false, samples = [];
   panel.addEventListener('pointerdown', e => {
     if(!mobile() || e.button > 0) return;
-    if(e.target.closest('input,textarea,select,.chips')) return;
+    if(e.target.closest('input,textarea,select,.chips,.no-drag')) return;
     start = {x:e.clientX, y:e.clientY, sy:sheetY, id:e.pointerId, scroller:e.target.closest('.pb,.pad')};
     dragging = false; moved = false; samples = [{y:e.clientY, t:performance.now()}];
   });
@@ -1728,6 +1813,81 @@ $('#modal').addEventListener('input', e => {
 function closeCats(){ $('#modal').hidden = true; refreshAll(); if(view === 'detail' && selected) renderDetail(data.spots.find(s => s.id === selected)); if(view === 'edit') refreshEditLive(); }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#modal').hidden) closeCats(); });
 
+/* ================= Einstellungen ================= */
+const VERSION = '2026.10.03';
+const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
+const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
+function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
+function curTheme(){ const t = prefs.theme || 'dark'; return t === 'auto' ? (darkMQ.matches ? 'dark' : 'light') : t; }
+function accentCol(th = curTheme()){ const a = ACCENTS[prefs.accent] || ACCENTS.blue; return th === 'light' ? a[1] : a[0]; }
+function applyTheme(){
+  const th = curTheme(), root = document.documentElement, col = accentCol(th);
+  root.dataset.theme = th;
+  root.style.setProperty('--accent', col);
+  root.style.setProperty('--accent-soft', `color-mix(in srgb, ${col} 16%, transparent)`);
+  root.style.setProperty('--accent-fg', th === 'dark' && ['teal','green','orange'].includes(prefs.accent) ? '#0b0d10' : '#ffffff');
+  const m = document.querySelector('meta[name="theme-color"]'); if(m) m.content = th === 'light' ? '#e9ecf1' : '#090b0e';
+  if(mapReady){ try{ map.setPaintProperty('acc-fill', 'fill-color', col); map.setPaintProperty('acc-line', 'line-color', col); map.setPaintProperty('nav-route-line', 'line-color', col); }catch(e){} }
+}
+if(darkMQ.addEventListener) darkMQ.addEventListener('change', () => { if(prefs.theme === 'auto') applyTheme(); });
+function openSettings(){
+  $('#layersPop').hidden = true; $('#b-layers').classList.remove('on'); $('#b-layers').setAttribute('aria-expanded', 'false');
+  renderSettings(); $('#modal').hidden = false;
+}
+function renderSettings(){
+  const pad = $('#modal .pad'), keep = pad && $('#modal [aria-label="Einstellungen"]') ? pad.scrollTop : 0;
+  const th = prefs.theme || 'dark', cam = prefs.cam || 'normal', lt = curTheme() === 'light', chev = `<span class="ri chev">${svg(UI.back, 14)}</span>`;
+  const tg = (k, label, sub) => `<button class="set-row${onOff(k) ? ' on' : ''}" data-st="tg" data-k="${k}" role="switch" aria-checked="${onOff(k)}"><span>${label}${sub ? `<small>${sub}</small>` : ''}</span><i class="tg"></i></button>`;
+  $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Einstellungen">
+    <div class="top" style="padding:12px 14px"><strong style="font-size:17px">Einstellungen</strong><button class="txtbtn bold" data-st="close">Fertig</button></div>
+    <div class="pad" style="padding-top:2px;gap:8px">
+      <div class="set-sec">Darstellung</div>
+      <div class="set-card">
+        <div class="set-theme">${[['dark','Dunkel'],['light','Hell'],['auto','Automatisch']].map(([k, n]) => `<button data-st="theme" data-v="${k}" class="${th === k ? 'on' : ''}"><i class="th-${k}"></i>${n}</button>`).join('')}</div>
+        <div class="set-row col"><span>Akzentfarbe</span><div class="swatches">${Object.entries(ACCENTS).map(([k, a]) => `<button data-st="accent" data-v="${k}" class="${(prefs.accent || 'blue') === k ? 'on' : ''}" style="--c:${lt ? a[1] : a[0]}" aria-label="${a[2]}" title="${a[2]}"></button>`).join('')}</div></div>
+      </div>
+      <div class="set-sec">Fahren</div>
+      <div class="set-card">
+        ${tg('recCockpit', 'Aufzeichnen öffnet Cockpit', 'Ein Tipp, direkt losfahren')}
+        <div class="set-row"><span>Kamera<small>im Cockpit</small></span><div class="set-seg">${[['near','Nah'],['normal','Normal'],['far','Weit']].map(([k, n]) => `<button data-st="cam" data-v="${k}" class="${cam === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+        ${tg('car3d', '3D-Auto', 'Aus: flaches Symbol, spart Akku')}
+        ${tg('limit', 'Tempolimit anzeigen')}
+        ${tg('ghost', 'Geister-Auto auf Rennstrecken')}
+        ${tg('sound', 'Töne bei der 0–100-Messung')}
+      </div>
+      <div class="set-sec">Daten</div>
+      <div class="set-card">
+        <button class="set-row" data-st="export"><span>Backup speichern<small>Spots, Kategorien, Strecken und Zeiten (ohne Fotos)</small></span><span class="ri">${svg(UI.share, 16)}</span></button>
+        <button class="set-row" data-st="import"><span>Backup laden</span>${chev}</button>
+        <button class="set-row" data-st="offline"><span>Offline-Karten</span><span class="ri">${offAreas.length ? `${offAreas.length} ${offAreas.length > 1 ? 'Gebiete' : 'Gebiet'}` : ''}${svg('<path d="M15 5 8 12l7 7"/>', 14).replace('<svg', '<svg style="transform:scaleX(-1)"')}</span></button>
+        <div class="set-row"><span>Speicher belegt</span><span class="ri" id="stStore">…</span></div>
+      </div>
+      <div class="set-sec">Über</div>
+      <div class="set-card"><div class="set-row"><span>Jamsis Spots<small>Alles bleibt nur auf diesem Gerät.</small></span><span class="ri">Version ${VERSION}</span></div></div>
+    </div></div>`;
+  if(keep) $('#modal .pad').scrollTop = keep;
+  storageInfo();
+}
+async function storageInfo(){
+  let txt = '–';
+  try{ if(navigator.storage && navigator.storage.estimate){ const e = await navigator.storage.estimate(); txt = fmtMB((e.usage || 0) / 1048576); } }catch(e){}
+  const el = $('#stStore'); if(el) el.textContent = txt;
+}
+$('#modal').addEventListener('click', e => {
+  const b = e.target.closest('[data-st]'); if(!b) return;
+  const a = b.dataset.st;
+  if(a === 'close'){ $('#modal').hidden = true; return; }
+  if(a === 'theme'){ prefs.theme = b.dataset.v; savePrefs(); applyTheme(); renderSettings(); }
+  if(a === 'accent'){ prefs.accent = b.dataset.v; savePrefs(); applyTheme(); renderSettings(); if(view === 'track') updateTrackLayers(); }
+  if(a === 'cam'){ prefs.cam = b.dataset.v; savePrefs(); renderSettings(); }
+  if(a === 'tg'){ const k = b.dataset.k; prefs[k] = !onOff(k); savePrefs(); b.classList.toggle('on', prefs[k]); b.setAttribute('aria-checked', prefs[k]); }
+  if(a === 'export') $('#exportBtn').click();
+  if(a === 'import') $('#importBtn').click();
+  if(a === 'offline') openOffline();
+});
+$('#setBtn').addEventListener('click', openSettings);
+$('#b-settings').addEventListener('click', e => { e.stopPropagation(); openSettings(); });
+
 /* ================= Export / Import ================= */
 $('#exportBtn').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify({app:'meine-spots', version:1, exported:new Date().toISOString(), ...data, tracks, runs, courses, efforts}, null, 2)], {type:'application/json'});
@@ -1947,16 +2107,19 @@ document.querySelector('.tabs').addEventListener('click', e => { const b = e.tar
 /* Kartenlinien */
 function updateTrackLayers(){
   if(!mapReady) return;
-  const showAll = (tab === 'tracks' && sub === 'rec' && view === 'list') || view === 'track';
+  const showAll = tab === 'tracks' && sub === 'rec' && view === 'list';
   setSrc('track-all', FC(showAll ? tracks.filter(t => t.id !== selTrack).flatMap(t => segFeatures(t.segs, {id:t.id})) : []));
   const t = view === 'track' && tracks.find(x => x.id === selTrack);
   if(t){
     const segs = t.segs.filter(sg => sg.length);
     const first = segs[0][0], lastSeg = segs[segs.length - 1], last = lastSeg[lastSeg.length - 1];
-    setSrc('track-view', FC(segFeatures(t.segs)));
+    const an = analyzeTrack(t);
+    setSrc('track-view', FC(an ? an.feats : segFeatures(t.segs)));
+    setSrc('track-secs', FC(an ? an.bounds : []));
     setSrc('track-ends', FC([{type:'Feature', properties:{k:'start'}, geometry:{type:'Point', coordinates:[first[0], first[1]]}},
                              {type:'Feature', properties:{k:'end'}, geometry:{type:'Point', coordinates:[last[0], last[1]]}}]));
-  } else { setSrc('track-view', FC([])); setSrc('track-ends', FC([])); }
+  } else { setSrc('track-view', FC([])); setSrc('track-ends', FC([])); setSrc('track-secs', FC([])); setSrc('track-cur', FC([])); }
+  tvPaint();
   updateCourseLayers();
 }
 function drawLive(){ setSrc('track-live', FC(rec ? segFeatures(rec.segs) : [])); }
@@ -1983,7 +2146,7 @@ function startRec(){
   startWatch(); startGPS(false); requestWake(); startTick();
   persistRec(true); renderTracksHead(); updateRecUI(); renderNearest();
   // Direkt in den Fahrmodus: Cockpit mit laufender Aufnahme
-  if(!ckOn && !mode && view !== 'edit') enterCockpit();
+  if(onOff('recCockpit') && !ckOn && !mode && view !== 'edit') enterCockpit();
   else if(mobile() && !ckOn) setSnap('peek');
   toast(ckOn ? 'Aufnahme läuft – gute Fahrt' : 'Aufzeichnung läuft');
 }
@@ -2214,13 +2377,13 @@ function fitTrack(segs){
 }
 function openTrack(id, fly = true){
   const t = tracks.find(x => x.id === id); if(!t) return;
-  selTrack = id; trackRenaming = false; trackDelArmed = false;
+  selTrack = id; trackRenaming = false; trackDelArmed = false; tvSel = -1;
   if(tab !== 'tracks') setTab('tracks');
   if(sub !== 'rec'){ sub = 'rec'; renderTracksHead(); renderList(); }
   renderTrackView(); show('track', mobile() && snap === 'full' ? 'full' : 'half');
   fitTrack(t.segs);
 }
-function closeTrack(){ selTrack = null; renderList(); show('list', 'half'); }
+function closeTrack(){ selTrack = null; tvSel = -1; renderList(); show('list', 'half'); }
 function renderTrackView(){
   const t = tracks.find(x => x.id === selTrack); if(!t) return;
   const avg = t.dur > 0 ? t.dist / (t.dur / 1000) : 0;
@@ -2236,11 +2399,13 @@ function renderTrackView(){
         <div><b>${fmtSpd(avg)}</b><span>Ø Tempo</span></div>
         <div><b>${fmtSpd(t.maxSpd || 0)}</b><span>Max. Tempo</span></div>
       </div>
+      ${tvDetailsHTML(t)}
       <button class="btn" data-tv="course">${svg(ICONS.flag,15)} Als Rennstrecke speichern</button>
       <button class="btn" data-tv="gpx">${svg(UI.share,15)} Als GPX exportieren</button>
       <div class="btns"><button class="btn" data-tv="rename">Umbenennen</button><button class="btn danger" data-tv="del">Löschen</button></div>
     </div>`;
   if(trackRenaming) setTimeout(() => { const i = $('#tv-name'); if(i){ i.focus(); i.select(); } }, 50);
+  if(tvSel >= 0) tvApplySel(false);
 }
 $('#trackView').addEventListener('click', e => {
   const b = e.target.closest('[data-tv]'); if(!b) return;
@@ -2264,6 +2429,143 @@ function toGPX(t){
     t.segs.map(sg => '<trkseg>\n' + sg.map(q => `<trkpt lat="${q[1]}" lon="${q[0]}"><time>${new Date(t.created + q[2] * 1000).toISOString()}</time></trkpt>`).join('\n') + '\n</trkseg>').join('\n') +
     `\n</trk>\n</gpx>\n`;
 }
+/* ================= Strecken-Analyse: Tempo-Verlauf & Sektoren ================= */
+const TRAMP = ['#8f3d00', '#ff8a00', '#ffd98f'];   // Linienfarbe = Tempo: dunkel = langsam, hell = schnell
+const anCache = new WeakMap();
+let tvSel = -1, tvDown = false;
+function analyzeTrack(t){
+  if(anCache.has(t)) return anCache.get(t);
+  const P = []; let D = 0, TA = 0;
+  t.segs.forEach((sg, si) => sg.forEach((q, i) => {
+    if(i){ const p = sg[i - 1]; D += dist({lat:p[1], lng:p[0]}, {lat:q[1], lng:q[0]}); TA += Math.max(0, q[2] - p[2]); }
+    P.push({lng:q[0], lat:q[1], d:D, ta:TA, si});
+  }));
+  if(P.length < 3 || D < 30){ anCache.set(t, null); return null; }
+  // Tempo je Punkt, über ±2 Nachbarpunkte geglättet (km/h)
+  P.forEach((p, k) => {
+    let j0 = k, j1 = k;
+    for(let n = 0; n < 2; n++){ if(j0 > 0 && P[j0 - 1].si === p.si) j0--; if(j1 < P.length - 1 && P[j1 + 1].si === p.si) j1++; }
+    const dt = P[j1].ta - P[j0].ta;
+    p.v = dt > .4 ? Math.min(400, (P[j1].d - P[j0].d) / dt * 3.6) : null;
+  });
+  for(let k = 1; k < P.length; k++) if(P[k].v == null) P[k].v = P[k - 1].v;
+  for(let k = P.length - 2; k >= 0; k--) if(P[k].v == null) P[k].v = P[k + 1].v;
+  P.forEach(p => { if(p.v == null) p.v = 0; });
+  const vs = P.map(p => p.v).sort((a, b) => a - b), pc = q => vs[Math.min(vs.length - 1, Math.floor(q * vs.length))];
+  const lo = pc(.05), hi = Math.max(pc(.95), lo + 5);
+  // Sektoren: runde Länge, ca. 4–10 Stück
+  const L = [100,200,250,500,1000,2000,2500,5000,10000,20000,25000,50000,100000].find(l => D / l <= 10) || 100000;
+  const n = Math.max(1, Math.round(D / L)), secOf = d => Math.min(n - 1, Math.floor(d / L));
+  const idx = d => { let a = 0, b = P.length - 1; while(b - a > 1){ const m = (a + b) >> 1; if(P[m].d < d) a = m; else b = m; } return [P[a], P[b]]; };
+  const lerp = (d, k) => { const [a, b] = idx(d), f = b.d > a.d ? Math.max(0, Math.min(1, (d - a.d) / (b.d - a.d))) : 0; return a[k] + f * (b[k] - a[k]); };
+  const secs = [];
+  for(let i = 0; i < n; i++){
+    const a = i * L, b = i === n - 1 ? D : (i + 1) * L, tm = Math.max(.1, lerp(b, 'ta') - lerp(a, 'ta'));
+    let mx = 0; for(const p of P) if(p.d >= a && p.d <= b && p.v > mx) mx = p.v;
+    secs.push({a, b, t:tm, avg:(b - a) / tm * 3.6, max:mx});
+  }
+  const fast = secs.length > 1 ? secs.reduce((m, s, i) => s.avg > secs[m].avg ? i : m, 0) : -1;
+  const feats = [];
+  for(let k = 1; k < P.length; k++){
+    const a = P[k - 1], b = P[k]; if(a.si !== b.si) continue;
+    const v = (a.v + b.v) / 2;
+    feats.push({type:'Feature', properties:{k:+Math.max(0, Math.min(1, (v - lo) / (hi - lo))).toFixed(3), s:secOf((a.d + b.d) / 2)}, geometry:{type:'LineString', coordinates:[[a.lng, a.lat], [b.lng, b.lat]]}});
+  }
+  const bounds = secs.slice(1).map(s => ({type:'Feature', properties:{}, geometry:{type:'Point', coordinates:[lerp(s.a, 'lng'), lerp(s.a, 'lat')]}}));
+  const prof = Array.from({length:240}, (_, i) => { const d = D * i / 239; return [d, lerp(d, 'v')]; });
+  const an = {P, D, L, n, secs, fast, lo, hi, feats, bounds, prof, secOf, lerp};
+  anCache.set(t, an); return an;
+}
+const fmtLen = m => m < 1000 ? `${m} m` : `${String(m / 1000).replace('.', ',')} km`;
+const fmtKm1 = m => (m / 1000).toFixed(m < 10000 ? 1 : 0).replace('.', ',');
+function tvGeom(an){
+  const W = 340, H = 150, l = 30, r = 10, tp = 18, bt = 20, iw = W - l - r, ih = H - tp - bt;
+  const vmax = Math.max(10, ...an.prof.map(p => p[1]));
+  const step = [5,10,20,25,50,100].find(s => vmax / s <= 4) || 100, ymax = Math.ceil(vmax / step) * step;
+  return {W, H, l, r, tp, bt, iw, ih, step, ymax, X:d => l + d / an.D * iw, Y:v => tp + ih - v / ymax * ih};
+}
+function tvDetailsHTML(t){
+  const an = analyzeTrack(t); if(!an) return '';
+  const g = tvGeom(an), {X, Y} = g, f1 = x => x.toFixed(1);
+  let grid = '';
+  for(let v = 0; v <= g.ymax; v += g.step) grid += `<line class="grid" x1="${g.l}" x2="${g.W - g.r}" y1="${f1(Y(v))}" y2="${f1(Y(v))}"/><text class="ax" x="${g.l - 6}" y="${f1(Y(v) + 3)}" text-anchor="end">${v}</text>`;
+  let sb = '';
+  an.secs.forEach((s, i) => {
+    if(i) sb += `<line class="sb" x1="${f1(X(s.a))}" x2="${f1(X(s.a))}" y1="${g.tp - 4}" y2="${g.tp + g.ih}"/>`;
+    if(X(s.b) - X(s.a) >= 12) sb += `<text class="sl" x="${f1((X(s.a) + X(s.b)) / 2)}" y="${g.tp - 7}">${i + 1}</text>`;
+  });
+  const line = an.prof.map((p, i) => `${i ? 'L' : 'M'}${f1(X(p[0]))} ${f1(Y(p[1]))}`).join('');
+  const area = `${line}L${f1(X(an.D))} ${g.tp + g.ih}L${g.l} ${g.tp + g.ih}Z`;
+  const mi = an.prof.reduce((m, p, i) => p[1] > an.prof[m][1] ? i : m, 0), mp = an.prof[mi];
+  const mx = X(mp[0]), my = Y(mp[1]), anchor = mx > g.W - 50 ? 'end' : mx < g.l + 30 ? 'start' : 'middle';
+  const xl = `<text class="ax" x="${g.l}" y="${g.H - 5}">0</text><text class="ax" x="${f1(X(an.D / 2))}" y="${g.H - 5}" text-anchor="middle">${fmtKm1(an.D / 2)}</text><text class="ax" x="${g.W - g.r}" y="${g.H - 5}" text-anchor="end">${fmtKm1(an.D)} km</text>`;
+  const svgC = `<svg viewBox="0 0 ${g.W} ${g.H}" role="img" aria-label="Tempo über die Strecke, höchstens ${Math.round(mp[1])} km/h">
+    <rect id="tvBand" class="band" x="0" y="${g.tp}" width="0" height="${g.ih}"/>${grid}${sb}
+    <path class="ar" d="${area}"/><path class="ln" d="${line}"/>
+    <circle class="mxd" cx="${f1(mx)}" cy="${f1(my)}" r="4"/><text class="mxt" x="${f1(mx)}" y="${f1(Math.max(g.tp + 2, my - 8))}" text-anchor="${anchor}">${Math.round(mp[1])} km/h</text>
+    ${xl}<line id="tvX" class="cx" x1="0" x2="0" y1="${g.tp}" y2="${g.tp + g.ih}" visibility="hidden"/><circle id="tvDot" class="cd" r="4.5" cx="0" cy="0" visibility="hidden"/></svg>`;
+  const maxAvg = Math.max(...an.secs.map(s => s.avg));
+  const rows = an.secs.map((s, i) => `<button class="tv-row${tvSel === i ? ' on' : ''}" data-sec="${i}" aria-label="Sektor ${i + 1}">
+      <span class="n">${i + 1}</span>
+      <span class="av"><b>${Math.round(s.avg)} <small>km/h</small>${i === an.fast ? '<span class="tv-fast">Schnellster</span>' : ''}</b><i style="width:${Math.max(3, s.avg / maxAvg * 100).toFixed(1)}%"></i></span>
+      <span class="tm">${fmtDur(s.t * 1000)}</span><span class="mx">${Math.round(s.max)}</span></button>`).join('');
+  return `<div class="st-h">Tempo-Verlauf <em id="tvRead">Tippe auf die Kurve</em></div>
+    <div class="tv-chart no-drag" id="tvChart">${svgC}</div>
+    <div class="tv-leg"><span>Linie auf der Karte:</span><span>${Math.round(an.lo)}</span><i style="background:linear-gradient(90deg,${TRAMP.join(',')})"></i><span>${Math.round(an.hi)} km/h</span></div>
+    <div class="st-h">Sektoren <em>je ${fmtLen(an.L)}</em></div>
+    <div class="tv-tab"><div class="tv-head"><span>#</span><span>Ø Tempo</span><span>Zeit</span><span>Max</span></div>${rows}</div>`;
+}
+function tvPaint(){
+  if(!mapReady) return;
+  const on = view === 'track' && tvSel >= 0, m = ['==', ['get', 's'], tvSel];
+  try{
+    map.setPaintProperty('track-view-line', 'line-opacity', on ? ['case', m, 1, .2] : 1);
+    map.setPaintProperty('track-view-case', 'line-opacity', on ? ['case', m, .85, .12] : .75);
+  }catch(e){}
+}
+function tvApplySel(fit = true){
+  const t = tracks.find(x => x.id === selTrack), an = t && analyzeTrack(t); if(!an) return;
+  document.querySelectorAll('#trackView [data-sec]').forEach(el => el.classList.toggle('on', +el.dataset.sec === tvSel));
+  const band = $('#tvBand'), g = tvGeom(an);
+  if(band){ if(tvSel < 0) band.setAttribute('width', 0); else { const s = an.secs[tvSel]; band.setAttribute('x', g.X(s.a).toFixed(1)); band.setAttribute('width', (g.X(s.b) - g.X(s.a)).toFixed(1)); } }
+  tvPaint();
+  if(!fit || !mapReady) return;
+  if(tvSel < 0){ fitTrack(t.segs); return; }
+  const s = an.secs[tvSel], pts = an.P.filter(p => p.d >= s.a && p.d <= s.b); if(!pts.length) return;
+  const b = pts.reduce((b, p) => b.extend([p.lng, p.lat]), new maplibregl.LngLatBounds([pts[0].lng, pts[0].lat], [pts[0].lng, pts[0].lat]));
+  map.fitBounds(b, {padding:camPad(), maxZoom:17, duration:900});
+}
+function tvScrub(e){
+  const t = tracks.find(x => x.id === selTrack), an = t && analyzeTrack(t), el = $('#tvChart svg'); if(!an || !el) return;
+  const g = tvGeom(an), r = el.getBoundingClientRect(); if(!r.width) return;
+  const fx = (e.clientX - r.left) / r.width * g.W, d = Math.max(0, Math.min(an.D, (fx - g.l) / g.iw * an.D));
+  const v = an.lerp(d, 'v'), x = g.X(d).toFixed(1), y = g.Y(v).toFixed(1), s = an.secOf(d);
+  const cx = $('#tvX'), cd = $('#tvDot');
+  cx.setAttribute('x1', x); cx.setAttribute('x2', x); cx.setAttribute('visibility', 'visible');
+  cd.setAttribute('cx', x); cd.setAttribute('cy', y); cd.setAttribute('visibility', 'visible');
+  $('#tvRead').textContent = `${fmtKm1(d)} km · ${Math.round(v)} km/h · Sektor ${s + 1}`;
+  setSrc('track-cur', FC([{type:'Feature', properties:{}, geometry:{type:'Point', coordinates:[an.lerp(d, 'lng'), an.lerp(d, 'lat')]}}]));
+}
+function tvScrubEnd(){
+  const cx = $('#tvX'), cd = $('#tvDot');
+  if(cx) cx.setAttribute('visibility', 'hidden'); if(cd) cd.setAttribute('visibility', 'hidden');
+  const rd = $('#tvRead'); if(rd) rd.textContent = 'Tippe auf die Kurve';
+  setSrc('track-cur', FC([]));
+}
+$('#trackView').addEventListener('pointerdown', e => {
+  if(!e.target.closest('#tvChart')) return;
+  tvDown = true; try{ e.target.closest('#tvChart').setPointerCapture(e.pointerId); }catch(_){}
+  tvScrub(e);
+});
+$('#trackView').addEventListener('pointermove', e => { if(tvDown || (e.pointerType === 'mouse' && e.target.closest('#tvChart'))) tvScrub(e); });
+$('#trackView').addEventListener('pointerup', () => { tvDown = false; });
+$('#trackView').addEventListener('pointercancel', () => { tvDown = false; });
+$('#trackView').addEventListener('pointerout', e => { if(e.pointerType === 'mouse' && !tvDown && e.target.closest('#tvChart') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('#tvChart'))) tvScrubEnd(); });
+$('#trackView').addEventListener('click', e => {
+  const r = e.target.closest('[data-sec]'); if(!r) return;
+  const i = +r.dataset.sec; tvSel = tvSel === i ? -1 : i; tvApplySel();
+});
+
 function downloadText(name, text, type){
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name;
@@ -2285,7 +2587,7 @@ function bearing(a, b){
   return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 }
 const ckPad = () => ({top:Math.round(innerHeight * .42), bottom:110, left:20, right:20});
-function ckZoom(v){ const k = (v || 0) * 3.6; return k < 15 ? 17.2 : k < 40 ? 16.6 : k < 70 ? 16 : k < 110 ? 15.3 : 14.6; }
+function ckZoom(v){ const k = (v || 0) * 3.6, o = prefs.cam === 'near' ? .7 : prefs.cam === 'far' ? -.8 : 0; return (k < 15 ? 17.2 : k < 40 ? 16.6 : k < 70 ? 16 : k < 110 ? 15.3 : 14.6) + o; }
 const cam = {raf:0, last:0, fix:null, disp:null, bearing:null, zoom:null, hold:0};
 let userGesture = false, ckUserPitch = null;
 function offsetPt(p, brg, d){
@@ -2335,7 +2637,8 @@ function enterCockpit(){
   if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
   if(mode || view === 'edit'){ toast('Erst den Spot fertig bearbeiten.'); return; }
   ckOn = true; document.body.classList.add('cockpit');
-  car3d.on = true; car3d.pos = me ? {...me} : null; enableCar3d();
+  car3d.on = onOff('car3d'); car3d.pos = me ? {...me} : null;
+  if(car3d.on) enableCar3d(); else document.body.classList.remove('car3d');
   if(meMarker){ meMarker.setRotationAlignment('map'); meMarker.setPitchAlignment('map'); }
   ck = {start:Date.now(), dist:0, max:0, v:null, h:null, last:null, ts:0};
   ckFollow = true; ckUserZoom = null; $('#ckRecenter').hidden = true;
@@ -2387,7 +2690,7 @@ function onDrivePos(p){
   setMeHeading((ck.v || 0) > 1.4 ? ck.h : null);
   updateCockpitUI();
   cam.fix = {lat:pt.lat, lng:pt.lng, t:performance.now(), v:ck.v || 0, h:ck.h};
-  limitFix(pt);
+  if(onOff('limit')) limitFix(pt); else if(limitNow){ showLimit(null); }
   if(nav && nav.active) onNavFix(pt, c.accuracy);
 }
 map.on('dragstart', () => { if(ckOn){ ckFollow = false; $('#ckRecenter').hidden = false; } });
@@ -2618,6 +2921,7 @@ function progAt(splits, t){
 }
 function hideGhost(){ if(ghostM){ ghostM.remove(); ghostM = null; } }
 function updateGhost(){
+  if(!onOff('ghost')){ hideGhost(); return; }
   const ar = ckOn ? activeRun() : null, best = ar && courseEfforts(ar.cid)[0];
   if(!ar || !best || !best.splits || best.splits.length < 2){ hideGhost(); return; }
   const el = runElapsed(ar.run), gp = progAt(best.splits, el);
@@ -3038,6 +3342,7 @@ const fmtS = x => x.toFixed(2).replace('.', ',') + ' s';
 const pkey = (a, b) => `${a}–${b}`;
 
 function beep(freq = 880, dur = .12, vol = .25){
+  if(!onOff('sound')) return;
   try{
     audio = audio || new (window.AudioContext || window.webkitAudioContext)();
     if(audio.state === 'suspended') audio.resume();
@@ -3620,6 +3925,8 @@ $('#searchIc').innerHTML = svg(UI.search, 15);
 $('#b-locate').innerHTML = svg(UI.locate, 19);
 $('#b-layers').innerHTML = svg(UI.layers, 20);
 $('#popTimer').innerHTML = svg(UI.timer, 17);
+$('#popSet').innerHTML = svg(UI.gear, 17, 2);
+applyTheme();
 $('#b-compass').innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 3.5 15.2 12H8.8z" fill="#ff5a5f"/><path d="M12 20.5 8.8 12h6.4z" fill="#d5dae2"/></svg>';
 if(prefs.pcol && !mobile()) setCollapsed(true);
 $('#popOff').innerHTML = svg('<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/>', 17);
