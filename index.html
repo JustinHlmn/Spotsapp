@@ -610,7 +610,7 @@ body.navprev #panel,body.navprev #near,body.navprev #recbar,body.navprev #panelO
 <div id="ckStats" class="glass">
   <div><b data-ck="dist">0 m</b><span>Distanz</span></div>
   <div><b data-ck="time">0:00</b><span>Zeit</span></div>
-  <div><b data-ck="avg">0</b><span data-ck="avgl">Ø km/h</span></div>
+  <div><b data-ck="avg">0</b><span>Ø km/h</span></div>
   <div class="mx"><b data-ck="max">0</b><span>Max km/h</span></div>
 </div>
 <button id="ckRecenter" class="glass" hidden></button>
@@ -1908,7 +1908,7 @@ function fitAll(animate){
 const TKEY = 'meine-spots-tracks', RKEY = 'meine-spots-rec';
 let tracks = [];
 try{ tracks = JSON.parse(localStorage.getItem(TKEY) || '[]'); if(!Array.isArray(tracks)) tracks = []; }catch(e){ tracks = []; }
-let rec = null, recWatch = null, recTick = null, wake = null, followMe = true, lastPersist = 0, spr = {};
+let rec = null, recWatch = null, recTick = null, wake = null, followMe = true, lastPersist = 0;
 let tab = 'spots', selTrack = null, trackRenaming = false, trackDelArmed = false, discardArmed = false;
 
 function saveTracks(){
@@ -1978,9 +1978,8 @@ function startRec(){
   if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
   if(rec && rec.stopped){ openTrackSave(); return; }
   if(rec) return;
-  rec = {id:uid(), start:Date.now(), segs:[[]], dist:0, active:0, runFrom:Date.now(), maxSpd:0, last:null, weak:false, best:{}};
-  followMe = true; spr = {};
-  beep(0, .01, .001); // Ton für Sprint-Zeiten im Klick freischalten
+  rec = {id:uid(), start:Date.now(), segs:[[]], dist:0, active:0, runFrom:Date.now(), maxSpd:0, last:null, weak:false};
+  followMe = true;
   startWatch(); startGPS(false); requestWake(); startTick();
   persistRec(true); renderTracksHead(); updateRecUI(); renderNearest();
   // Direkt in den Fahrmodus: Cockpit mit laufender Aufnahme
@@ -1990,14 +1989,14 @@ function startRec(){
 }
 function pauseRec(){
   if(!rec || !rec.runFrom) return;
-  rec.active += Date.now() - rec.runFrom; rec.runFrom = null; rec.last = null; spr = {};
+  rec.active += Date.now() - rec.runFrom; rec.runFrom = null; rec.last = null;
   stopWatch(); releaseWake();
   persistRec(true); renderTracksHead(); updateRecUI();
 }
 function resumeRec(){
   if(!rec || rec.runFrom || rec.stopped) return;
   if(rec.segs[rec.segs.length - 1].length) rec.segs.push([]);
-  rec.runFrom = Date.now(); rec.last = null; followMe = true; spr = {};
+  rec.runFrom = Date.now(); rec.last = null; followMe = true;
   startWatch(); requestWake(); startTick();
   persistRec(true); renderTracksHead(); updateRecUI();
 }
@@ -2016,48 +2015,8 @@ function stopRec(){
   }
   renderTracksHead(); updateRecUI(); renderNearest();
 }
-/* Sprints während der Aufnahme automatisch messen */
-const SPRINTS = [[0,100],[100,150],[100,200]];
-function sprintFeed(p){
-  if(!rec || !rec.runFrom || rec.stopped || perfOn){ spr = {}; return; }
-  const c = p.coords, t = p.timestamp || Date.now(), pt = {lat:c.latitude, lng:c.longitude};
-  if(spr.prev && (t - spr.prev.t > 3000 || t <= spr.prev.t)) spr = {};   // GPS-Lücke → neu ansetzen
-  const pv = spr.prev;
-  let v = (c.speed != null && !isNaN(c.speed) && c.speed >= 0) ? c.speed * 3.6 : null;
-  if(v == null && pv && t - pv.t >= 500) v = dist(pv, pt) / ((t - pv.t) / 1000) * 3.6;
-  if(v == null || !(c.accuracy <= 25)){ spr = {}; return; }
-  const cur = {v, t, ...pt};
-  SPRINTS.forEach(([a, b]) => {
-    const k = pkey(a, b), s = spr[k] || (spr[k] = {st:'idle'});
-    if(s.st === 'run'){
-      s.d += dist(pv, cur); s.max = Math.max(s.max, v);
-      if(v >= b){ s.st = 'idle'; const sec = (interp(pv, cur, b) - s.t0) / 1000; if(sec > .5) sprintDone(a, b, sec, s.d, c.accuracy); }
-      else if(v < s.max - 8 || t - s.t0 > (a ? 60000 : 40000)) s.st = 'idle';
-    }
-    if(s.st === 'run') return;
-    if(a === 0){
-      if(v < 3) s.st = 'ready';
-      else if(s.st === 'ready' && pv){ s.st = 'run'; s.t0 = pv.v < 3 ? interp(pv, cur, 1) : pv.t; s.max = v; s.d = 0; }
-    } else if(pv && pv.v < a && v >= a){ s.st = 'run'; s.t0 = interp(pv, cur, a); s.max = v; s.d = 0; }
-  });
-  spr.prev = cur;
-}
-function sprintDone(a, b, sec, d, acc){
-  sec = Math.round(sec * 100) / 100;
-  const k = pkey(a, b), best = runs.filter(r => pkey(r.from, r.to) === k).reduce((m, r) => Math.min(m, r.time), Infinity);
-  runs.unshift({id:uid(), from:a, to:b, time:sec, dist:Math.round(d || 0), date:Date.now(), hz:0, acc:Math.round(acc || 0), auto:true}); saveRuns();
-  rec.best = rec.best || {};
-  if(!rec.best[k] || sec < rec.best[k]) rec.best[k] = sec;
-  persistRec(true);
-  beep(1046, .18, .3);
-  toast(`${a}–${b} km/h in ${fmtS(sec)}${sec < best ? ' · neue Bestzeit' : ''}`);
-  updateCockpitUI();
-}
-const recBestTxt = r => { const b = r && r.best || {}; return SPRINTS.map(([a, z]) => b[pkey(a, z)] ? [`${a}–${z}`, fmtS(b[pkey(a, z)])] : null).filter(Boolean); };
-
 function onRecPos(p){
   feedLive(p);
-  sprintFeed(p);
   if(!rec || !rec.runFrom) return;
   const c = p.coords, ts = p.timestamp || Date.now();
   if(c.accuracy > 35){ if(!rec.weak){ rec.weak = true; updateRecUI(); } return; }
@@ -2104,7 +2063,7 @@ function renderTracksHead(){
   if(!rec){
     h.innerHTML = segHTML + `<button class="btn rec-start" data-rec="start"><span class="rdot"></span>Aufzeichnung starten</button>
       <div class="btns"><button class="btn" data-ck-open>${svg(UI.gauge, 17)} Cockpit</button><button class="btn" data-pf-open>${svg(UI.timer, 17)} 0–100</button></div>
-      <div class="hint">Startet direkt das Cockpit. 0–100, 100–150 und 100–200 werden beim Fahren automatisch gemessen. Bildschirm anlassen.</div>`;
+      <div class="hint">Startet direkt das Cockpit. Bildschirm anlassen – im Hintergrund pausiert das Handy die Ortung.</div>`;
   } else if(rec.stopped){
     h.innerHTML = segHTML + `<button class="btn primary" data-rec="opensave">Beendete Aufzeichnung speichern</button>`;
   } else {
@@ -2144,7 +2103,6 @@ function openTrackSave(){
         <div><b>${fmtDur(rec.active)}</b><span>Dauer</span></div>
         <div><b>${fmtSpd(avg)}</b><span>Ø Tempo</span></div>
         <div><b>${fmtSpd(rec.maxSpd)}</b><span>Max. Tempo</span></div>
-        ${recBestTxt(rec).map(([k, v]) => `<div><b>${v}</b><span>${k} km/h</span></div>`).join('')}
       </div>
       <div class="muted">Die Strecke wird nur auf diesem Gerät gespeichert.</div>
     </div>`;
@@ -2157,7 +2115,6 @@ $('#trackSaveView').addEventListener('click', e => {
   if(b.dataset.ts === 'save'){
     const t = {id:rec.id, name:($('#t-name').value.trim() || 'Strecke'), created:rec.start, dist:Math.round(rec.dist), dur:rec.active, maxSpd:rec.maxSpd,
                segs:rec.segs.filter(sg => sg.length)};
-    if(rec.best && Object.keys(rec.best).length) t.best = rec.best;
     tracks.unshift(t);
     if(!saveTracks()){ tracks.shift(); return; }
     rec = null; persistRec(true); drawLive(); renderTracksHead();
@@ -2278,7 +2235,6 @@ function renderTrackView(){
         <div><b>${fmtDur(t.dur)}</b><span>Dauer</span></div>
         <div><b>${fmtSpd(avg)}</b><span>Ø Tempo</span></div>
         <div><b>${fmtSpd(t.maxSpd || 0)}</b><span>Max. Tempo</span></div>
-        ${recBestTxt(t).map(([k, v]) => `<div><b>${v}</b><span>${k} km/h</span></div>`).join('')}
       </div>
       <button class="btn" data-tv="course">${svg(ICONS.flag,15)} Als Rennstrecke speichern</button>
       <button class="btn" data-tv="gpx">${svg(UI.share,15)} Als GPX exportieren</button>
@@ -2477,10 +2433,7 @@ function updateCockpitUI(){
   const avg = time > 0 ? dst / (time / 1000) : 0;
   $('[data-ck="dist"]').textContent = fmtKm(dst);
   $('[data-ck="time"]').textContent = fmtDur(time);
-  // Beim Aufnehmen zählt Performance: beste 0–100 dieser Fahrt statt Ø
-  const b100 = recOn && rec.best && rec.best['0–100'];
-  $('[data-ck="avgl"]').textContent = recOn ? '0–100' : 'Ø km/h';
-  $('[data-ck="avg"]').textContent = recOn ? (b100 ? fmtS(b100) : '–') : String(Math.round(avg * 3.6));
+  $('[data-ck="avg"]').textContent = String(Math.round(avg * 3.6));
   const mx = Math.round(max * 3.6), mEl = $('[data-ck="max"]');
   if(mEl.textContent !== String(mx)){
     mEl.textContent = String(mx);
