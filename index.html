@@ -754,6 +754,8 @@ body.car3d .rp-car{visibility:hidden}
 .ws-ok{color:#30d158}
 .ws-add{background:var(--accent);color:var(--accent-fg)}
 .ws-boards{display:flex;flex-direction:column}
+.ws-paste{display:block;margin:0 auto 6px;font-size:13px}
+.ws-paste.top{margin:-2px 0 4px 6px}
 .ws-chips{margin:2px -8px 8px!important;padding:0 14px!important}
 .ws-lb{padding:0 8px}
 .lb-row.me .lb-time::after{content:"Du";font-size:10.5px;font-weight:800;margin-left:7px;padding:2px 6px;border-radius:6px;background:var(--accent-soft);color:var(--accent);vertical-align:2px}
@@ -2152,7 +2154,7 @@ function openGroupDlg(kind, arg){
       <label class="f">Name der Gruppe<input class="inp" id="gp-name" value="${esc((prefs.group && prefs.group.name) || '')}" maxlength="30" placeholder="z. B. Jamsis Crew"></label>${nameField}
       <div class="btns"><button class="btn" data-gp="cancel">Abbrechen</button><button class="btn primary" data-gp="create">Erstellen</button></div>
       <button class="txtbtn" data-gp="tocode" style="align-self:center">Schon eingeladen? Link einfügen</button>`;
-  if(kind === 'code') body = `<h2>Mit Code beitreten</h2><div class="muted">Füg den Einladungslink oder den Code ein, den du bekommen hast.</div>
+  if(kind === 'code') body = `<h2>Link einfügen</h2><div class="muted">Füg einen Einladungslink oder einen geteilten Spot-Link ein. Praktisch, wenn du die App vom Home-Bildschirm öffnest und Links sonst im Browser landen.</div>
       <label class="f">Link oder Code<input class="inp" id="gp-code" maxlength="300" autocomplete="off"></label>${nameField}
       <div class="btns"><button class="btn" data-gp="cancel">Abbrechen</button><button class="btn primary" data-gp="code">Beitreten</button></div>`;
   if(kind === 'name') body = `<h2>Wie heißt du?</h2><div class="muted">So sehen die anderen, von wem ein Spot oder eine Zeit kommt.</div>${nameField}
@@ -2166,6 +2168,10 @@ $('#modal').addEventListener('click', e => {
   const a = b.dataset.gp, err = t => { $('#gp-err').textContent = t; };
   if(a === 'cancel'){ gpPending = null; $('#modal').hidden = true; return; }
   if(a === 'tocode'){ openGroupDlg('code', gpPending.arg); return; }
+  if(a === 'code'){   // eingefügter Spot-Link (z. B. aus WhatsApp, wenn die App vom Home-Bildschirm läuft)
+    const sm = $('#gp-code').value.match(/#spot=([A-Za-z0-9_-]+)/);
+    if(sm){ try{ const o = JSON.parse(b64d(sm[1])); gpPending = null; showIncoming(o); }catch(_){ err('Der Spot-Link ist kaputt.'); } return; }
+  }
   const me_ = ($('#gp-me') && $('#gp-me').value.trim()) || '';
   if(!me_) return err('Gib deinen Namen ein.');
   prefs.myName = me_;
@@ -2306,6 +2312,7 @@ function renderWorkshop(){
   }
   if(!grp()){
     body.innerHTML = `<div class="ws-card"><b>Noch in keiner Gruppe</b><span>Erstell eine Gruppe und schick deinen Freunden den Einladungslink. Oder tritt mit einem Link bei, den du bekommen hast.</span>
+      <span>Tipp: Öffnest du die App vom Home-Bildschirm, kopier den Einladungslink und füg ihn hier über „Mit Link beitreten“ ein. Sonst landet er im Browser statt in der App.</span>
       <div class="btns"><button class="btn" data-wsa="code">Mit Link beitreten</button><button class="btn primary" data-wsa="create">Gruppe erstellen</button></div></div>`;
     return;
   }
@@ -2319,8 +2326,9 @@ function renderWorkshop(){
 }
 function wsSpotsHTML(){
   const list = WS.spots.slice().sort((a, b) => (b.at || 0) - (a.at || 0));
-  if(!list.length) return `<div class="empty"><b>Noch keine Spots geteilt</b>Öffne einen deiner Spots und tippe auf „In den Workshop“.</div>`;
-  return list.map(w => {
+  const paste = `<button class="link ws-paste" data-wsa="code">Geteilten Link einfügen</button>`;
+  if(!list.length) return `<div class="empty"><b>Noch keine Spots geteilt</b>Öffne einen deiner Spots und tippe auf „In den Workshop“.</div>${paste}`;
+  return paste.replace('ws-paste', 'ws-paste top') + list.map(w => {
     const saved = wsSavedAs(w), mine = w.dev === myId(), col = (w.cat && w.cat.color) || '#868e96';
     return `<button class="item" data-ws="${esc(w._id)}"><span class="ic" style="--c:${esc(col)}">${ic((w.cat && w.cat.icon) || 'pin', 16)}</span>
       <span class="tx"><span class="t">${esc(w.name)}</span><span class="s">${mine ? 'von dir' : `von ${esc(w.by || '?')}`}${me ? ` · <span class="me-d">${fmtDist(dist(me, w))}</span>` : ''} · ${ago(w.at || 0)}</span></span>
@@ -2543,7 +2551,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.4';
+const VERSION = '2026.10.04.5';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
