@@ -487,6 +487,7 @@ h2{font-size:23px}
 .me .car{display:none;position:absolute;left:50%;top:50%;width:34px;height:68px;transform:translate(-50%,-50%);filter:drop-shadow(0 4px 5px rgba(0,0,0,.6))}
 body.cockpit .me .car{display:block}
 body.cockpit .me .p,body.cockpit .me .h,body.cockpit .me .d{display:none}
+body.cockpit.car3d .me{visibility:hidden}
 .ghost{width:28px;height:56px;pointer-events:none;opacity:.62;filter:drop-shadow(0 0 6px rgba(191,90,242,.8))}
 .ghost svg{width:28px;height:56px;display:block}
 .ghost-tag{position:absolute;left:50%;top:-20px;transform:translateX(-50%);font:700 10px/1 var(--font);color:#fff;background:rgba(191,90,242,.9);padding:3px 6px;border-radius:7px;white-space:nowrap;letter-spacing:.02em}
@@ -864,7 +865,9 @@ function setSrc(id, fc){
   if(!mapReady){ pendingSrc[id] = fc; return; }
   map.getSource(id)?.setData(fc);
 }
-map.on('load', () => {
+let initDone = false;
+function onMapStyle(){
+  if(initDone) return; initDone = true;
   map.addSource('links', {type:'geojson', data:FC([])});
   map.addSource('draftlink', {type:'geojson', data:FC([])});
   map.addSource('acc', {type:'geojson', data:FC([])});
@@ -906,7 +909,10 @@ map.on('load', () => {
   updateTrackLayers(); drawLive();
   renderMarkers();
   hideSplash();
-});
+}
+map.on('style.load', onMapStyle);
+map.on('load', onMapStyle);
+if(map.isStyleLoaded && map.isStyleLoaded()) onMapStyle();
 map.on('moveend', scheduleMarkers);
 map.on('sourcedata', e => { if(e.sourceId === 'spots' && e.isSourceLoaded && !map.isMoving()) scheduleMarkers(); });
 
@@ -2312,6 +2318,9 @@ function camStep(now, dt){
     meMarker.setLngLat(LL(cam.disp));
     if(cam.bearing != null && (ckOn || meMarker.getElement().classList.contains('dir'))) meMarker.setRotation(cam.bearing);
   }
+  car3d.pos = cam.disp; if(cam.bearing != null) car3d.brg = cam.bearing;
+  if(prefs.terrain && mapReady && map.queryTerrainElevation){ try{ car3d.alt = map.queryTerrainElevation(LL(cam.disp)) || 0; }catch(e){ car3d.alt = 0; } } else car3d.alt = 0;
+  if(!(ckFollow && !userGesture && now > cam.hold) && car3d.ready && mapReady) map.triggerRepaint();
   if(ckFollow && !userGesture && now > cam.hold && mapReady)
     map.jumpTo({center:LL(cam.disp), bearing:cam.bearing != null ? cam.bearing : map.getBearing(), zoom:cam.zoom, pitch:ckUserPitch != null ? ckUserPitch : 55});
   updateGhost();
@@ -2321,6 +2330,7 @@ function enterCockpit(){
   if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
   if(mode || view === 'edit'){ toast('Erst den Spot fertig bearbeiten.'); return; }
   ckOn = true; document.body.classList.add('cockpit');
+  car3d.on = true; car3d.pos = me ? {...me} : null; enableCar3d();
   if(meMarker){ meMarker.setRotationAlignment('map'); meMarker.setPitchAlignment('map'); }
   ck = {start:Date.now(), dist:0, max:0, v:null, h:null, last:null, ts:0};
   ckFollow = true; ckUserZoom = null; $('#ckRecenter').hidden = true;
@@ -2343,6 +2353,7 @@ function exitCockpit(){
   if(nav && nav.active) endNav(true);
   camStop(); hideGhost(); $('#ckLimit').classList.remove('show'); $('#ckSpeed').classList.remove('over');
   ckOn = false; document.body.classList.remove('cockpit');
+  car3d.on = false; document.body.classList.remove('car3d'); if(mapReady) map.triggerRepaint();
   ckTarget = null; updateCourseLayers();
   if(ckWatch != null){ navigator.geolocation.clearWatch(ckWatch); ckWatch = null; }
   clearInterval(ckTick); releaseWake();
@@ -2441,6 +2452,140 @@ function carSVG(kind){
     <path d="M8.6 83.5Q9.2 89 15.2 90.6L15.7 88.6Q11.2 87.6 10.6 83.5ZM39.4 83.5Q38.8 89 32.8 90.6L32.3 88.6Q36.8 87.6 37.4 83.5Z" fill="${ghost ? '#f3e1ff' : '#ff2b2b'}"/>
     <path d="M15.5 85.5Q24 87.6 32.5 85.5" stroke="rgba(255,255,255,.14)" stroke-width=".8" fill="none"/>
   </svg>`;
+}
+
+/* ================= 3D-Auto (three.js, wird erst im Cockpit geladen) ================= */
+/* Prozedurales Coupé-Modell (Meter, vorne = +X, oben = +Y, rechts = +Z) */
+function buildCar(THREE){
+  const g = new THREE.Group();
+  const paint = new THREE.MeshPhysicalMaterial({color:0x111b2e, metalness:.72, roughness:.34, clearcoat:1, clearcoatRoughness:.05, envMapIntensity:1.1});
+  const glass = new THREE.MeshPhysicalMaterial({color:0x020305, metalness:.1, roughness:.03, clearcoat:1, clearcoatRoughness:.02, envMapIntensity:1.4});
+  const black = new THREE.MeshStandardMaterial({color:0x07090c, metalness:.2, roughness:.55});
+  const tire = new THREE.MeshStandardMaterial({color:0x050505, roughness:.92});
+  const rim = new THREE.MeshStandardMaterial({color:0x1d2127, metalness:.9, roughness:.25});
+  const head = new THREE.MeshStandardMaterial({color:0xeaf2ff, emissive:0xdbe8ff, emissiveIntensity:1.6});
+  const tail = new THREE.MeshStandardMaterial({color:0xff2a2a, emissive:0xff1010, emissiveIntensity:1.8});
+
+  const extrude = (pts, width, bevel, mat, tumbleOn) => {
+    const sh = new THREE.Shape(); sh.moveTo(pts[0][0], pts[0][1]);
+    let cx = pts[0][0], cy = pts[0][1];
+    for(let i = 1; i < pts.length; i++){
+      const p = pts[i];
+      if(p.length === 4){ sh.quadraticCurveTo(p[0], p[1], p[2], p[3]); cx = p[2]; cy = p[3]; continue; }
+      const n = Math.max(1, Math.ceil(Math.hypot(p[0] - cx, p[1] - cy) / .12));
+      for(let k = 1; k <= n; k++) sh.lineTo(cx + (p[0] - cx) * k / n, cy + (p[1] - cy) * k / n);
+      cx = p[0]; cy = p[1];
+    }
+    const geo = new THREE.ExtrudeGeometry(sh, {depth:width - 2 * bevel, bevelEnabled:true, bevelThickness:bevel, bevelSize:bevel * .7, bevelSegments:5, curveSegments:18});
+    geo.translate(0, 0, -(width - 2 * bevel) / 2);
+    const pos = geo.attributes.position;
+    for(let i = 0; i < pos.count; i++){
+      const x = pos.getX(i), y = pos.getY(i);
+      const ends = Math.max(0, (Math.abs(x) - 1.55) / .9), taper = 1 - .16 * ends * ends;
+      const tumble = tumbleOn && y > .9 ? 1 - .30 * Math.min(1, (y - .9) / .5) : 1;
+      pos.setZ(i, pos.getZ(i) * taper * tumble);
+    }
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, mat); return m;
+  };
+  // Karosserie (Seitenprofil mit Radläufen)
+  const R = .40, fA = 1.41, rA = -1.40;
+  const body = [
+    [-2.28, .30], [rA - R - .04, .30],
+    [rA - R, .62, rA, .70], [rA + R, .62, rA + R + .04, .30],      // hinterer Radlauf (genähert)
+    [fA - R - .04, .30],
+    [fA - R, .62, fA, .70], [fA + R, .62, fA + R + .04, .30],      // vorderer Radlauf
+    [2.24, .28], [2.36, .36, 2.36, .52], [2.34, .66],              // Bug
+    [2.10, .80], [1.30, .90], [.66, .96],                          // Motorhaube
+    [-1.0, .99], [-1.95, .98], [-2.22, .96, -2.30, .86],           // Gürtellinie + Heckklappe
+    [-2.36, .66], [-2.34, .40, -2.28, .30]
+  ];
+  const b = extrude(body, 1.84, .14, paint); g.add(b);
+  // Glashaus (Fastback)
+  const gh = [[.70, .95], [.02, 1.34], [-.20, 1.39], [-.80, 1.40], [-1.20, 1.31], [-1.98, .99], [.70, .95]];
+  const gm = extrude(gh, 1.56, .12, glass, true); gm.position.y = .005; g.add(gm);
+  // Dach (lackiert)
+  const roof = [[-.02, 1.35], [-.20, 1.405], [-.80, 1.415], [-1.10, 1.36], [-.95, 1.34], [-.15, 1.335]];
+  const rf = extrude(roof, 1.24, .05, paint, true); rf.position.y = .012; g.add(rf);
+  // Außenspiegel
+  [-1, 1].forEach(sd => { const m = new THREE.Mesh(new THREE.BoxGeometry(.22, .11, .14), paint); m.position.set(.50, 1.02, sd * .93); g.add(m); });
+  // Räder
+  const wGeo = new THREE.CylinderGeometry(.34, .34, .24, 36); wGeo.rotateX(Math.PI / 2);
+  const rGeo = new THREE.CylinderGeometry(.24, .24, .245, 24); rGeo.rotateX(Math.PI / 2);
+  [[fA, 1], [fA, -1], [rA, 1], [rA, -1]].forEach(([x, sd]) => {
+    const t = new THREE.Mesh(wGeo, tire); t.position.set(x, .34, sd * .80); g.add(t);
+    const r = new THREE.Mesh(rGeo, rim); r.position.set(x, .34, sd * .81); g.add(r);
+  });
+  // Lichter
+  [-1, 1].forEach(sd => {
+    const hl = new THREE.Mesh(new THREE.BoxGeometry(.10, .06, .40), head); hl.position.set(2.40, .64, sd * .56); hl.rotation.y = sd * -.18; g.add(hl);
+    const tl = new THREE.Mesh(new THREE.BoxGeometry(.06, .08, .44), tail); tl.position.set(-2.44, .80, sd * .56); tl.rotation.y = sd * .12; g.add(tl);
+  });
+  // Lufteinlässe vorne, Diffusor hinten
+  const v = new THREE.Mesh(new THREE.BoxGeometry(.05, .14, 1.10), black); v.position.set(2.44, .42, 0); g.add(v);
+  const d = new THREE.Mesh(new THREE.BoxGeometry(.06, .10, 1.20), black); d.position.set(-2.43, .38, 0); g.add(d);
+  return g;
+}
+function carEnv(THREE, renderer){
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+  const x = c.getContext('2d'), gr = x.createLinearGradient(0, 0, 0, 128);
+  gr.addColorStop(0, '#c9d7f0'); gr.addColorStop(.42, '#6d7f9e'); gr.addColorStop(.5, '#1e2430'); gr.addColorStop(1, '#07080b');
+  x.fillStyle = gr; x.fillRect(0, 0, 256, 128);
+  x.fillStyle = 'rgba(255,255,255,.9)'; x.fillRect(60, 20, 40, 10); x.fillRect(170, 26, 30, 8);
+  const tex = new THREE.CanvasTexture(c); tex.mapping = THREE.EquirectangularReflectionMapping;
+  const pm = new THREE.PMREMGenerator(renderer); const env = pm.fromEquirectangular(tex).texture; pm.dispose(); tex.dispose();
+  return env;
+}
+function carShadow(THREE){
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 8, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(0,0,0,.65)'); gr.addColorStop(.6, 'rgba(0,0,0,.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 2.6), new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c), transparent:true, depthWrite:false}));
+  m.rotation.x = -Math.PI / 2; m.position.y = .02; return m;
+}
+
+const car3d = {on:false, ready:false, loading:false, pos:null, brg:0, alt:0};
+function loadThree(){
+  return new Promise((res, rej) => {
+    if(window.THREE) return res();
+    const sc = document.createElement('script'); sc.src = 'lib/three.min.js'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc);
+  });
+}
+async function enableCar3d(){
+  if(car3d.ready){ document.body.classList.toggle('car3d', car3d.on); return; }
+  if(car3d.loading || !mapReady) return;
+  car3d.loading = true;
+  try{ await loadThree(); addCarLayer(); car3d.ready = true; document.body.classList.toggle('car3d', car3d.on); map.triggerRepaint(); }
+  catch(e){ /* Fallback: flaches Auto-Symbol bleibt */ }
+  car3d.loading = false;
+}
+function addCarLayer(){
+  const THREE = window.THREE;
+  if(THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
+  const rotX = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  map.addLayer({
+    id:'car3d', type:'custom', renderingMode:'3d',
+    onAdd(m, gl){
+      this.camera = new THREE.Camera(); this.scene = new THREE.Scene();
+      this.renderer = new THREE.WebGLRenderer({canvas:m.getCanvas(), context:gl, antialias:true});
+      this.renderer.autoClear = false; this.renderer.outputEncoding = THREE.sRGBEncoding;
+      this.scene.environment = carEnv(THREE, this.renderer);
+      this.scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x202020, .9));
+      const dl = new THREE.DirectionalLight(0xffffff, 1.4); dl.position.set(3, 8, 4); this.scene.add(dl);
+      this.car = buildCar(THREE); this.car.add(carShadow(THREE)); this.scene.add(this.car);
+    },
+    render(gl, matrix){
+      if(!car3d.on || !car3d.pos) return;
+      const ll = car3d.pos, mc = maplibregl.MercatorCoordinate.fromLngLat([ll.lng, ll.lat], car3d.alt || 0);
+      const ppm = 512 * Math.pow(2, map.getZoom()) / (40075016.686 * Math.cos(ll.lat * Math.PI / 180));
+      const sc = mc.meterInMercatorCoordinateUnits() * Math.max(1, 86 / (4.7 * ppm));
+      this.car.rotation.y = (90 - car3d.brg) * Math.PI / 180;
+      const l = new THREE.Matrix4().makeTranslation(mc.x, mc.y, mc.z).scale(new THREE.Vector3(sc, -sc, sc)).multiply(rotX);
+      this.camera.projectionMatrix = new THREE.Matrix4().fromArray(matrix).multiply(l);
+      this.renderer.resetState(); this.renderer.render(this.scene, this.camera);
+    }
+  });
 }
 
 /* ================= Geister-Auto ================= */
