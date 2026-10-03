@@ -813,11 +813,12 @@ const FC = f => ({type:'FeatureCollection', features:f});
 /* ================= Karte (MapLibre) ================= */
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
 const BASES = {
-  sat:{name:'Satellit', url:ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', kb:24, credit:'Bilder © Esri, Maxar, Earthstar Geographics'},
-  street:{name:'Straße', url:'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png', kb:34, credit:'© OpenStreetMap-Mitwirkende · © CARTO'},
-  dark:{name:'Dunkel', url:'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png', kb:22, credit:'© OpenStreetMap-Mitwirkende · © CARTO'},
-  topo:{name:'Gelände', url:ESRI + 'World_Topo_Map/MapServer/tile/{z}/{y}/{x}', kb:26, credit:'Karte © Esri, HERE, Garmin, USGS'}
+  sat:{name:'Satellit', url:ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', kb:24, maxz:19, credit:'Bilder © Esri, Maxar, Earthstar Geographics'},
+  street:{name:'Straße', url:ESRI + 'World_Street_Map/MapServer/tile/{z}/{y}/{x}', kb:20, maxz:19, credit:'Karte © Esri, HERE, Garmin, OpenStreetMap'},
+  dark:{name:'Dunkel', url:ESRI + 'Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', kb:9, maxz:16, credit:'Karte © Esri, HERE, Garmin, OpenStreetMap'},
+  topo:{name:'Gelände', url:ESRI + 'World_Topo_Map/MapServer/tile/{z}/{y}/{x}', kb:26, maxz:19, credit:'Karte © Esri, HERE, Garmin, USGS'}
 };
+const DARK_REF = ESRI + 'Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}';
 const OVERLAYS = [ESRI + 'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', ESRI + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'];
 const map = new maplibregl.Map({
   container:'map',
@@ -825,8 +826,9 @@ const map = new maplibregl.Map({
     version:8,
     sources:{
       sat:{type:'raster', tiles:[ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize:256, maxzoom:19, attribution:'Bilder © Esri, Maxar, Earthstar Geographics'},
-      street:{type:'raster', tiles:[BASES.street.url], tileSize:256, maxzoom:20, attribution:'© OpenStreetMap · © CARTO'},
-      dark:{type:'raster', tiles:[BASES.dark.url], tileSize:256, maxzoom:20, attribution:'© OpenStreetMap · © CARTO'},
+      street:{type:'raster', tiles:[BASES.street.url], tileSize:256, maxzoom:19},
+      dark:{type:'raster', tiles:[BASES.dark.url], tileSize:256, maxzoom:16},
+      darkref:{type:'raster', tiles:[DARK_REF], tileSize:256, maxzoom:16},
       topo:{type:'raster', tiles:[BASES.topo.url], tileSize:256, maxzoom:19, attribution:'© Esri'},
       roads:{type:'raster', tiles:[ESRI + 'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}'], tileSize:256, maxzoom:19},
       places:{type:'raster', tiles:[ESRI + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'], tileSize:256, maxzoom:19},
@@ -838,6 +840,7 @@ const map = new maplibregl.Map({
       {id:'street', type:'raster', source:'street', layout:{visibility:'none'}, paint:{'raster-fade-duration':250}},
       {id:'dark', type:'raster', source:'dark', layout:{visibility:'none'}, paint:{'raster-fade-duration':250}},
       {id:'topo', type:'raster', source:'topo', layout:{visibility:'none'}, paint:{'raster-fade-duration':250}},
+      {id:'darkref', type:'raster', source:'darkref', layout:{visibility:'none'}, paint:{'raster-fade-duration':250}},
       {id:'roads', type:'raster', source:'roads', paint:{'raster-opacity':.7, 'raster-fade-duration':250}},
       {id:'places', type:'raster', source:'places', paint:{'raster-fade-duration':250}}
     ]
@@ -937,9 +940,10 @@ function applyLabels(){
   if(mapReady){
     for(const k of Object.keys(BASES)) map.setLayoutProperty(k, 'visibility', k === base ? 'visible' : 'none');
     for(const l of ['roads','places']) map.setLayoutProperty(l, 'visibility', base === 'sat' && prefs.labels ? 'visible' : 'none');
+    map.setLayoutProperty('darkref', 'visibility', base === 'dark' && prefs.labels ? 'visible' : 'none');
   }
   $('#b-labels').classList.toggle('on', prefs.labels);
-  $('#b-labels').hidden = base !== 'sat';
+  $('#b-labels').hidden = base !== 'sat' && base !== 'dark';
   document.querySelectorAll('[data-base]').forEach(b => b.classList.toggle('on', b.dataset.base === base));
   $('#attrib').textContent = BASES[base].credit + (prefs.terrain ? ' · Höhen © Mapzen' : '') + ' · Daten © OpenStreetMap';
 }
@@ -2544,9 +2548,9 @@ let offDetail = 16, offJob = null, offDelArmed = null;
 const lon2x = (lon, z) => Math.floor((lon + 180) / 360 * 2 ** z);
 const lat2y = (lat, z) => { const r = lat * Math.PI / 180; return Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * 2 ** z); };
 function areaURLs(a){
-  const tpl = [BASES[a.base].url, ...(a.base === 'sat' && a.labels ? OVERLAYS : [])], out = [];
+  const tpl = [BASES[a.base].url, ...(a.labels ? (a.base === 'sat' ? OVERLAYS : a.base === 'dark' ? [DARK_REF] : []) : [])], out = [];
   const [w, sB, e, n] = a.bbox;
-  for(let z = 6; z <= a.maxZ; z++){
+  for(let z = 6; z <= Math.min(a.maxZ, BASES[a.base].maxz || 19); z++){
     const x0 = lon2x(w, z), x1 = lon2x(e, z), y0 = lat2y(n, z), y1 = lat2y(sB, z);
     for(let x = x0; x <= x1; x++) for(let y = y0; y <= y1; y++) for(const t of tpl) out.push(t.replace('{z}', z).replace('{x}', x).replace('{y}', y));
   }
@@ -2554,10 +2558,10 @@ function areaURLs(a){
 }
 function curArea(){
   const b = map.getBounds(), base = BASES[prefs.base] ? prefs.base : 'sat';
-  return {bbox:[b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], maxZ:offDetail, base, labels: base === 'sat' && prefs.labels};
+  return {bbox:[b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], maxZ:offDetail, base, labels:(base === 'sat' || base === 'dark') && prefs.labels};
 }
 function offEstimate(a){
-  const n = areaURLs(a).length, perTile = a.base === 'sat' && a.labels ? (BASES.sat.kb + 2 * 7) / 3 : BASES[a.base].kb;
+  const n = areaURLs(a).length, perTile = a.labels ? (a.base === 'sat' ? (BASES.sat.kb + 2 * 7) / 3 : (BASES[a.base].kb + 6) / 2) : BASES[a.base].kb;
   return {n, mb: n * perTile / 1024};
 }
 const fmtMB = mb => mb < 1 ? `${Math.max(1, Math.round(mb * 1024))} KB` : mb < 100 ? `${mb.toFixed(1).replace('.', ',')} MB` : `${Math.round(mb)} MB`;
