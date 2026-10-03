@@ -2104,19 +2104,9 @@ const NAVI = {
 };
 const navIcon = st => !st ? NAVI.straight : st.type === 'arrive' ? NAVI.arrive : /roundabout|rotary/.test(st.type) ? NAVI.round : (NAVI[st.mod] || NAVI.straight);
 const fmtNav = m => m < 25 ? 'Jetzt' : m < 100 ? `${Math.round(m / 10) * 10} m` : m < 975 ? `${Math.round(m / 50) * 50} m` : m < 10000 ? `${(m / 1000).toFixed(1).replace('.', ',')} km` : `${Math.round(m / 1000)} km`;
-const spokenDist = m => m < 1000 ? `${Math.max(10, Math.round(m / 50) * 50 || Math.round(m / 10) * 10)} Metern` : `${(m / 1000).toFixed(1).replace('.0', '').replace('.', ',')} Kilometern`;
 const fmtDurNav = sec => { const m = Math.max(1, Math.round(sec / 60)); return m < 60 ? `${m} Min` : `${Math.floor(m / 60)} h ${m % 60} Min`; };
 const clock = sec => new Date(Date.now() + sec * 1000).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
 
-function speak(text){
-  if(!nav || nav.mute || !('speechSynthesis' in window) || !text) return;
-  try{
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'de-DE'; u.rate = 1.02;
-    const v = speechSynthesis.getVoices().find(x => /^de/i.test(x.lang)); if(v) u.voice = v;
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
-  }catch(e){}
-}
 function navState(){
   const R = nav.route, prog = nav.prog;
   let i = R.steps.findIndex((st, k) => k > 0 && st.start > prog - 3 && isMan(st));
@@ -2139,7 +2129,7 @@ async function planNav(target, name, walkTo){
   const r = await fetchRoute(here, target);
   if(!r){ toast('Route konnte nicht berechnet werden. Prüfe deine Internetverbindung.'); return; }
   hideToast();
-  nav = {active:false, dest:{lat:target.lat, lng:target.lng}, name, walkTo, route:prepRoute(r), prog:0, off:0, lastReroute:0, said:{}, mute:!!prefs.navMute, arrived:false};
+  nav = {active:false, dest:{lat:target.lat, lng:target.lng}, name, walkTo, route:prepRoute(r), prog:0, off:0, lastReroute:0, arrived:false};
   navPrevOn = true; document.body.classList.add('navprev');
   setSrc('nav-route', routeFC(nav.route.coords));
   renderNavPrev();
@@ -2157,9 +2147,6 @@ function startNav(){
   if(!nav) return;
   navPrevOn = false; document.body.classList.remove('navprev');
   nav.active = true; document.body.classList.add('nav');
-  const s = navState();
-  speak(s.st && s.st.type !== 'arrive' && s.d < 3000 ? `Route gestartet. In ${spokenDist(s.d)} ${low(instr(s.st))}.` : 'Route gestartet. Folge der Straße.');
-  if(s.st) nav.said[s.i + 'f'] = 1;
   enterCockpit();
   if(!ckOn){ endNav(); return; }
   renderNav();
@@ -2170,7 +2157,6 @@ function endNav(fromExit){
   nav = null; navPrevOn = false;
   document.body.classList.remove('nav', 'navprev');
   setSrc('nav-route', FC([]));
-  try{ speechSynthesis.cancel(); }catch(e){}
   if(wasActive && !fromExit && ckOn) exitCockpit();
   if(mobile()) setSnap(snap, false);
 }
@@ -2184,29 +2170,21 @@ function onNavFix(pt, acc){
   if(nav.off >= 3 && Date.now() - nav.lastReroute > 10000){ reroute(pt); return; }
   if(R.L - nav.prog < 30 || dist(pt, nav.dest) < 25){ arrive(); return; }
   setSrc('nav-route', routeFC(remainingCoords(R, nav.prog)));
-  renderNav(); navVoice();
-}
-function navVoice(){
-  const s = navState(); if(!s.st) return;
-  const v = (ck && ck.v) || 0, far = Math.max(350, v * 22), near = Math.max(55, v * 5), k = s.i;
-  const txt = instr(s.st);
-  if(s.d <= near && !nav.said[k + 'n']){ nav.said[k + 'n'] = nav.said[k + 'f'] = 1; speak(txt + (s.then ? `, dann ${low(instr(s.then))}` : '')); }
-  else if(s.d <= far && s.d > near * 2 && !nav.said[k + 'f']){ nav.said[k + 'f'] = 1; speak(`In ${spokenDist(s.d)} ${low(txt)}`); }
+  renderNav();
 }
 async function reroute(pt){
   nav.lastReroute = Date.now(); nav.off = 0;
-  toast('Neue Route wird berechnet …'); speak('Route wird neu berechnet.');
+  toast('Neue Route wird berechnet …');
   const r = await fetchRoute(pt, nav.dest);
   if(!nav || !nav.active) return;
   if(!r){ toast('Neue Route gerade nicht verfügbar.'); return; }
-  nav.route = prepRoute(r); nav.prog = 0; nav.said = {};
+  nav.route = prepRoute(r); nav.prog = 0;
   setSrc('nav-route', routeFC(nav.route.coords)); renderNav();
 }
 function arrive(){
   nav.arrived = true;
   setSrc('nav-route', FC([]));
   const walk = nav.walkTo ? dist(nav.dest, nav.walkTo) : 0;
-  speak(walk ? `Parkplatz erreicht. Ab hier zu Fuß, etwa ${walkMin(walk)} Minuten.` : 'Du hast dein Ziel erreicht.');
   renderNav();
 }
 function renderNav(){
@@ -2223,7 +2201,6 @@ function renderNav(){
   const html = `<span class="mi">${svg(navIcon(s.st), 32, 2.4)}</span><div class="tx"><div class="md">${fmtNav(s.d)}</div><div class="mt">${esc(instr(s.st))}</div>${thenHTML}</div>`;
   if(top._h !== html){ top.innerHTML = html; top._h = html; }
   const bh = `<div class="eta"><b>${clock(s.remTime)}</b><span>${fmtDurNav(s.remTime)} · ${fmtNav(s.remDist).replace('Jetzt', '0 m')}</span></div>
-    <button class="nbtn" data-nav="mute" aria-label="${nav.mute ? 'Ton an' : 'Ton aus'}">${svg(nav.mute ? UI.spkOff : UI.spkOn, 20)}</button>
     <button class="nbtn end" data-nav="end" aria-label="Navigation beenden">${svg(UI.close, 18, 2.6)}</button>`;
   if(bot._h !== bh){ bot.innerHTML = bh; bot._h = bh; }
 }
@@ -2233,7 +2210,6 @@ document.addEventListener('click', e => {
   if(a === 'go') startNav();
   if(a === 'cancel') endNav();
   if(a === 'end') endNav();
-  if(a === 'mute' && nav){ nav.mute = !nav.mute; prefs.navMute = nav.mute; savePrefs(); if(nav.mute) try{ speechSynthesis.cancel(); }catch(e){} renderNav(); }
 });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && navPrevOn) endNav(); });
 setInterval(() => { if(nav && nav.active && !nav.arrived) renderNav(); }, 15000);
