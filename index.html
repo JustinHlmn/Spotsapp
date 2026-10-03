@@ -17,6 +17,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="lib/maplibre-gl.css">
 <style>
+@font-face{font-family:"Grenze Gotisch";font-weight:800;font-style:normal;font-display:swap;src:url(lib/fonts/grenze-gotisch-latin-800-normal.woff2) format("woff2")}
+@font-face{font-family:"Grenze Gotisch";font-weight:900;font-style:normal;font-display:swap;src:url(lib/fonts/grenze-gotisch-latin-900-normal.woff2) format("woff2")}
 /* Layout: Vollbild-Satellitenkarte, dunkles Glas-Interface. Panel links (Handy: ziehbares Sheet), Steuerung rechts. Bewusst nur ein dunkles Theme. */
 :root{
   --page:#090b0e; --glass:rgba(16,18,23,.76); --glass-strong:rgba(14,16,20,.92);
@@ -136,6 +138,11 @@ body.cockpit #ckRecenter:not([hidden]){display:inline-flex}
 .pf-scale{width:100%;display:flex;justify-content:space-between;font-size:12px;color:#9d9da6;font-variant-numeric:tabular-nums;margin-top:-8px}
 .pf-time{font-size:52px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1}
 .pf-time.done{color:#30d158}
+.pf-g{display:flex;gap:26px;justify-content:center;min-height:44px;font-variant-numeric:tabular-nums}
+.pf-g div{display:flex;flex-direction:column;align-items:center;gap:2px}
+.pf-g b{font-size:24px;font-weight:800;color:#fff;line-height:1}
+.pf-g span{font-size:12px;color:#9d9da6;font-weight:600}
+.pf-g .live b{color:#9d9da6}
 .pf-time.fail{color:#ff453a}
 .pf-msg{font-size:15px;color:#c7c7cc;text-align:center;min-height:1.4em;text-wrap:balance}
 .pf-msg b{color:#fff}
@@ -660,6 +667,76 @@ body.replay #rpTop{display:flex}
 .rp-car svg{width:34px;height:68px;display:block;filter:drop-shadow(0 4px 5px rgba(0,0,0,.6))}
 body.car3d .rp-car{visibility:hidden}
 
+/* ---------- Risk ---------- */
+.rk-pill{margin-left:auto;flex:none;min-width:34px;height:24px;padding:0 8px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--lv);background:color-mix(in srgb,var(--lv) 15%,transparent)}
+.rk{background:var(--solid);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.rk-top{display:flex;align-items:center;gap:12px}
+.rk-s{display:flex;flex-direction:column;align-items:center;justify-content:center;width:64px;height:64px;border-radius:18px;background:color-mix(in srgb,var(--lv) 14%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--lv) 55%,transparent);flex:none}
+.rk-s b{font-size:26px;font-weight:800;line-height:1;color:var(--lv);font-variant-numeric:tabular-nums}
+.rk-s span{font-size:10.5px;font-weight:700;color:var(--muted);margin-top:2px}
+.rk-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rk-t b{font-size:17px;font-weight:700}
+.rk-t span{font-size:12.5px;color:var(--muted)}
+.rk-go{flex:none;border:0;height:34px;padding:0 12px;border-radius:12px;background:#0a0405;color:#ff3b4e;font:800 15px/1 "Grenze Gotisch",serif;letter-spacing:.01em;box-shadow:inset 0 0 0 1px rgba(227,18,44,.5)}
+.rk-bar{height:8px;border-radius:4px;background:var(--fill);overflow:hidden}
+.rk-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#30d158,#ffd60a 40%,#ff9f0a 60%,#ff3b30 80%,#ff2d55)}
+.rk-why{display:flex;flex-wrap:wrap;gap:6px}
+.rk-why span{font-size:12px;padding:4px 9px;border-radius:9px;background:var(--fill);color:var(--fg)}
+
+/* ---------- Death List ---------- */
+.dl-entry{position:relative;display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;border:0;margin:2px 0 10px;padding:14px 16px 13px;border-radius:18px;color:#efe7dc;overflow:hidden;
+  background:radial-gradient(120% 140% at 100% 0%,rgba(227,18,44,.42),transparent 55%),#060203;box-shadow:inset 0 0 0 1px rgba(227,18,44,.45),0 12px 30px -14px rgba(227,18,44,.6)}
+.dl-entry .t{font:900 34px/0.9 "Grenze Gotisch",serif;letter-spacing:-.005em;text-shadow:0 0 18px rgba(227,18,44,.6)}
+.dl-entry .s{font-size:12.5px;color:#a39893;display:flex;gap:10px;flex-wrap:wrap}
+.dl-entry .s b{color:#ff3b4e;font-weight:800}
+.dl-entry svg{position:absolute;right:-4px;top:12px;width:46%;height:34px;opacity:.85}
+.dl-entry svg path{fill:none;stroke:#e3122c;stroke-width:2;stroke-linejoin:round;filter:drop-shadow(0 0 4px rgba(227,18,44,.9))}
+#death{position:fixed;inset:0;z-index:62;color:#efe7dc;overflow-y:auto;overscroll-behavior:contain;color-scheme:dark;-webkit-font-smoothing:antialiased;
+  background:radial-gradient(100% 46% at 50% -8%,rgba(227,18,44,.34),transparent 62%),radial-gradient(70% 40% at 110% 105%,rgba(110,0,18,.32),transparent 70%),#000;
+  padding:calc(10px + env(safe-area-inset-top,0px)) 18px calc(30px + env(safe-area-inset-bottom,0px));animation:fadein .25s}
+.dl-wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.dl-bar{display:flex;justify-content:space-between;align-items:center}
+.dl-tag{font-weight:700;font-size:14px;color:#e3122c}
+.dl-x{width:38px;height:38px;border-radius:50%;border:0;background:rgba(239,231,220,.08);color:#efe7dc;display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(239,231,220,.14)}
+.dl-head h1{font:900 clamp(66px,20vw,112px)/.84 "Grenze Gotisch",serif;letter-spacing:-.01em;margin:4px 0 0;color:#efe7dc;text-shadow:0 0 30px rgba(227,18,44,.6),0 0 2px rgba(255,59,78,.9)}
+.dl-pulse{display:block;width:100%;height:48px;overflow:visible;margin-top:-2px}
+.dl-pulse path{fill:none;stroke:#e3122c;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 6px rgba(227,18,44,.95));stroke-dasharray:900;stroke-dashoffset:900;animation:dlbeat 1.6s .2s cubic-bezier(.45,0,.2,1) forwards}
+@keyframes dlbeat{to{stroke-dashoffset:0}}
+.dl-head p{margin:4px 0 0;color:#a39893;font-size:14px;line-height:1.5;max-width:46ch}
+.dl-list{display:flex;flex-direction:column}
+.dl-row{display:grid;grid-template-columns:42px 1fr auto;gap:14px;align-items:start;width:100%;text-align:left;border:0;border-top:1px solid rgba(239,231,220,.09);background:none;color:inherit;padding:16px 2px}
+.dl-row.hero{border:0;border-radius:22px;padding:18px 16px 16px;margin-bottom:8px;background:radial-gradient(130% 90% at 0% 0%,rgba(227,18,44,.24),transparent 60%),#090304;box-shadow:inset 0 0 0 1px rgba(227,18,44,.55),0 24px 60px -24px rgba(227,18,44,.65)}
+.dl-row.hero+.dl-row{border-top:0}
+.dl-rank{font:900 46px/.82 "Grenze Gotisch",serif;color:#e3122c;text-align:center;font-variant-numeric:lining-nums}
+.dl-row.hero .dl-rank{font-size:78px;text-shadow:0 0 24px rgba(227,18,44,.75)}
+.dl-body{display:flex;flex-direction:column;gap:5px;min-width:0}
+.dl-place{font-size:16px;font-weight:700;color:#efe7dc;overflow-wrap:anywhere;line-height:1.25}
+.dl-row.hero .dl-place{font-size:20px}
+.dl-when{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;color:#857b77;font-variant-numeric:tabular-nums}
+.dl-verdict{font:800 19px/1.05 "Grenze Gotisch",serif;color:#ff3b4e;margin-top:2px;letter-spacing:.005em}
+.dl-row.hero .dl-verdict{font-size:24px}
+.dl-ecg{width:100%;height:26px;display:block;overflow:visible;margin:2px 0}
+.dl-row.hero .dl-ecg{height:46px;margin:6px 0 4px}
+.dl-ecg path{fill:none;stroke:var(--lv);stroke-width:1.6;vector-effect:non-scaling-stroke;stroke-linejoin:round;filter:drop-shadow(0 0 3px var(--lv))}
+.dl-facts{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:12.5px;color:#a39893}
+.dl-facts b{color:#efe7dc;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;margin-right:3px}
+.dl-wi{display:flex;flex-direction:column;gap:10px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(227,18,44,.22)}
+.dl-wi div{display:flex;flex-direction:column;gap:2px}
+.dl-wi b{font-size:15px;font-weight:800;color:#ff5c6c}
+.dl-wi span{font-size:13px;color:#c9bfb8;line-height:1.45}
+.dl-row:not(.hero) .dl-wi{border-top:0;padding-top:0;margin-top:4px;gap:6px}
+.dl-row:not(.hero) .dl-wi b{font-size:13.5px}
+.dl-row:not(.hero) .dl-wi span{font-size:12.5px;color:#a39893}
+.dl-score{display:flex;flex-direction:column;align-items:flex-end;min-width:54px}
+.dl-score b{font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:var(--lv);text-shadow:0 0 18px color-mix(in srgb,var(--lv) 60%,transparent)}
+.dl-row.hero .dl-score b{font-size:54px}
+.dl-score span{font-size:11.5px;color:#857b77;margin-top:3px}
+.dl-score em{font-style:normal;font-size:12px;font-weight:700;color:var(--lv);margin-top:3px;white-space:nowrap}
+.dl-empty{border-radius:18px;padding:22px;color:#a39893;line-height:1.5;box-shadow:inset 0 0 0 1px rgba(239,231,220,.14)}
+.dl-empty b{display:block;color:#efe7dc;font-size:16px;margin-bottom:4px}
+.dl-foot{color:#6a605d;font-size:12px;line-height:1.5;text-align:center;margin:4px auto 0;max-width:48ch}
+@media (max-width:420px){.dl-row{grid-template-columns:34px 1fr auto;gap:10px}.dl-rank{font-size:40px}.dl-row.hero .dl-rank{font-size:62px}.dl-row.hero .dl-score b{font-size:44px}}
+
 /* ---------- Einstellungen ---------- */
 .set-sec{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px 4px 0}
 .set-card{background:var(--solid);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column}
@@ -766,12 +843,25 @@ body.car3d .rp-car{visibility:hidden}
       <div class="pf-bar"><i id="pfBar"></i></div>
       <div class="pf-scale"><span id="pfFromL">0</span><span id="pfToL">100</span></div>
       <div class="pf-time" id="pfTime">0,00 s</div>
+      <div class="pf-g" id="pfG"></div>
       <div class="pf-msg" id="pfMsg">Wähle eine Messung und tippe auf Start.</div>
     </div>
     <button class="pf-go" id="pfGo">Messung starten</button>
     <div class="pf-h"><span>Bisherige Messungen</span><button id="pfClear">Verlauf löschen</button></div>
     <div class="pf-list" id="pfList"></div>
     <div class="pf-safe">Nur auf abgesperrter Strecke oder wo es erlaubt ist. Handy in die Halterung, Augen auf die Straße – die Messung läuft von selbst.</div>
+  </div>
+</div>
+<div id="death" hidden role="dialog" aria-modal="true" aria-label="Death List">
+  <div class="dl-wrap">
+    <div class="dl-bar"><span class="dl-tag">#deathlist</span><button class="dl-x" data-dl="close" aria-label="Schließen"></button></div>
+    <header class="dl-head">
+      <h1>Death List</h1>
+      <svg class="dl-pulse" viewBox="0 0 400 56" preserveAspectRatio="none" aria-hidden="true"><path d="M0 32H96l8-4 6 4h20l7 0 8-24 10 44 9-34 6 14h22l6-6 7 6H400"/></svg>
+      <p>Deine zehn riskantesten Fahrten. Bewertet nach Tempo, G-Kräften, harten Manövern und wie du im Vergleich zu früheren Fahrten unterwegs warst.</p>
+    </header>
+    <div id="dlList" class="dl-list"></div>
+    <p class="dl-foot">Risk-Score 0–100. „Was wäre wenn“ ist Physik-Schätzung: 1 s Reaktion, trockene Straße, Reifen bis etwa 1 G, Auto rund 1,5 t. Alles bleibt auf diesem Gerät.</p>
   </div>
 </div>
 <div id="attrib">Bilder © Esri, Maxar, Earthstar Geographics · Höhen © Mapzen</div>
@@ -1871,7 +1961,7 @@ function closeCats(){ $('#modal').hidden = true; refreshAll(); if(view === 'deta
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#modal').hidden) closeCats(); });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04';
+const VERSION = '2026.10.04.2';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -2129,7 +2219,9 @@ try{ tracks = JSON.parse(localStorage.getItem(TKEY) || '[]'); if(!Array.isArray(
 let rec = null, recWatch = null, recTick = null, wake = null, followMe = true, lastPersist = 0;
 let tab = 'spots', selTrack = null, trackRenaming = false, trackDelArmed = false, discardArmed = false;
 
+let riskCache = new WeakMap();
 function saveTracks(){
+  riskCache = new WeakMap();
   try{ localStorage.setItem(TKEY, JSON.stringify(tracks)); return true; }
   catch(e){ toast('Speicher voll. Exportiere deine Daten und lösche alte Strecken.'); return false; }
 }
@@ -2346,6 +2438,7 @@ $('#trackSaveView').addEventListener('click', e => {
     if(!saveTracks()){ tracks.shift(); return; }
     rec = null; persistRec(true); drawLive(); renderTracksHead();
     renderList(); openTrack(t.id, false);
+    fetchPlace(t);
     const found = scanTrack(t);
     toast(found.length ? `Strecke gespeichert · ${found.length} neue Zeit${found.length > 1 ? 'en' : ''} auf Rennstrecken` : 'Strecke gespeichert');
   } else {
@@ -2397,7 +2490,7 @@ function renderStats(){
       <div class="empty"><b>Noch keine Fahrten</b>Zeichne eine Fahrt auf, dann füllt sich die Statistik von selbst.</div></div>`;
     return;
   }
-  body.innerHTML = `<div class="st">
+  body.innerHTML = `<div class="st">${dlEntryHTML()}
     <div class="st-tiles">
       <div class="st-tile"><b>${fmtKmS(tot)}</b><span>gesamt gefahren</span></div>
       <div class="st-tile"><b>${tracks.length}</b><span>Fahrt${tracks.length === 1 ? '' : 'en'} · ${fmtDurLong(dur)}</span></div>
@@ -2431,7 +2524,7 @@ function renderTrackList(){
   if(sub === 'stats') return renderStats();
   const body = $('#listBody');
   if(!tracks.length){ body.innerHTML = `<div class="empty"><b>Noch keine Strecken</b>Tippe auf „Aufzeichnung starten“ und los geht’s.</div>`; return; }
-  body.innerHTML = tracks.map(t => `<button class="item" data-track="${t.id}"><span class="ic" style="--c:#ff9f0a">${svg(UI.route, 16)}</span><span class="tx"><span class="t">${esc(t.name)}</span><span class="s">${fmtKm(t.dist)} · ${fmtDurLong(t.dur)} · ${fmtDate(t.created)}</span></span></button>`).join('');
+  body.innerHTML = dlEntryHTML() + tracks.map(t => { const r = trackRisk(t); return `<button class="item" data-track="${t.id}"><span class="ic" style="--c:#ff9f0a">${svg(UI.route, 16)}</span><span class="tx"><span class="t">${esc(t.name)}</span><span class="s">${fmtKm(t.dist)} · ${fmtDurLong(t.dur)} · ${fmtDate(t.created)}</span></span>${r ? `<span class="rk-pill" style="--lv:${r.lv.col}">${r.score}</span>` : ''}</button>`; }).join('');
 }
 $('#listBody').addEventListener('click', e => { const b = e.target.closest('[data-track]'); if(b) openTrack(b.dataset.track, true); });
 function fitTrack(segs){
@@ -2463,6 +2556,7 @@ function renderTrackView(){
         <div><b>${fmtSpd(avg)}</b><span>Ø Tempo</span></div>
         <div><b>${fmtSpd(t.maxSpd || 0)}</b><span>Max. Tempo</span></div>
       </div>
+      ${riskCardHTML(t)}
       ${analyzeTrack(t) ? `<button class="btn primary" data-tv="replay">${svg(UI.play, 15)} Fahrt abspielen</button>` : ''}
       ${tvDetailsHTML(t)}
       <button class="btn" data-tv="course">${svg(ICONS.flag,15)} Als Rennstrecke speichern</button>
@@ -2535,12 +2629,13 @@ function analyzeTrack(t){
   let iLat = 0, iBr = 0, iAc = 0;
   P.forEach((p, k) => { if(Math.abs(p.glat) > Math.abs(P[iLat].glat)) iLat = k; if(p.glon < P[iBr].glon) iBr = k; if(p.glon > P[iAc].glon) iAc = k; });
   const at = k => [P[k].lng, P[k].lat];
-  const gx = {src:gSrc, lat:{v:P[iLat].glat, at:at(iLat)}, brake:{v:Math.max(0, -P[iBr].glon), at:at(iBr)}, acc:{v:Math.max(0, P[iAc].glon), at:at(iAc)}};
+  const gx = {src:gSrc, lat:{v:P[iLat].glat, at:at(iLat), kmh:P[iLat].v}, brake:{v:Math.max(0, -P[iBr].glon), at:at(iBr), kmh:P[iBr].v}, acc:{v:Math.max(0, P[iAc].glon), at:at(iAc), kmh:P[iAc].v}};
   if(t.g){   // Spitzenwerte vom Sensor während der Fahrt (genauer)
     gx.src = 'sensor';
-    if(t.g.lat) gx.lat = {v:t.g.lat, at:t.g.latAt || gx.lat.at};
-    if(t.g.brake) gx.brake = {v:t.g.brake, at:t.g.brakeAt || gx.brake.at};
-    if(t.g.acc) gx.acc = {v:t.g.acc, at:t.g.accAt || gx.acc.at};
+    const vNear = ll => { if(!ll) return null; let b = null, bd = Infinity; for(const p of P){ const dd = Math.abs(p.lat - ll[1]) + Math.abs(p.lng - ll[0]); if(dd < bd){ bd = dd; b = p; } } return b ? b.v : null; };
+    if(t.g.lat) gx.lat = {v:t.g.lat, at:t.g.latAt || gx.lat.at, kmh:vNear(t.g.latAt) ?? gx.lat.kmh};
+    if(t.g.brake) gx.brake = {v:t.g.brake, at:t.g.brakeAt || gx.brake.at, kmh:vNear(t.g.brakeAt) ?? gx.brake.kmh};
+    if(t.g.acc) gx.acc = {v:t.g.acc, at:t.g.accAt || gx.acc.at, kmh:vNear(t.g.accAt) ?? gx.acc.kmh};
   }
   const vs = P.map(p => p.v).sort((a, b) => a - b), pc = q => vs[Math.min(vs.length - 1, Math.floor(q * vs.length))];
   const lo = pc(.05), hi = Math.max(pc(.95), lo + 5);
@@ -2568,6 +2663,7 @@ function analyzeTrack(t){
   anCache.set(t, an); return an;
 }
 const fmtG = x => `${(+x || 0).toFixed(2).replace('.', ',')} G`;
+const fmtGn = x => (+x || 0).toFixed(2).replace('.', ',');
 const fmtLen = m => m < 1000 ? `${m} m` : `${String(m / 1000).replace('.', ',')} km`;
 const fmtKm1 = m => (m / 1000).toFixed(m < 10000 ? 1 : 0).replace('.', ',');
 function tvGeom(an){
@@ -2862,6 +2958,163 @@ function updateCockpitUI(){
   }
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && ckOn) exitCockpit(); });
+
+/* ================= Risk-Indikator ================= */
+const RISK_LV = [[85, 'Kritisch', '#ff2d55'], [70, 'Gefährlich', '#ff3b30'], [50, 'Riskant', '#ff9f0a'], [30, 'Sportlich', '#ffd60a'], [0, 'Entspannt', '#30d158']];
+const riskLevel = s => { const l = RISK_LV.find(x => s >= x[0]); return {name:l[1], col:l[2]}; };
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const baseCache = new WeakMap();
+function trackBase(t){
+  if(baseCache.has(t)) return baseCache.get(t);
+  const an = analyzeTrack(t); let b = null;
+  if(an){
+    const vs = an.P.map(p => p.v).sort((x, y) => x - y), dur = an.P[an.P.length - 1].ta || 1;
+    b = {p95:vs[Math.floor(.95 * (vs.length - 1))], avg:an.D / dur * 3.6, s:an.P[0], e:an.P[an.P.length - 1], D:an.D, dur};
+  }
+  baseCache.set(t, b); return b;
+}
+function trackRisk(t){
+  if(riskCache.has(t)) return riskCache.get(t);
+  const an = analyzeTrack(t), b = trackBase(t);
+  if(!an || !b || an.D < 500){ riskCache.set(t, null); return null; }
+  const P = an.P; let tHigh = 0, ev = 0, lastEv = -1e9;
+  for(let k = 1; k < P.length; k++){
+    const p = P[k], q = P[k - 1];
+    if(p.si === q.si && (p.v + q.v) / 2 > 130) tHigh += p.ta - q.ta;
+    if((Math.abs(p.glon) > .35 || Math.abs(p.glat) > .4) && p.ta - lastEv > 5){ ev++; lastEv = p.ta; }
+  }
+  const fHigh = tHigh / b.dur, evPer10 = ev / Math.max(1, an.D / 10000);
+  const brake = an.g.brake.v, acc = an.g.acc.v, lat = Math.abs(an.g.lat.v);
+  // Vergleich mit früheren Fahrten: gleiche Strecke (Start + Ziel), sonst deine üblichen Fahrten
+  const prev = tracks.filter(x => x !== t && x.created < t.created).map(trackBase).filter(Boolean);
+  const same = prev.filter(x => dist(x.s, b.s) < 400 && dist(x.e, b.e) < 400);
+  const pct = r => r >= 1 ? `${Math.round((r - 1) * 100)} % schneller` : `${Math.round((1 - r) * 100)} % langsamer`;
+  let ratio = 1, cmpTxt = 'Erste Fahrt zum Vergleich';
+  if(same.length){ ratio = b.avg / (same.reduce((a, x) => a + x.avg, 0) / same.length); cmpTxt = `${pct(ratio)} als sonst auf dieser Strecke`; }
+  else if(prev.length >= 2){ const ps = prev.map(x => x.p95).sort((x, y) => x - y); ratio = b.p95 / ps[Math.floor(ps.length / 2)]; cmpTxt = `${pct(ratio)} als deine üblichen Fahrten`; }
+  const F = [
+    {w:.18, c:clamp01((b.p95 - 80) / 120), t:`Top-Tempo ${Math.round(b.p95)} km/h`},
+    {w:.10, c:clamp01((b.avg - 50) / 90), t:`Ø ${Math.round(b.avg)} km/h`},
+    {w:.12, c:clamp01(fHigh / .4), t:`${Math.round(fHigh * 100)} % der Zeit über 130`},
+    {w:.15, c:clamp01((brake - .3) / .6), t:`Bremsung ${fmtG(brake)}`},
+    {w:.08, c:clamp01((acc - .2) / .4), t:`Beschleunigung ${fmtG(acc)}`},
+    {w:.15, c:clamp01((lat - .3) / .6), t:`Querkraft ${fmtG(lat)}`},
+    {w:.12, c:clamp01(evPer10 / 6), t:`${ev} harte${ev === 1 ? 's' : ''} Manöver`},
+    {w:.10, c:clamp01((ratio - 1) / .3), t:cmpTxt},
+  ];
+  const score = Math.round(100 * F.reduce((a, x) => a + x.w * x.c, 0));
+  const r = {score, lv:riskLevel(score), F, cmpTxt, ratio, top:Math.max((t.maxSpd || 0) * 3.6, b.p95), avg:b.avg, brake, lat, acc, ev, an,
+             why:F.filter(x => x.c > .05).sort((x, y) => y.w * y.c - x.w * x.c)};
+  riskCache.set(t, r); return r;
+}
+function riskRank(t){ const i = deathTop().findIndex(x => x.t === t); return i >= 0 ? i + 1 : 0; }
+const VERDICTS = [[85, 'Das war knapper, als du denkst.'], [70, 'Hier hat nicht viel gefehlt.'], [50, 'Am Limit gekratzt.'], [30, 'Sportlich, aber mit Luft.'], [0, 'Ganz entspannt.']];
+const verdict = s => VERDICTS.find(x => s >= x[0])[1];
+// „Was wäre wenn" – Physik, vereinfacht: 1 s Reaktion, ~0,9 G Vollbremsung, Haftgrenze ~1 G (trocken) / ~0,6 G (nass), 1,5 t
+function riskStory(r){
+  const v = r.top / 3.6, L = [], kmh = Math.round(r.top);
+  const react = v, brakeD = v * v / (2 * 9), stop = react + brakeD, fall = v * v / 19.62, mj = .5 * 1500 * v * v / 1e6;
+  if(r.lat > .3){
+    const more = Math.round((Math.sqrt(1 / r.lat) - 1) * 100), vc = r.an.g.lat.kmh, vWet = vc ? vc * Math.sqrt(.6 / r.lat) : 0;
+    L.push({h:`${Math.max(0, Math.round((1 - r.lat) * 100))} % Grip-Reserve`, t:`In deiner schärfsten ${r.an.g.lat.v >= 0 ? 'Rechts' : 'Links'}kurve lagen ${fmtG(r.lat)} an. Reifen halten auf trockener Straße etwa 1 G. ${more > 0 ? `${more} % mehr Tempo, und sie hätten losgelassen.` : 'Du warst an der Haftgrenze.'}${r.lat > .6 && vc > vWet + 3 ? ` Bei Regen wäre schon bei ${Math.round(vWet)} km/h Schluss gewesen. Du warst mit ${Math.round(vc)} km/h drin.` : ''}`});
+  }
+  L.push({h:`${Math.round(stop)} m bis zum Stillstand`, t:`Aus ${kmh} km/h: ${Math.round(react)} m fährst du allein in der Schrecksekunde, bevor die Bremse überhaupt packt.${stop > 105 ? ` Zusammen ${(stop / 105).toFixed(1).replace('.', ',')} Fußballfelder.` : ''}`});
+  L.push({h:`Wie ein Sturz aus ${Math.round(fall)} m`, t:`So viel Wucht hätte ein Aufprall mit ${kmh} km/h. Das ist ungefähr das ${Math.max(1, Math.round(fall / 3))}. Stockwerk.`});
+  if(r.brake > .4) L.push({h:`${Math.max(0, Math.round((1 - r.brake) * 100))} % Brems-Reserve`, t:`Deine härteste Bremsung: ${fmtG(r.brake)}${r.an.g.brake.kmh ? ` bei ${Math.round(r.an.g.brake.kmh)} km/h` : ''}. Viel mehr als 1 G gibt kein Reifen her.`});
+  L.push({h:`${mj.toFixed(1).replace('.', ',')} Megajoule`, t:`Bewegungsenergie bei Top-Tempo, so viel wie ${(mj / 4.184).toFixed(1).replace('.', ',')} kg TNT.`});
+  return L;
+}
+function riskCardHTML(t){
+  const r = trackRisk(t); if(!r) return '';
+  const rank = riskRank(t);
+  return `<div class="rk" style="--lv:${r.lv.col}">
+    <div class="rk-top"><div class="rk-s"><b>${r.score}</b><span>Risk</span></div>
+      <div class="rk-t"><b>${r.lv.name}</b><span>${rank ? `Platz ${rank} auf der Death List` : 'Nicht in den Top 10'}</span></div>
+      <button class="rk-go" data-dl-open-list>Death List</button></div>
+    <div class="rk-bar"><i style="width:${Math.max(3, r.score)}%;background-size:${(10000 / Math.max(3, r.score)).toFixed(1)}% 100%"></i></div>
+    ${r.why.length ? `<div class="rk-why">${r.why.slice(0, 4).map(x => `<span>${esc(x.t)}</span>`).join('')}</div>` : ''}
+  </div>`;
+}
+
+/* ================= Death List ================= */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function deathTop(){ return tracks.map(t => ({t, r:trackRisk(t)})).filter(x => x.r).sort((a, b) => b.r.score - a.r.score).slice(0, 10); }
+function placeTxt(t){ const p = t.place; if(!p) return null; return p.a && p.b && p.a !== p.b ? `${p.a} → ${p.b}` : (p.a || p.b || null); }
+const DL_PULSE = '<path d="M0 22H40l5-3 4 3h14l5-17 6 28 6-22 4 11H120"/>';
+function dlEntryHTML(){
+  const top = deathTop(); if(!top.length) return '';
+  const x = top[0];
+  return `<button class="dl-entry" data-dl-open-list aria-label="Death List öffnen"><svg viewBox="0 0 120 34" preserveAspectRatio="none" aria-hidden="true">${DL_PULSE}</svg>
+    <span class="t">Death List</span><span class="s"><span>Platz 1: ${esc(placeTxt(x.t) || x.t.name)}</span><span>Risk <b>${x.r.score}</b></span></span></button>`;
+}
+function ecgPath(an, w, h, vmax){
+  const pts = an.prof.filter((_, i) => i % 3 === 0);
+  return pts.map((p, i) => `${i ? 'L' : 'M'}${(i / (pts.length - 1) * w).toFixed(1)} ${(h - 2 - p[1] / vmax * (h - 4)).toFixed(1)}`).join('');
+}
+function openDeath(){
+  if(rp) return;
+  $('#death').hidden = false; $('#death').scrollTop = 0;
+  const p = $('#death .dl-pulse path'); if(p){ p.style.animation = 'none'; void p.getBoundingClientRect(); p.style.animation = ''; }
+  renderDeath(); dlPlaces();
+}
+function closeDeath(){ $('#death').hidden = true; }
+function renderDeath(){
+  const top = deathTop(), list = $('#dlList');
+  if(!top.length){ list.innerHTML = `<div class="dl-empty"><b>Noch leer</b>Zeichne Fahrten auf. Ab 500 m bekommt jede Fahrt einen Risk-Score, die zehn höchsten landen hier.</div>`; return; }
+  const vmax = Math.max(100, ...top.map(x => x.r.top));
+  list.innerHTML = top.map((x, i) => {
+    const t = x.t, r = x.r, d = new Date(t.created), hero = i === 0, h = hero ? 46 : 26;
+    const story = riskStory(r).slice(0, hero ? 5 : 1);
+    return `<button class="dl-row${hero ? ' hero' : ''}" data-dl-open="${t.id}" style="--lv:${r.lv.col}">
+      <span class="dl-rank">${i + 1}</span>
+      <span class="dl-body">
+        <span class="dl-place">${esc(placeTxt(t) || t.name)}</span>
+        <span class="dl-when"><span>${d.toLocaleDateString('de-DE', {weekday:'short', day:'numeric', month:'short', year:'numeric'})}</span><span>${d.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} Uhr</span><span>${fmtKmS(t.dist)}</span></span>
+        ${hero || r.score >= 50 ? `<span class="dl-verdict">${verdict(r.score)}</span>` : ''}
+        <svg class="dl-ecg" viewBox="0 0 200 ${h}" preserveAspectRatio="none" aria-hidden="true"><path d="${ecgPath(r.an, 200, h, vmax)}"/></svg>
+        ${hero ? `<span class="dl-facts"><span><b>${Math.round(r.top)}</b>km/h top</span><span><b>${fmtGn(r.brake)}</b>G Bremsen</span><span><b>${fmtGn(r.lat)}</b>G quer</span><span><b>${r.ev}</b>harte Manöver</span></span>
+          <span class="dl-facts"><span>${esc(r.cmpTxt)}</span></span>` : ''}
+        <span class="dl-wi">${story.map(s => `<div><b>${esc(s.h)}</b><span>${esc(s.t)}</span></div>`).join('')}</span>
+      </span>
+      <span class="dl-score"><b>${r.score}</b><span>Risk</span><em>${r.lv.name}</em></span>
+    </button>`;
+  }).join('');
+}
+async function reverseName(p){
+  try{
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&accept-language=de&lat=${p.lat.toFixed(5)}&lon=${p.lng.toFixed(5)}`);
+    const j = await r.json(), ad = j.address || {};
+    return ad.city || ad.town || ad.village || ad.municipality || ad.county || null;
+  }catch(e){ return null; }
+}
+async function fetchPlace(t){
+  if(t.place) return true;
+  const b = trackBase(t); if(!b) return false;
+  const a = await reverseName(b.s); let e = a;
+  if(dist(b.s, b.e) > 1500){ await sleep(1100); e = await reverseName(b.e); }
+  if(!a && !e) return false;
+  t.place = {a, b:e};
+  try{ localStorage.setItem(TKEY, JSON.stringify(tracks)); }catch(_){}
+  return true;
+}
+let dlBusy = false;
+async function dlPlaces(){
+  if(dlBusy) return; dlBusy = true;
+  for(const x of deathTop()){
+    if($('#death').hidden) break;
+    if(x.t.place) continue;
+    if(await fetchPlace(x.t)) renderDeath();
+    await sleep(1100);
+  }
+  dlBusy = false;
+}
+document.addEventListener('click', e => {
+  if(e.target.closest('[data-dl-open-list]')){ openDeath(); return; }
+  if(e.target.closest('[data-dl="close"]')){ closeDeath(); return; }
+  const o = e.target.closest('[data-dl-open]');
+  if(o){ closeDeath(); openTrack(o.dataset.dlOpen, true); }
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#death').hidden) closeDeath(); });
 
 /* ================= G-Kräfte ================= */
 // Sensor liefert Beschleunigung im Handy-Koordinatensystem. Der waagrechte Anteil wird über GPS
@@ -3642,7 +3895,8 @@ function openPerf(){
   if(perfOn) return;
   if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
   perfOn = true; $('#perf').hidden = false;
-  pf.state = 'idle'; pf.prev = null; pf.v = null; pf.ts = []; pf.result = null;
+  pf.state = 'idle'; pf.prev = null; pf.v = null; pf.ts = []; pf.result = null; pf.gpk = 0;
+  gStart();
   pfWatch = navigator.geolocation.watchPosition(onPerfPos, err => {
     if(err.code === 1){ toast('Standortzugriff verweigert. Die Messung braucht deinen Standort.'); closePerf(); }
   }, {enableHighAccuracy:true, maximumAge:0, timeout:30000});
@@ -3654,6 +3908,7 @@ function closePerf(){
   perfOn = false; $('#perf').hidden = true;
   if(pfWatch != null){ navigator.geolocation.clearWatch(pfWatch); pfWatch = null; }
   cancelAnimationFrame(pfRaf); releaseWake();
+  if(!ckOn && !(rec && !rec.stopped)) gStop();
 }
 function setPreset(a, b, custom){
   if(['arm','wait','run'].includes(pf.state)) return;
@@ -3673,6 +3928,7 @@ function onPerfPos(p){
   if(v == null && pf.prev && t - pf.prev.t >= 500) v = dist(pf.prev, pt) / ((t - pf.prev.t) / 1000) * 3.6;
   if(v == null) v = pf.prev ? pf.prev.v : 0;
   pf.v = v; pf.acc = c.accuracy;
+  if(!ckOn) gGpsFix(v / 3.6, c.heading != null && !isNaN(c.heading) ? c.heading : null, t);
   pf.ts.push(t); if(pf.ts.length > 6) pf.ts.shift();
   const cur = {v, t, ...pt}, prev = pf.prev;
 
@@ -3688,7 +3944,8 @@ function onPerfPos(p){
     if(v >= pf.to){
       const tEnd = interp(prev, cur, pf.to), sec = (tEnd - pf.tStart) / 1000;
       const k = pkey(pf.from, pf.to), best = runs.filter(r => pkey(r.from, r.to) === k).reduce((m, r) => Math.min(m, r.time), Infinity);
-      const r = {id:uid(), from:pf.from, to:pf.to, time:Math.round(sec * 100) / 100, dist:Math.round(pf.dist), date:Date.now(), hz:+hzNow().toFixed(1), acc:Math.round(pf.acc || 0)};
+      const ga = (pf.to - pf.from) / 3.6 / sec / 9.81;
+      const r = {id:uid(), from:pf.from, to:pf.to, time:Math.round(sec * 100) / 100, dist:Math.round(pf.dist), date:Date.now(), hz:+hzNow().toFixed(1), acc:Math.round(pf.acc || 0), ga:+ga.toFixed(2), gp:+Math.max(ga, pf.gpk || 0).toFixed(2)};
       runs.unshift(r); saveRuns();
       pf.result = {...r, best: sec < best};
       pf.state = 'done'; cancelAnimationFrame(pfRaf);
@@ -3703,7 +3960,14 @@ function onPerfPos(p){
 function startRun(){
   pf.state = 'run'; pf.dist = 0; pf.maxV = pf.v; pf.wallStart = Date.now() - Math.max(0, Date.now() - pf.tStart);
   beep(990, .15, .3);
-  const loop = () => { if(pf.state !== 'run') return; $('#pfTime').textContent = fmtS(Math.max(0, (Date.now() - pf.tStart) / 1000)); pfRaf = requestAnimationFrame(loop); };
+  pf.gpk = 0;
+  const loop = () => {
+    if(pf.state !== 'run') return;
+    $('#pfTime').textContent = fmtS(Math.max(0, (Date.now() - pf.tStart) / 1000));
+    const g = gNow(); if(g && g.lon > pf.gpk) pf.gpk = g.lon;
+    $('#pfG').innerHTML = `<div class="live"><b>${fmtGn(g ? Math.max(0, g.lon) : 0)}</b><span>G jetzt</span></div><div><b>${fmtGn(pf.gpk)}</b><span>G Spitze</span></div>`;
+    pfRaf = requestAnimationFrame(loop);
+  };
   cancelAnimationFrame(pfRaf); pfRaf = requestAnimationFrame(loop);
 }
 function hzNow(){ const ts = pf.ts; return ts.length > 1 ? (ts.length - 1) / ((ts[ts.length - 1] - ts[0]) / 1000) : 0; }
@@ -3735,6 +3999,8 @@ function renderPerf(){
   if(pf.state === 'run'){ msg.innerHTML = `Läuft … Ziel <b>${pf.to} km/h</b>`; }
   if(pf.state === 'done'){ const r = pf.result; tm.textContent = fmtS(r.time); msg.innerHTML = `<b>${label}</b> in ${fmtS(r.time)} · ${r.dist} m${r.best ? '<span class="pf-best">Bestzeit</span>' : ''}`; }
   if(pf.state === 'fail'){ tm.textContent = 'Abbruch'; msg.innerHTML = 'Das Tempo ist gefallen oder es hat zu lange gedauert. Nochmal?'; }
+  if(pf.state === 'done' && pf.result) $('#pfG').innerHTML = `<div><b>${fmtGn(pf.result.ga)}</b><span>Ø G</span></div><div><b>${fmtGn(pf.result.gp)}</b><span>G Spitze</span></div>`;
+  else if(pf.state !== 'run'){ const g = gNow(); $('#pfG').innerHTML = g && pf.state !== 'fail' ? `<div class="live"><b>${fmtGn(Math.abs(g.lon))}</b><span>G jetzt</span></div>` : ''; }
   // Button
   const go = $('#pfGo');
   go.textContent = busy ? 'Abbrechen' : pf.state === 'idle' ? 'Messung starten' : 'Nochmal';
@@ -3744,7 +4010,7 @@ function renderPerf(){
 function renderRuns(){
   const bests = {};
   runs.forEach(r => { const k = pkey(r.from, r.to); if(!bests[k] || r.time < bests[k].time) bests[k] = r; });
-  const html = runs.length ? runs.slice(0, 30).map(r => `<div class="pf-row"><span class="k">${r.from}–${r.to}</span><span class="v">${fmtS(r.time)}</span>${bests[pkey(r.from, r.to)] === r ? '<span class="pf-best">Best</span>' : ''}<span class="d">${fmtDate(r.date)}<br>${r.auto ? 'Fahrt · ' : ''}${r.dist} m · ±${r.acc} m</span></div>`).join('')
+  const html = runs.length ? runs.slice(0, 30).map(r => `<div class="pf-row"><span class="k">${r.from}–${r.to}</span><span class="v">${fmtS(r.time)}</span>${bests[pkey(r.from, r.to)] === r ? '<span class="pf-best">Best</span>' : ''}<span class="d">${fmtDate(r.date)}<br>Ø ${fmtGn(r.ga || (r.to - r.from) / 3.6 / r.time / 9.81)} G${r.gp && r.gp > (r.ga || 0) + .01 ? ` · max ${fmtGn(r.gp)}` : ''} · ${r.dist} m</span></div>`).join('')
     : '<div class="pf-empty">Noch keine Messungen.</div>';
   const l = $('#pfList'); if(l._h !== html){ l.innerHTML = html; l._h = html; }
   $('#pfClear').hidden = !runs.length;
@@ -4224,6 +4490,7 @@ $('#b-cockpit').innerHTML = svg(UI.gauge, 19);
 $('#ckRecenter').innerHTML = svg(UI.locate, 15) + 'Zentrieren';
 $('#perf [data-pf="close"]').innerHTML = svg(UI.close, 15);
 $('#rpBar [data-rp="close"]').innerHTML = svg(UI.close, 16);
+$('#death [data-dl="close"]').innerHTML = svg(UI.close, 15);
 applyLabels(); refreshAll();
 if(rec){
   setTab('tracks'); renderTracksHead(); updateRecUI(); renderNearest();

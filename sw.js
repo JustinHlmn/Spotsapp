@@ -1,7 +1,7 @@
 /* Jamsis Spots – Service Worker: App offline starten + Kartenkacheln zwischenspeichern */
-const V = 'v6';
+const V = 'v7';
 const APP = 'app-' + V, RT = 'tiles-rt', SAVED = 'tiles-saved';
-const SHELL = ['./', './index.html', './lib/maplibre-gl.js', './lib/maplibre-gl.css', './lib/three.min.js', './manifest.webmanifest', './icon-192.png', './apple-touch-icon.png', './favicon.png'];
+const SHELL = ['./', './index.html', './lib/maplibre-gl.js', './lib/maplibre-gl.css', './lib/three.min.js', './lib/fonts/grenze-gotisch-latin-800-normal.woff2', './lib/fonts/grenze-gotisch-latin-900-normal.woff2', './manifest.webmanifest', './icon-192.png', './apple-touch-icon.png', './favicon.png'];
 const isTile = u => /(^|\.)arcgisonline\.com$/.test(u.hostname) || /elevation-tiles-prod/.test(u.pathname);
 
 self.addEventListener('install', e => {
