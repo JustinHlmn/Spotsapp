@@ -179,7 +179,7 @@ body.cockpit #ckRace.show{display:flex}
 #ckRace .pg{height:5px;border-radius:3px;background:var(--fill);overflow:hidden}
 #ckRace .pg i{display:block;height:100%;width:0;background:#bf5af2;transition:width .4s linear}
 .rb.txt{width:auto!important;padding:0 12px;border-radius:20px;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
-body.cockpit #attrib{transform:none!important;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 1px);right:12px}
+body.cockpit #attrib,body.replay #attrib{transform:none!important;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 1px);right:12px}
 #ckTop{position:absolute;z-index:20;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);align-items:center;gap:10px;height:52px;padding:0 6px 0 16px;border-radius:26px;color:var(--fg);animation:fadein .3s}
 #ckTop .dot{width:10px;height:10px;border-radius:50%;background:#ff3b30;flex:none;animation:recblink 1.4s ease-in-out infinite}
 #ckTop.paused .dot{background:var(--muted);animation:none}
@@ -197,7 +197,7 @@ body.cockpit #attrib{transform:none!important;top:auto;bottom:calc(env(safe-area
 #ckStats b{transform-origin:left center}
 #ckStats .mx.hit b{animation:mxhit .8s cubic-bezier(.2,.8,.2,1)}
 @keyframes mxhit{0%{transform:scale(1)}30%{transform:scale(1.16);color:var(--accent)}100%{transform:scale(1)}}
-#ckRecenter{position:absolute;z-index:20;right:14px;bottom:calc(102px + env(safe-area-inset-bottom,0px));height:40px;padding:0 14px;border-radius:20px;align-items:center;gap:6px;font-weight:600;color:var(--accent);border:1px solid var(--line)}
+#ckRecenter{position:absolute;z-index:20;right:124px;bottom:calc(102px + env(safe-area-inset-bottom,0px));height:40px;padding:0 14px;border-radius:20px;align-items:center;gap:6px;font-weight:600;color:var(--accent);border:1px solid var(--line)}
 @media (max-width:560px){#ckStats{grid-template-columns:1fr 1fr}#ckStats b{font-size:17px}#ckRecenter{bottom:calc(150px + env(safe-area-inset-bottom,0px))}}
 @media (min-width:641px){#recbar{left:calc(50% + 182px)}}
 .search{display:flex;align-items:center;gap:6px;background:var(--fill);border-radius:11px;padding:0 10px;height:38px;color:var(--muted)}
@@ -584,19 +584,19 @@ body.navprev #panel,body.navprev #near,body.navprev #recbar,body.navprev #panelO
 :root[data-theme="light"]{--trk:#cf7000}
 .tv-chart{background:var(--solid);border:1px solid var(--line);border-radius:16px;padding:10px 8px 4px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair}
 .tv-chart svg{display:block;width:100%;height:auto;overflow:visible}
-.tv-chart .ln{fill:none;stroke:var(--trk);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
-.tv-chart .ar{fill:var(--trk);opacity:.14}
+.tv-chart .ln{fill:none;stroke:url(#tvGrad);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.tv-chart .ar{fill:url(#tvGrad);opacity:.16}
 .tv-chart .grid{stroke:var(--gridline);stroke-width:1}
 .tv-chart .sb{stroke:var(--fill-2);stroke-width:1;stroke-dasharray:3 3}
 .tv-chart .ax{fill:var(--muted);font-size:9.5px;font-family:var(--font);font-variant-numeric:tabular-nums}
 .tv-chart .sl{fill:var(--muted);font-size:9.5px;font-weight:600;font-family:var(--font);text-anchor:middle}
 .tv-chart .band{fill:var(--fg);opacity:.08}
-.tv-chart .mxd{fill:var(--trk);stroke:var(--solid-2);stroke-width:2}
+.tv-chart .mxd{fill:#ef4444;stroke:var(--solid-2);stroke-width:2}
 .tv-chart .mxt{fill:var(--fg);font-size:10.5px;font-weight:700;font-family:var(--font);font-variant-numeric:tabular-nums}
 .tv-chart .cx{stroke:var(--fg);stroke-width:1;opacity:.45}
-.tv-chart .cd{fill:var(--trk);stroke:var(--solid-2);stroke-width:2}
+.tv-chart .cd{fill:var(--fg);stroke:var(--solid-2);stroke-width:2}
 .tv-leg{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:-6px}
-.tv-leg i{flex:1;height:6px;border-radius:3px;max-width:140px}
+.tv-leg i{flex:1;height:8px;border-radius:4px;max-width:160px}
 .tv-tab{background:var(--solid);border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .tv-head,.tv-row{display:grid;grid-template-columns:24px 1fr 56px 46px;align-items:center;gap:10px}
 .tv-head{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:9px 14px 6px}
@@ -613,6 +613,52 @@ body.navprev #panel,body.navprev #near,body.navprev #recbar,body.navprev #panelO
 .tv-row .tm{font-weight:600}
 .tv-row .mx{color:var(--muted);font-weight:600}
 .tv-fast{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;color:var(--fg);background:var(--fill-2);padding:1px 6px;border-radius:6px;vertical-align:1px;letter-spacing:.01em}
+
+/* ---------- G-Kräfte ---------- */
+#gMeter{position:absolute;z-index:20;right:14px;bottom:calc(102px + env(safe-area-inset-bottom,0px));width:100px;border-radius:22px;padding:8px 8px 7px;display:none;flex-direction:column;align-items:center;gap:3px;color:var(--fg);animation:viewin .4s var(--ease)}
+body.cockpit.gon #gMeter,body.replay #gMeter{display:flex}
+@media (max-width:560px){#gMeter{bottom:calc(140px + env(safe-area-inset-bottom,0px))}}
+body.nav #gMeter{display:none!important}
+#gMeter svg{width:84px;height:84px;display:block;overflow:visible}
+#gMeter .gr{fill:none;stroke:var(--fill-2);stroke-width:1.5}
+#gMeter .gx{stroke:var(--line);stroke-width:1}
+#gMeter .gt{fill:var(--muted);font:600 7.5px var(--font);text-anchor:middle}
+#gMeter .gd{fill:var(--accent);stroke:#fff;stroke-width:2.5}
+#gMeter.gps .gd{fill:var(--muted)}
+#gMeter b{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+#gMeter b small{font-size:11px;color:var(--muted);font-weight:600;margin-left:2px}
+.tv-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tv-g button{border:1px solid var(--line);background:var(--solid);border-radius:14px;padding:10px 10px 9px;display:flex;flex-direction:column;gap:3px;text-align:left;color:var(--fg);min-width:0;transition:transform .18s var(--ease)}
+.tv-g button:active{transform:scale(.97)}
+.tv-g b{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em;display:flex;align-items:center;gap:6px}
+.tv-g b i{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}
+.tv-g span{font-size:11.5px;color:var(--muted);line-height:1.25}
+.gmk{display:flex;align-items:center;gap:5px;padding:4px 8px 4px 4px;border-radius:13px;background:rgba(12,14,18,.9);color:#fff;font:700 11.5px/1 var(--font);white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.45);border:1.5px solid rgba(255,255,255,.85);font-variant-numeric:tabular-nums;cursor:pointer}
+.gmk i{width:17px;height:17px;border-radius:50%;display:grid;place-items:center;font:800 9.5px/1 var(--font);background:var(--c);color:#fff}
+body.replay .gmk{display:none}
+
+/* ---------- Replay ---------- */
+#rpBar,#rpTop{display:none}
+body.replay #panel,body.replay #near,body.replay #recbar,body.replay #ctrl,body.replay #panelOpen,body.replay #tilewarn,body.replay .maplibregl-ctrl-top-right,body.replay .maplibregl-ctrl-bottom-right{display:none!important}
+body.replay .me{visibility:hidden}
+body.replay #ckSpeed{display:flex;bottom:calc(98px + env(safe-area-inset-bottom,0px))}
+body.replay #gMeter{bottom:calc(98px + env(safe-area-inset-bottom,0px))}
+#rpBar{position:absolute;z-index:22;left:14px;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));height:70px;border-radius:24px;padding:0 10px;align-items:center;gap:10px;max-width:600px;margin:0 auto;color:var(--fg);animation:viewin .35s var(--ease)}
+body.replay #rpBar{display:flex}
+#rpBar .rb{width:48px;height:48px}
+#rpBar .rb.play{background:var(--accent);color:var(--accent-fg)}
+.rp-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.rp-tx{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-variant-numeric:tabular-nums}
+.rp-tx b{font-size:15px;font-weight:700;white-space:nowrap}
+.rp-tx span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rpSeek{width:100%;margin:0;height:20px;accent-color:var(--accent);background:none}
+#rpTop{position:absolute;z-index:22;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);max-width:calc(100% - 28px);height:40px;border-radius:20px;padding:0 16px;align-items:center;gap:8px;color:var(--fg);white-space:nowrap;animation:fadein .3s}
+body.replay #rpTop{display:flex}
+#rpTop b{font-weight:700}
+#rpTop span{color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.rp-car{width:34px;height:68px;pointer-events:none}
+.rp-car svg{width:34px;height:68px;display:block;filter:drop-shadow(0 4px 5px rgba(0,0,0,.6))}
+body.car3d .rp-car{visibility:hidden}
 
 /* ---------- Einstellungen ---------- */
 .set-sec{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px 4px 0}
@@ -693,6 +739,17 @@ body.navprev #panel,body.navprev #near,body.navprev #recbar,body.navprev #panelO
   <div class="mx"><b data-ck="max">0</b><span>Max km/h</span></div>
 </div>
 <button id="ckRecenter" class="glass" hidden></button>
+<div id="gMeter" class="glass" aria-hidden="true">
+  <svg viewBox="0 0 100 100"><circle class="gr" cx="50" cy="50" r="44"/><circle class="gr" cx="50" cy="50" r="22"/><path class="gx" d="M50 6v88M6 50h88"/><text class="gt" x="50" y="4">Bremsen</text><circle id="gDot" class="gd" cx="50" cy="50" r="7"/></svg>
+  <b><span id="gVal">–</span><small>G</small></b>
+</div>
+<div id="rpTop" class="glass"></div>
+<div id="rpBar" class="glass">
+  <button class="rb play" data-rp="play" aria-label="Pause"></button>
+  <div class="rp-mid"><div class="rp-tx"><b id="rpTime">0:00</b><span id="rpInfo"></span></div><input type="range" id="rpSeek" min="0" max="1000" step="1" value="0" aria-label="Zeitleiste"></div>
+  <button class="rb txt" data-rp="speed" aria-label="Abspieltempo">20×</button>
+  <button class="rb" data-rp="close" aria-label="Replay beenden"></button>
+</div>
 <div id="navTop" class="glass" aria-live="polite"></div>
 <div id="navBottom" class="glass"></div>
 <div id="navPrev" class="glass"></div>
@@ -964,8 +1021,8 @@ function onMapStyle(){
   const rl = {'line-cap':'round', 'line-join':'round'};
   map.addLayer({id:'track-all-line', type:'line', source:'track-all', layout:rl, paint:{'line-color':'#ff9f0a', 'line-width':3, 'line-opacity':.6}});
   map.addLayer({id:'track-all-hit', type:'line', source:'track-all', layout:rl, paint:{'line-color':'#000', 'line-width':20, 'line-opacity':0}});
-  map.addLayer({id:'track-view-case', type:'line', source:'track-view', layout:rl, paint:{'line-color':'#0b0d10', 'line-width':9, 'line-opacity':.75}});
-  map.addLayer({id:'track-view-line', type:'line', source:'track-view', layout:rl, paint:{'line-color':['interpolate', ['linear'], ['coalesce', ['get','k'], .5], 0, TRAMP[0], .5, TRAMP[1], 1, TRAMP[2]], 'line-width':5}});
+  map.addLayer({id:'track-view-case', type:'line', source:'track-view', layout:rl, paint:{'line-color':'#0b0d10', 'line-width':11, 'line-opacity':.8}});
+  map.addLayer({id:'track-view-line', type:'line', source:'track-view', layout:rl, paint:{'line-color':['interpolate', ['linear'], ['coalesce', ['get','k'], .5], 0, TRAMP[0], .25, TRAMP[1], .5, TRAMP[2], .75, TRAMP[3], 1, TRAMP[4]], 'line-width':6.5}});
   map.addLayer({id:'track-live-case', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ffffff', 'line-width':8, 'line-opacity':.9}});
   map.addLayer({id:'track-live-line', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ff3b30', 'line-width':5}});
   map.addSource('nav-route', {type:'geojson', data:FC([])});
@@ -1814,7 +1871,7 @@ function closeCats(){ $('#modal').hidden = true; refreshAll(); if(view === 'deta
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#modal').hidden) closeCats(); });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.03';
+const VERSION = '2026.10.04';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -1851,6 +1908,7 @@ function renderSettings(){
         ${tg('recCockpit', 'Aufzeichnen öffnet Cockpit', 'Ein Tipp, direkt losfahren')}
         <div class="set-row"><span>Kamera<small>im Cockpit</small></span><div class="set-seg">${[['near','Nah'],['normal','Normal'],['far','Weit']].map(([k, n]) => `<button data-st="cam" data-v="${k}" class="${cam === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
         ${tg('car3d', '3D-Auto', 'Aus: flaches Symbol, spart Akku')}
+        ${tg('gforce', 'G-Kraft-Anzeige', 'Bewegungssensor, richtet sich beim Fahren selbst aus')}
         ${tg('limit', 'Tempolimit anzeigen')}
         ${tg('ghost', 'Geister-Auto auf Rennstrecken')}
         ${tg('sound', 'Töne bei der 0–100-Messung')}
@@ -1880,7 +1938,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'theme'){ prefs.theme = b.dataset.v; savePrefs(); applyTheme(); renderSettings(); }
   if(a === 'accent'){ prefs.accent = b.dataset.v; savePrefs(); applyTheme(); renderSettings(); if(view === 'track') updateTrackLayers(); }
   if(a === 'cam'){ prefs.cam = b.dataset.v; savePrefs(); renderSettings(); }
-  if(a === 'tg'){ const k = b.dataset.k; prefs[k] = !onOff(k); savePrefs(); b.classList.toggle('on', prefs[k]); b.setAttribute('aria-checked', prefs[k]); }
+  if(a === 'tg'){ const k = b.dataset.k; prefs[k] = !onOff(k); savePrefs(); b.classList.toggle('on', prefs[k]); b.setAttribute('aria-checked', prefs[k]); if(k === 'gforce' && prefs[k]) gStart(); }
   if(a === 'export') $('#exportBtn').click();
   if(a === 'import') $('#importBtn').click();
   if(a === 'offline') openOffline();
@@ -2119,7 +2177,7 @@ function updateTrackLayers(){
     setSrc('track-ends', FC([{type:'Feature', properties:{k:'start'}, geometry:{type:'Point', coordinates:[first[0], first[1]]}},
                              {type:'Feature', properties:{k:'end'}, geometry:{type:'Point', coordinates:[last[0], last[1]]}}]));
   } else { setSrc('track-view', FC([])); setSrc('track-ends', FC([])); setSrc('track-secs', FC([])); setSrc('track-cur', FC([])); }
-  tvPaint();
+  tvPaint(); tvGMarkers(t || null);
   updateCourseLayers();
 }
 function drawLive(){ setSrc('track-live', FC(rec ? segFeatures(rec.segs) : [])); }
@@ -2146,6 +2204,7 @@ function startRec(){
   startWatch(); startGPS(false); requestWake(); startTick();
   persistRec(true); renderTracksHead(); updateRecUI(); renderNearest();
   // Direkt in den Fahrmodus: Cockpit mit laufender Aufnahme
+  gStart();
   if(onOff('recCockpit') && !ckOn && !mode && view !== 'edit') enterCockpit();
   else if(mobile() && !ckOn) setSnap('peek');
   toast(ckOn ? 'Aufnahme läuft – gute Fahrt' : 'Aufzeichnung läuft');
@@ -2166,6 +2225,7 @@ function resumeRec(){
 function stopRec(){
   if(!rec || rec.stopped) return;
   if(ckOn) exitCockpit();
+  gStop();
   if(rec.runFrom){ rec.active += Date.now() - rec.runFrom; rec.runFrom = null; }
   stopWatch(); releaseWake(); clearInterval(recTick);
   const pts = rec.segs.reduce((n, sg) => n + sg.length, 0);
@@ -2182,6 +2242,7 @@ function onRecPos(p){
   feedLive(p);
   if(!rec || !rec.runFrom) return;
   const c = p.coords, ts = p.timestamp || Date.now();
+  if(!ckOn) gGpsFix(c.speed != null && c.speed >= 0 ? c.speed : 0, c.heading != null && !isNaN(c.heading) ? c.heading : null, ts);
   if(c.accuracy > 35){ if(!rec.weak){ rec.weak = true; updateRecUI(); } return; }
   if(rec.weak){ rec.weak = false; updateRecUI(); }
   const pt = {lat:c.latitude, lng:c.longitude};
@@ -2193,7 +2254,9 @@ function onRecPos(p){
     const spd = (c.speed != null && c.speed >= 0) ? c.speed : (dt >= 2 ? d / dt : 0);
     if(spd > rec.maxSpd && c.accuracy <= 20) rec.maxSpd = spd;
   }
-  rec.segs[rec.segs.length - 1].push([+pt.lng.toFixed(6), +pt.lat.toFixed(6), Math.round((ts - rec.start) / 100) / 10]);
+  const q = [+pt.lng.toFixed(6), +pt.lat.toFixed(6), Math.round((ts - rec.start) / 100) / 10], gp = gTake();
+  if(gp) q.push(+gp[0].toFixed(2), +gp[1].toFixed(2));
+  rec.segs[rec.segs.length - 1].push(q);
   rec.last = {...pt, ts};
   drawLive(); persistRec(); updateRecUI();
   if(followMe && !ckOn && mapReady && !map.isMoving()) map.easeTo({center:LL(pt), padding:camPad(), duration:900});
@@ -2278,6 +2341,7 @@ $('#trackSaveView').addEventListener('click', e => {
   if(b.dataset.ts === 'save'){
     const t = {id:rec.id, name:($('#t-name').value.trim() || 'Strecke'), created:rec.start, dist:Math.round(rec.dist), dur:rec.active, maxSpd:rec.maxSpd,
                segs:rec.segs.filter(sg => sg.length)};
+    if(rec.g && (rec.g.lat || rec.g.brake || rec.g.acc)) t.g = rec.g;
     tracks.unshift(t);
     if(!saveTracks()){ tracks.shift(); return; }
     rec = null; persistRec(true); drawLive(); renderTracksHead();
@@ -2399,6 +2463,7 @@ function renderTrackView(){
         <div><b>${fmtSpd(avg)}</b><span>Ø Tempo</span></div>
         <div><b>${fmtSpd(t.maxSpd || 0)}</b><span>Max. Tempo</span></div>
       </div>
+      ${analyzeTrack(t) ? `<button class="btn primary" data-tv="replay">${svg(UI.play, 15)} Fahrt abspielen</button>` : ''}
       ${tvDetailsHTML(t)}
       <button class="btn" data-tv="course">${svg(ICONS.flag,15)} Als Rennstrecke speichern</button>
       <button class="btn" data-tv="gpx">${svg(UI.share,15)} Als GPX exportieren</button>
@@ -2415,6 +2480,7 @@ $('#trackView').addEventListener('click', e => {
   if(a === 'rename'){ trackRenaming = true; renderTrackView(); }
   if(a === 'renamesave'){ t.name = $('#tv-name').value.trim() || t.name; saveTracks(); trackRenaming = false; renderTrackView(); }
   if(a === 'course') return courseFromTrack(t);
+  if(a === 'replay') return startReplay(t);
   if(a === 'gpx') downloadText(`${t.name.replace(/[^\wäöüÄÖÜß -]+/g, '').trim() || 'strecke'}.gpx`, toGPX(t), 'application/gpx+xml');
   if(a === 'del'){
     if(!trackDelArmed){ trackDelArmed = true; b.classList.add('armed'); b.textContent = 'Wirklich löschen?'; setTimeout(() => { if(b.isConnected){ trackDelArmed = false; b.classList.remove('armed'); b.textContent = 'Löschen'; } }, 3500); return; }
@@ -2430,7 +2496,8 @@ function toGPX(t){
     `\n</trk>\n</gpx>\n`;
 }
 /* ================= Strecken-Analyse: Tempo-Verlauf & Sektoren ================= */
-const TRAMP = ['#8f3d00', '#ff8a00', '#ffd98f'];   // Linienfarbe = Tempo: dunkel = langsam, hell = schnell
+const TRAMP = ['#22c55e', '#a3e635', '#facc15', '#f97316', '#ef4444'];   // Linienfarbe = Tempo: grün = langsam, rot = schnell
+const tCol = k => { const i = Math.max(0, Math.min(.9999, k)) * (TRAMP.length - 1), a = Math.floor(i), f = i - a, h = x => [1, 3, 5].map(j => parseInt(x.slice(j, j + 2), 16)); const p = h(TRAMP[a]), q = h(TRAMP[a + 1]); return '#' + p.map((v, j) => Math.round(v + (q[j] - v) * f).toString(16).padStart(2, '0')).join(''); };
 const anCache = new WeakMap();
 let tvSel = -1, tvDown = false;
 function analyzeTrack(t){
@@ -2438,7 +2505,7 @@ function analyzeTrack(t){
   const P = []; let D = 0, TA = 0;
   t.segs.forEach((sg, si) => sg.forEach((q, i) => {
     if(i){ const p = sg[i - 1]; D += dist({lat:p[1], lng:p[0]}, {lat:q[1], lng:q[0]}); TA += Math.max(0, q[2] - p[2]); }
-    P.push({lng:q[0], lat:q[1], d:D, ta:TA, si});
+    P.push({lng:q[0], lat:q[1], d:D, ta:TA, si, sl:q.length > 4 ? q[3] : null, sn:q.length > 4 ? q[4] : null});
   }));
   if(P.length < 3 || D < 30){ anCache.set(t, null); return null; }
   // Tempo je Punkt, über ±2 Nachbarpunkte geglättet (km/h)
@@ -2451,6 +2518,30 @@ function analyzeTrack(t){
   for(let k = 1; k < P.length; k++) if(P[k].v == null) P[k].v = P[k - 1].v;
   for(let k = P.length - 2; k >= 0; k--) if(P[k].v == null) P[k].v = P[k + 1].v;
   P.forEach(p => { if(p.v == null) p.v = 0; });
+  // G-Kräfte je Punkt: Sensorwerte, wenn aufgezeichnet, sonst aus GPS (Tempoänderung + Kurvenradius)
+  P.forEach((p, k) => {
+    let j0 = k, j1 = k;
+    for(let n = 0; n < 2; n++){ if(j0 > 0 && P[j0 - 1].si === p.si) j0--; if(j1 < P.length - 1 && P[j1 + 1].si === p.si) j1++; }
+    const A = P[j0], B = P[j1], dt = B.ta - A.ta, vm = p.v / 3.6;
+    let lon = dt > .5 ? (B.v - A.v) / 3.6 / dt / 9.81 : 0, lat = 0;
+    if(j0 < k && j1 > k && vm > 3){
+      const ds = (B.d - A.d) / 2;
+      if(ds > 6){ const dh = ((bearing(p, B) - bearing(A, p) + 540) % 360) - 180; lat = vm * vm * (dh * Math.PI / 180) / ds / 9.81; }
+    }
+    p.glat = p.sl != null ? p.sl : Math.max(-1.5, Math.min(1.5, lat));
+    p.glon = p.sn != null ? p.sn : Math.max(-1.5, Math.min(1.5, lon));
+  });
+  const gSrc = P.some(p => p.sl != null) ? 'sensor' : 'gps';
+  let iLat = 0, iBr = 0, iAc = 0;
+  P.forEach((p, k) => { if(Math.abs(p.glat) > Math.abs(P[iLat].glat)) iLat = k; if(p.glon < P[iBr].glon) iBr = k; if(p.glon > P[iAc].glon) iAc = k; });
+  const at = k => [P[k].lng, P[k].lat];
+  const gx = {src:gSrc, lat:{v:P[iLat].glat, at:at(iLat)}, brake:{v:Math.max(0, -P[iBr].glon), at:at(iBr)}, acc:{v:Math.max(0, P[iAc].glon), at:at(iAc)}};
+  if(t.g){   // Spitzenwerte vom Sensor während der Fahrt (genauer)
+    gx.src = 'sensor';
+    if(t.g.lat) gx.lat = {v:t.g.lat, at:t.g.latAt || gx.lat.at};
+    if(t.g.brake) gx.brake = {v:t.g.brake, at:t.g.brakeAt || gx.brake.at};
+    if(t.g.acc) gx.acc = {v:t.g.acc, at:t.g.accAt || gx.acc.at};
+  }
   const vs = P.map(p => p.v).sort((a, b) => a - b), pc = q => vs[Math.min(vs.length - 1, Math.floor(q * vs.length))];
   const lo = pc(.05), hi = Math.max(pc(.95), lo + 5);
   // Sektoren: runde Länge, ca. 4–10 Stück
@@ -2473,9 +2564,10 @@ function analyzeTrack(t){
   }
   const bounds = secs.slice(1).map(s => ({type:'Feature', properties:{}, geometry:{type:'Point', coordinates:[lerp(s.a, 'lng'), lerp(s.a, 'lat')]}}));
   const prof = Array.from({length:240}, (_, i) => { const d = D * i / 239; return [d, lerp(d, 'v')]; });
-  const an = {P, D, L, n, secs, fast, lo, hi, feats, bounds, prof, secOf, lerp};
+  const an = {P, D, L, n, secs, fast, lo, hi, feats, bounds, prof, secOf, lerp, g:gx};
   anCache.set(t, an); return an;
 }
+const fmtG = x => `${(+x || 0).toFixed(2).replace('.', ',')} G`;
 const fmtLen = m => m < 1000 ? `${m} m` : `${String(m / 1000).replace('.', ',')} km`;
 const fmtKm1 = m => (m / 1000).toFixed(m < 10000 ? 1 : 0).replace('.', ',');
 function tvGeom(an){
@@ -2500,6 +2592,7 @@ function tvDetailsHTML(t){
   const mx = X(mp[0]), my = Y(mp[1]), anchor = mx > g.W - 50 ? 'end' : mx < g.l + 30 ? 'start' : 'middle';
   const xl = `<text class="ax" x="${g.l}" y="${g.H - 5}">0</text><text class="ax" x="${f1(X(an.D / 2))}" y="${g.H - 5}" text-anchor="middle">${fmtKm1(an.D / 2)}</text><text class="ax" x="${g.W - g.r}" y="${g.H - 5}" text-anchor="end">${fmtKm1(an.D)} km</text>`;
   const svgC = `<svg viewBox="0 0 ${g.W} ${g.H}" role="img" aria-label="Tempo über die Strecke, höchstens ${Math.round(mp[1])} km/h">
+    <defs><linearGradient id="tvGrad" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="${f1(Y(an.lo))}" y2="${f1(Y(an.hi))}">${TRAMP.map((c, i) => `<stop offset="${i / (TRAMP.length - 1)}" stop-color="${c}"/>`).join('')}</linearGradient></defs>
     <rect id="tvBand" class="band" x="0" y="${g.tp}" width="0" height="${g.ih}"/>${grid}${sb}
     <path class="ar" d="${area}"/><path class="ln" d="${line}"/>
     <circle class="mxd" cx="${f1(mx)}" cy="${f1(my)}" r="4"/><text class="mxt" x="${f1(mx)}" y="${f1(Math.max(g.tp + 2, my - 8))}" text-anchor="${anchor}">${Math.round(mp[1])} km/h</text>
@@ -2507,20 +2600,38 @@ function tvDetailsHTML(t){
   const maxAvg = Math.max(...an.secs.map(s => s.avg));
   const rows = an.secs.map((s, i) => `<button class="tv-row${tvSel === i ? ' on' : ''}" data-sec="${i}" aria-label="Sektor ${i + 1}">
       <span class="n">${i + 1}</span>
-      <span class="av"><b>${Math.round(s.avg)} <small>km/h</small>${i === an.fast ? '<span class="tv-fast">Schnellster</span>' : ''}</b><i style="width:${Math.max(3, s.avg / maxAvg * 100).toFixed(1)}%"></i></span>
+      <span class="av"><b>${Math.round(s.avg)} <small>km/h</small>${i === an.fast ? '<span class="tv-fast">Schnellster</span>' : ''}</b><i style="width:${Math.max(3, s.avg / maxAvg * 100).toFixed(1)}%;background:${tCol((s.avg - an.lo) / (an.hi - an.lo))}"></i></span>
       <span class="tm">${fmtDur(s.t * 1000)}</span><span class="mx">${Math.round(s.max)}</span></button>`).join('');
   return `<div class="st-h">Tempo-Verlauf <em id="tvRead">Tippe auf die Kurve</em></div>
     <div class="tv-chart no-drag" id="tvChart">${svgC}</div>
-    <div class="tv-leg"><span>Linie auf der Karte:</span><span>${Math.round(an.lo)}</span><i style="background:linear-gradient(90deg,${TRAMP.join(',')})"></i><span>${Math.round(an.hi)} km/h</span></div>
+    <div class="tv-leg"><span>Farbe:</span><span>${Math.round(an.lo)}</span><i style="background:linear-gradient(90deg,${TRAMP.join(',')})"></i><span>${Math.round(an.hi)} km/h</span></div>
+    <div class="st-h">G-Kräfte <em>${an.g.src === 'sensor' ? 'Bewegungssensor' : 'aus GPS, ungefähr'}</em></div>
+    <div class="tv-g">
+      <button data-gat="lat" style="--c:#bf5af2"><b><i></i>${fmtG(Math.abs(an.g.lat.v))}</b><span>Querkraft · ${an.g.lat.v >= 0 ? 'Rechtskurve' : 'Linkskurve'}</span></button>
+      <button data-gat="brake" style="--c:#ff453a"><b><i></i>${fmtG(an.g.brake.v)}</b><span>Stärkste Bremsung</span></button>
+      <button data-gat="acc" style="--c:#0a84ff"><b><i></i>${fmtG(an.g.acc.v)}</b><span>Stärkste Beschleunigung</span></button>
+    </div>
     <div class="st-h">Sektoren <em>je ${fmtLen(an.L)}</em></div>
     <div class="tv-tab"><div class="tv-head"><span>#</span><span>Ø Tempo</span><span>Zeit</span><span>Max</span></div>${rows}</div>`;
+}
+let gMks = [];
+function tvGMarkers(t){
+  gMks.forEach(m => m.remove()); gMks = [];
+  const an = t && analyzeTrack(t); if(!an) return;
+  [['lat', 'Q', '#bf5af2', 'quer'], ['brake', 'B', '#ff453a', 'Bremsen'], ['acc', 'A', '#0a84ff', 'Beschl.']].forEach(([k, l, c, txt]) => {
+    const v = Math.abs(an.g[k].v); if(v < .05) return;
+    const e = document.createElement('div'); e.className = 'gmk'; e.style.setProperty('--c', c);
+    e.innerHTML = `<i>${l}</i>${fmtG(v)} ${txt}`;
+    e.addEventListener('click', ev => { ev.stopPropagation(); map.flyTo({center:an.g[k].at, zoom:Math.max(map.getZoom(), 16.5), padding:camPad(), duration:800}); });
+    gMks.push(new maplibregl.Marker({element:e, anchor:'bottom', offset:[0, -8]}).setLngLat(an.g[k].at).addTo(map));
+  });
 }
 function tvPaint(){
   if(!mapReady) return;
   const on = view === 'track' && tvSel >= 0, m = ['==', ['get', 's'], tvSel];
   try{
     map.setPaintProperty('track-view-line', 'line-opacity', on ? ['case', m, 1, .2] : 1);
-    map.setPaintProperty('track-view-case', 'line-opacity', on ? ['case', m, .85, .12] : .75);
+    map.setPaintProperty('track-view-case', 'line-opacity', on ? ['case', m, .9, .12] : .8);
   }catch(e){}
 }
 function tvApplySel(fit = true){
@@ -2562,6 +2673,8 @@ $('#trackView').addEventListener('pointerup', () => { tvDown = false; });
 $('#trackView').addEventListener('pointercancel', () => { tvDown = false; });
 $('#trackView').addEventListener('pointerout', e => { if(e.pointerType === 'mouse' && !tvDown && e.target.closest('#tvChart') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('#tvChart'))) tvScrubEnd(); });
 $('#trackView').addEventListener('click', e => {
+  const gb = e.target.closest('[data-gat]');
+  if(gb){ const t = tracks.find(x => x.id === selTrack), an = t && analyzeTrack(t); if(an) map.flyTo({center:an.g[gb.dataset.gat].at, zoom:Math.max(map.getZoom(), 16.5), padding:camPad(), duration:900}); return; }
   const r = e.target.closest('[data-sec]'); if(!r) return;
   const i = +r.dataset.sec; tvSel = tvSel === i ? -1 : i; tvApplySel();
 });
@@ -2631,6 +2744,7 @@ function camStep(now, dt){
   if(ckFollow && !userGesture && now > cam.hold && mapReady)
     map.jumpTo({center:LL(cam.disp), bearing:cam.bearing != null ? cam.bearing : map.getBearing(), zoom:cam.zoom, pitch:ckUserPitch != null ? ckUserPitch : 55});
   updateGhost();
+  if(document.body.classList.contains('gon')) gRender(gNow());
 }
 function enterCockpit(){
   if(ckOn) return;
@@ -2639,6 +2753,7 @@ function enterCockpit(){
   ckOn = true; document.body.classList.add('cockpit');
   car3d.on = onOff('car3d'); car3d.pos = me ? {...me} : null;
   if(car3d.on) enableCar3d(); else document.body.classList.remove('car3d');
+  document.body.classList.toggle('gon', onOff('gforce')); gStart(); gRender(null);
   if(meMarker){ meMarker.setRotationAlignment('map'); meMarker.setPitchAlignment('map'); }
   ck = {start:Date.now(), dist:0, max:0, v:null, h:null, last:null, ts:0};
   ckFollow = true; ckUserZoom = null; $('#ckRecenter').hidden = true;
@@ -2660,7 +2775,8 @@ function exitCockpit(){
   if(!ckOn) return;
   if(nav && nav.active) endNav(true);
   camStop(); hideGhost(); $('#ckLimit').classList.remove('show'); $('#ckSpeed').classList.remove('over');
-  ckOn = false; document.body.classList.remove('cockpit', 'ckrec');
+  ckOn = false; document.body.classList.remove('cockpit', 'ckrec', 'gon');
+  if(!(rec && !rec.stopped)) gStop();
   car3d.on = false; document.body.classList.remove('car3d'); if(mapReady) map.triggerRepaint();
   ckTarget = null; updateCourseLayers();
   if(ckWatch != null){ navigator.geolocation.clearWatch(ckWatch); ckWatch = null; }
@@ -2682,6 +2798,7 @@ function onDrivePos(p){
   let h = (c.heading != null && !isNaN(c.heading) && (ck.v || 0) > 1.4) ? c.heading : null;
   if(h == null && ck.last && d > 4 && (ck.v || 0) > 1.4) h = bearing(ck.last, pt);
   if(h != null) ck.h = h;
+  gGpsFix(ck.v || 0, (ck.v || 0) > 1.4 ? ck.h : null, ts);
   if(ck.last && c.accuracy <= 35 && d >= 3 && (dt <= 0 || d / dt < 70)) ck.dist += d;
   if(ck.v != null && c.accuracy <= 25 && ck.v > ck.max && ck.v < 70) ck.max = ck.v;
   if(!ck.last || d >= 3 || dt > 5) ck.last = {...pt, ts};
@@ -2745,6 +2862,175 @@ function updateCockpitUI(){
   }
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && ckOn) exitCockpit(); });
+
+/* ================= G-Kräfte ================= */
+// Sensor liefert Beschleunigung im Handy-Koordinatensystem. Der waagrechte Anteil wird über GPS
+// (Tempoänderung, Kurven) automatisch auf „vorne/seitlich" ausgerichtet – egal wie das Handy in der Halterung steckt.
+const gs = {on:false, s:[0,0,0], u:null, gl:null, sum:[0,0,0], cnt:0, facc:[0,0,0], fn:0, lacc:0, ln:0, lsign:1, f:null, live:null, peak:null, gps:null, lastGps:null, vNow:0};
+const v3 = {add:(a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub:(a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], mul:(a, k) => [a[0] * k, a[1] * k, a[2] * k],
+  dot:(a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], len:a => Math.hypot(a[0], a[1], a[2]), cross:(a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]};
+const v3n = a => v3.mul(a, 1 / (v3.len(a) || 1));
+const lpf = (o, n, dt, tau) => o ? v3.add(o, v3.mul(v3.sub(n, o), 1 - Math.exp(-dt / tau))) : n;
+const gCal = () => !!(gs.f && gs.ln >= 3);
+function onMotion(e){
+  const ag = e.accelerationIncludingGravity, a = e.acceleration;
+  if(!ag || ag.x == null) return;
+  const iv = e.interval > 1 ? e.interval / 1000 : (e.interval || .016), dt = Math.min(.1, Math.max(.005, iv));
+  const AG = [ag.x, ag.y, ag.z || 0];
+  let ua, grav;
+  if(a && a.x != null){ ua = [a.x, a.y, a.z || 0]; grav = v3.sub(AG, ua); }
+  else { gs.gl = lpf(gs.gl, AG, dt, 1); grav = gs.gl; ua = v3.sub(AG, grav); }
+  if(v3.len(ua) > 25) return;                     // Handy wird gerade angefasst
+  gs.u = v3n(lpf(gs.u, grav, dt, .5));
+  gs.s = lpf(gs.s, ua, dt, .25);
+  const h = v3.sub(gs.s, v3.mul(gs.u, v3.dot(gs.s, gs.u)));
+  gs.sum = v3.add(gs.sum, h); gs.cnt++;
+  if(!gs.f) return;                               // Längsachse noch nicht gelernt
+  const lon = v3.dot(h, gs.f) / 9.81, full = gCal();
+  const lat = full ? gs.lsign * v3.dot(h, v3.cross(gs.u, gs.f)) / 9.81 : (gs.gps ? gs.gps.lat : 0);
+  if(Math.hypot(lat, lon) > 2.2) return;
+  gs.live = {lat, lon, full, t:performance.now()};
+  if(gs.vNow > 3) gPeak(full ? lat : 0, lon);
+}
+function gPeak(lat, lon){
+  const p = gs.peak || (gs.peak = {lat:0, lon:0});
+  if(Math.abs(lat) > Math.abs(p.lat)) p.lat = lat;
+  if(Math.abs(lon) > Math.abs(p.lon)) p.lon = lon;
+  if(rec && rec.runFrom && !rec.stopped){
+    const g = rec.g || (rec.g = {lat:0, brake:0, acc:0}), at = me ? [+me.lng.toFixed(6), +me.lat.toFixed(6)] : null;
+    if(Math.abs(lat) > Math.abs(g.lat)){ g.lat = +lat.toFixed(2); g.latAt = at; }
+    if(-lon > g.brake){ g.brake = +(-lon).toFixed(2); g.brakeAt = at; }
+    if(lon > g.acc){ g.acc = +lon.toFixed(2); g.accAt = at; }
+  }
+}
+function gTake(){ const p = gs.peak; gs.peak = null; return gCal() && p ? [p.lat, p.lon] : null; }
+function gGpsFix(v, hd, t){     // v m/s, hd Grad oder null
+  const L = gs.lastGps; gs.lastGps = {v, h:hd, t}; gs.vNow = v;
+  if(!L) return;
+  const dt = (t - L.t) / 1000;
+  if(dt < .4 || dt > 3.5){ gs.sum = [0,0,0]; gs.cnt = 0; return; }
+  const aLon = (v - L.v) / dt;
+  let aLat = 0;
+  if(hd != null && L.h != null && v > 3){ const dh = ((hd - L.h + 540) % 360) - 180; aLat = v * (dh * Math.PI / 180) / dt; }
+  gs.gps = {lat:Math.max(-1.6, Math.min(1.6, aLat / 9.81)), lon:Math.max(-1.6, Math.min(1.6, aLon / 9.81)), t:performance.now()};
+  if(gs.cnt && gs.u){
+    const hb = v3.mul(gs.sum, 1 / gs.cnt);
+    if(v > 3 && Math.abs(aLon) > .8 && Math.abs(aLat) < 1){ gs.facc = v3.add(v3.mul(gs.facc, .97), v3.mul(hb, aLon)); gs.fn++; }
+    if(gs.fn >= 4){ const fh = v3.sub(gs.facc, v3.mul(gs.u, v3.dot(gs.facc, gs.u))); if(v3.len(fh) > .3) gs.f = v3n(fh); }
+    if(gs.f && v > 5 && Math.abs(aLat) > 1 && Math.abs(aLon) < 1.2){ gs.lacc = gs.lacc * .97 + v3.dot(hb, v3.cross(gs.u, gs.f)) * aLat; gs.ln++; gs.lsign = gs.lacc >= 0 ? 1 : -1; }
+  }
+  gs.sum = [0,0,0]; gs.cnt = 0;
+}
+function gNow(){
+  const now = performance.now();
+  if(gs.f && gs.live && now - gs.live.t < 1000) return {lat:gs.live.lat, lon:gs.live.lon, src:'sensor'};
+  if(gs.gps && now - gs.gps.t < 4000) return {lat:gs.gps.lat, lon:gs.gps.lon, src:'gps'};
+  return null;
+}
+function gStart(){
+  if(gs.on || !onOff('gforce')) return;
+  const DM = window.DeviceMotionEvent; if(!DM) return;
+  const go = () => { if(gs.on) return; window.addEventListener('devicemotion', onMotion); gs.on = true; };
+  try{ if(typeof DM.requestPermission === 'function') DM.requestPermission().then(r => { if(r === 'granted') go(); }).catch(() => {}); else go(); }catch(e){}
+}
+function gStop(){ if(!gs.on) return; window.removeEventListener('devicemotion', onMotion); gs.on = false; gs.live = null; }
+const gShow = {lat:0, lon:0};
+function gRender(g){
+  const dot = $('#gDot'); if(!dot) return;
+  const d = g || {lat:0, lon:0};
+  gShow.lat += (d.lat - gShow.lat) * .3; gShow.lon += (d.lon - gShow.lon) * .3;
+  let x = -gShow.lat * 44, y = gShow.lon * 44; const r = Math.hypot(x, y); if(r > 46){ x *= 46 / r; y *= 46 / r; }   // wie eine Kugel in der Schüssel
+  dot.setAttribute('cx', (50 + x).toFixed(1)); dot.setAttribute('cy', (50 + y).toFixed(1));
+  $('#gVal').textContent = g ? Math.hypot(gShow.lat, gShow.lon).toFixed(2).replace('.', ',') : '–';
+  $('#gMeter').classList.toggle('gps', !!(g && g.src === 'gps'));
+}
+
+/* ================= Fahrt-Replay ================= */
+const RP_SPEEDS = [5, 10, 20, 50, 100];
+let rp = null, rpMk = null;
+function rpAt(an, tr){
+  const P = an.P; let a = 0, b = P.length - 1;
+  if(tr <= P[0].ta) b = 0; else if(tr >= P[b].ta) a = b;
+  else while(b - a > 1){ const m = (a + b) >> 1; if(P[m].ta < tr) a = m; else b = m; }
+  const A = P[a], B = P[b], f = B.ta > A.ta ? (tr - A.ta) / (B.ta - A.ta) : 0, L = k => A[k] + f * (B[k] - A[k]);
+  return {lat:L('lat'), lng:L('lng'), v:L('v'), d:L('d'), glat:L('glat'), glon:L('glon')};
+}
+function startReplay(t){
+  const an = analyzeTrack(t); if(!an || rp || ckOn) return;
+  rp = {id:t.id, an, tr:0, dur:an.P[an.P.length - 1].ta, mult:RP_SPEEDS.includes(prefs.rpMult) ? prefs.rpMult : 20, playing:true, last:0, carBrg:null, camBrg:null, zoom:null, userZoom:null, gest:false, hud:0};
+  tvScrubEnd(); tvSel = -1; tvPaint();
+  document.body.classList.add('replay');
+  car3d.on = onOff('car3d'); car3d.pos = {lat:an.P[0].lat, lng:an.P[0].lng};
+  if(car3d.on) enableCar3d(); else document.body.classList.remove('car3d');
+  const e = document.createElement('div'); e.className = 'rp-car'; e.innerHTML = carSVG('car');
+  rpMk = new maplibregl.Marker({element:e, anchor:'center', rotationAlignment:'map', pitchAlignment:'map'}).setLngLat([an.P[0].lng, an.P[0].lat]).addTo(map);
+  map.setMaxPitch(70); try{ map.dragPan.disable(); map.dragRotate.disable(); }catch(_){}
+  $('#rpTop').innerHTML = `<b>Replay</b><span>${esc(t.name)}</span>`;
+  gShow.lat = gShow.lon = 0;
+  rpUI(); rp.raf = requestAnimationFrame(rpFrame);
+}
+function exitReplay(){
+  if(!rp) return;
+  cancelAnimationFrame(rp.raf); const id = rp.id; rp = null;
+  document.body.classList.remove('replay');
+  if(!ckOn){ car3d.on = false; document.body.classList.remove('car3d'); if(mapReady) map.triggerRepaint(); }
+  if(rpMk){ rpMk.remove(); rpMk = null; }
+  try{ map.dragPan.enable(); map.dragRotate.enable(); }catch(_){}
+  map.easeTo({pitch:prefs.terrain ? map.getPitch() : 0, bearing:0, padding:camPad(), duration:600});
+  if(!prefs.terrain) map.once('moveend', () => { if(!ckOn && !rp && !prefs.terrain) map.setMaxPitch(0); });
+  const t = tracks.find(x => x.id === id); if(t) setTimeout(() => fitTrack(t.segs), 650);
+  gRender(null); updateTrackLayers();
+}
+function rpFrame(now){
+  if(!rp) return;
+  rp.raf = requestAnimationFrame(rpFrame);
+  const dt = rp.last ? Math.min(.1, (now - rp.last) / 1000) : 0; rp.last = now;
+  if(rp.playing){ rp.tr = Math.min(rp.dur, rp.tr + dt * rp.mult); if(rp.tr >= rp.dur){ rp.playing = false; rpUI(); } }
+  rpDraw(dt, now);
+}
+function rpDraw(dt = 0, now = performance.now()){
+  const an = rp.an, p = rpAt(an, rp.tr);
+  const ahead = Math.min(an.D, p.d + 18), back = Math.max(0, ahead - 18);
+  const pa = {lat:an.lerp(ahead, 'lat'), lng:an.lerp(ahead, 'lng')}, pb = {lat:an.lerp(back, 'lat'), lng:an.lerp(back, 'lng')};
+  if(dist(pa, pb) > 3){
+    const tb = bearing(pb, pa), sm = (cur, tau) => cur == null ? tb : (cur + ((((tb - cur + 540) % 360) - 180) * (dt ? 1 - Math.exp(-dt / tau) : 1)) + 360) % 360;
+    rp.carBrg = sm(rp.carBrg, .1); rp.camBrg = sm(rp.camBrg, .45);
+  }
+  const zt = rp.userZoom != null ? rp.userZoom : ckZoom(p.v / 3.6) - .2;
+  rp.zoom = rp.zoom == null || !dt ? zt : rp.zoom + (zt - rp.zoom) * (1 - Math.exp(-dt / 1.2));
+  car3d.pos = {lat:p.lat, lng:p.lng}; if(rp.carBrg != null) car3d.brg = rp.carBrg;
+  if(prefs.terrain && map.queryTerrainElevation){ try{ car3d.alt = map.queryTerrainElevation([p.lng, p.lat]) || 0; }catch(e){ car3d.alt = 0; } } else car3d.alt = 0;
+  if(rpMk){ rpMk.setLngLat([p.lng, p.lat]); if(rp.carBrg != null) rpMk.setRotation(rp.carBrg); }
+  if(mapReady && !rp.gest) map.jumpTo({center:[p.lng, p.lat], bearing:rp.camBrg != null ? rp.camBrg : map.getBearing(), zoom:rp.zoom, pitch:55, padding:ckPad()});
+  gRender({lat:p.glat, lon:p.glon, src:an.g.src});
+  if(now - rp.hud > 90 || !dt){
+    rp.hud = now;
+    const kmh = Math.max(0, p.v), txt = String(Math.round(kmh));
+    $('[data-ck="v"]').textContent = txt; $('#ckSpeed').classList.toggle('w3', txt.length >= 3); $('#ckSpeed').classList.remove('over');
+    $('#ckSpeed').style.setProperty('--p', Math.min(1, kmh / 260).toFixed(3));
+    $('#rpTime').textContent = `${fmtDur(rp.tr * 1000)} / ${fmtDur(rp.dur * 1000)}`;
+    $('#rpInfo').textContent = `Sektor ${an.secOf(p.d) + 1} · ${fmtKm1(p.d)} km`;
+    if(!rp.seeking) $('#rpSeek').value = Math.round(rp.tr / (rp.dur || 1) * 1000);
+  }
+}
+function rpUI(){
+  if(!rp) return;
+  const b = $('#rpBar [data-rp="play"]');
+  b.innerHTML = svg(rp.playing ? UI.pause : UI.play, 20, 2.6); b.setAttribute('aria-label', rp.playing ? 'Pause' : 'Abspielen');
+  $('#rpBar [data-rp="speed"]').textContent = `${rp.mult}×`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-rp]'); if(!b || !rp) return;
+  const a = b.dataset.rp;
+  if(a === 'play'){ if(!rp.playing && rp.tr >= rp.dur) rp.tr = 0; rp.playing = !rp.playing; rp.last = 0; rpUI(); }
+  if(a === 'speed'){ rp.mult = RP_SPEEDS[(RP_SPEEDS.indexOf(rp.mult) + 1) % RP_SPEEDS.length]; prefs.rpMult = rp.mult; savePrefs(); rpUI(); }
+  if(a === 'close') exitReplay();
+});
+$('#rpSeek').addEventListener('input', e => { if(!rp) return; rp.seeking = true; rp.tr = e.target.value / 1000 * rp.dur; rpDraw(); });
+$('#rpSeek').addEventListener('change', () => { if(rp) rp.seeking = false; });
+map.on('zoomstart', e => { if(rp && e.originalEvent) rp.gest = true; });
+map.on('zoomend', () => { if(rp && rp.gest){ rp.gest = false; rp.userZoom = map.getZoom(); rp.zoom = rp.userZoom; } });
+document.addEventListener('keydown', e => { if(rp && e.key === 'Escape') exitReplay(); if(rp && e.key === ' '){ e.preventDefault(); $('#rpBar [data-rp="play"]').click(); } });
 
 /* ================= Auto-Symbol ================= */
 function carSVG(kind){
@@ -3937,6 +4223,7 @@ $('#recbar [data-ck-open]').innerHTML = svg(UI.gauge, 18);
 $('#b-cockpit').innerHTML = svg(UI.gauge, 19);
 $('#ckRecenter').innerHTML = svg(UI.locate, 15) + 'Zentrieren';
 $('#perf [data-pf="close"]').innerHTML = svg(UI.close, 15);
+$('#rpBar [data-rp="close"]').innerHTML = svg(UI.close, 16);
 applyLabels(); refreshAll();
 if(rec){
   setTab('tracks'); renderTracksHead(); updateRecUI(); renderNearest();
