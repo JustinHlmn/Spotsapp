@@ -7,44 +7,35 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#0a7cff">
+<meta name="theme-color" content="#090b0e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Spots">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="lib/maplibre-gl.css">
 <style>
-/* Layout: Vollbild-Satellitenkarte, Glas-Panel links (Handy: ziehbares Bottom-Sheet), Steuerung oben rechts */
+/* Layout: Vollbild-Satellitenkarte, dunkles Glas-Interface. Panel links (Handy: ziehbares Sheet), Steuerung rechts. Bewusst nur ein dunkles Theme. */
 :root{
-  --page:#1b1d1f; --glass:rgba(249,249,251,.86); --solid:#ffffff;
-  --fg:#1c1c1e; --muted:#6c6c74; --line:rgba(60,60,67,.13);
-  --fill:rgba(118,118,128,.12); --accent:#0a7cff; --accent-fg:#ffffff;
-  --danger:#e5484d; --park:#2b6cb0;
-  --shadow:0 10px 30px rgba(0,0,0,.18),0 1px 3px rgba(0,0,0,.1);
+  --page:#090b0e; --glass:rgba(16,18,23,.76); --glass-strong:rgba(14,16,20,.92);
+  --solid:rgba(255,255,255,.05); --solid-2:#171a20;
+  --fg:#f2f4f7; --muted:#8a919d; --line:rgba(255,255,255,.08);
+  --fill:rgba(255,255,255,.075); --fill-2:rgba(255,255,255,.14);
+  --accent:#4da3ff; --accent-fg:#ffffff; --accent-soft:rgba(77,163,255,.16);
+  --danger:#ff5a5f; --park:#3b82f6;
+  --shadow:0 18px 48px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3);
+  --hi:inset 0 1px 0 rgba(255,255,255,.06);
+  --r-xl:24px; --r-lg:18px; --r-md:14px;
   --ease:cubic-bezier(.22,1,.36,1);
-  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  color-scheme:light;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --glass:rgba(30,30,33,.84); --solid:#2c2c2e;
-  --fg:#f2f2f7; --muted:#9d9da6; --line:rgba(235,235,245,.12);
-  --fill:rgba(118,118,128,.26); --accent:#3c95ff;
-  --danger:#ff6369; --park:#5a9be8;
-  --shadow:0 10px 30px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.4);
-  color-scheme:dark;
-}}
-:root[data-theme="dark"]{
-  --glass:rgba(30,30,33,.84); --solid:#2c2c2e;
-  --fg:#f2f2f7; --muted:#9d9da6; --line:rgba(235,235,245,.12);
-  --fill:rgba(118,118,128,.26); --accent:#3c95ff;
-  --danger:#ff6369; --park:#5a9be8;
-  --shadow:0 10px 30px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.4);
+  --font:"Geist",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{position:fixed;inset:0;margin:0;overflow:hidden;overscroll-behavior:none}
-body{background:var(--page);color:var(--fg);font:14px/1.4 var(--font);-webkit-font-smoothing:antialiased}
-button,input,textarea,select{font:inherit;color:inherit}
+body{background:var(--page);color:var(--fg);font:14.5px/1.45 var(--font);letter-spacing:-.005em;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit;letter-spacing:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 [hidden]{display:none!important}
@@ -52,7 +43,7 @@ button{cursor:pointer}
 #map{position:absolute;inset:0;background:var(--page)}
 #map.placing canvas{cursor:crosshair!important}
 
-.glass{background:var(--glass);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);box-shadow:var(--shadow);border:1px solid var(--line)}
+.glass{background:var(--glass);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%);box-shadow:var(--shadow),var(--hi);border:1px solid var(--line)}
 .press{transition:transform .18s var(--ease),background-color .2s,opacity .2s}
 .press:active{transform:scale(.96)}
 
@@ -181,7 +172,7 @@ body.cockpit #attrib{transform:none!important;top:auto;bottom:calc(env(safe-area
 #ckTop{position:absolute;z-index:20;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);align-items:center;gap:10px;height:52px;padding:0 6px 0 16px;border-radius:26px;color:var(--fg);animation:fadein .3s}
 #ckTop .dot{width:10px;height:10px;border-radius:50%;background:#ff3b30;flex:none;animation:recblink 1.4s ease-in-out infinite}
 #ckTop.paused .dot{background:var(--muted);animation:none}
-#ckTop .tx{display:flex;flex-direction:column;line-height:1.15;font-variant-numeric:tabular-nums;min-width:86px}
+#ckTop .tx{display:flex;flex-direction:column;line-height:1.15;font-variant-numeric:tabular-nums;min-width:86px;white-space:nowrap}
 #ckTop b{font-size:16px}
 #ckTop .tx span{font-size:12px;color:var(--muted)}
 #ckTop .rb{width:40px;height:40px}
@@ -353,6 +344,125 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 #tilewarn{position:absolute;z-index:8;left:50%;top:40%;transform:translate(-50%,-50%);width:min(380px,calc(100% - 32px));border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:6px;line-height:1.45}
 #tilewarn strong{font-size:16px}
 
+/* ---------- Design ---------- */
+h1,h2{font-weight:650;letter-spacing:-.025em}
+h2{font-size:23px}
+#panel{top:14px;left:14px;width:360px;max-height:calc(100% - 28px);border-radius:var(--r-xl);transition:transform .45s var(--ease),opacity .3s}
+.ph{padding:14px 14px 12px;gap:12px}
+.tabs{gap:2px;background:var(--fill);border-radius:12px;padding:3px}
+.tabs button{font-size:14px;font-weight:600;letter-spacing:0;color:var(--muted);height:30px;padding:0 14px;border-radius:9px;transition:background-color .2s,color .2s}
+.tabs button.on{background:var(--fill-2);color:var(--fg)}
+.hdr-actions{gap:6px}
+.icon-btn{width:36px;height:36px;border-radius:12px;background:var(--fill);color:var(--fg);transition:background-color .2s,transform .18s var(--ease),opacity .2s}
+.icon-btn:hover{background:var(--fill-2)}
+.icon-btn:active{transform:scale(.94)}
+.icon-btn[disabled]{opacity:.45}
+.icon-btn.accent{background:var(--accent);color:#fff}
+.search{flex:1;min-width:0;height:40px;border-radius:12px;background:var(--fill)}
+#searchCancel{flex:none}
+#searchRow{gap:10px}
+.pb{padding:8px 8px 10px}
+.pb .chips{margin:2px -8px 8px;padding:0 12px}
+.chip{height:30px;border-radius:15px;border:1px solid var(--line);background:transparent;color:var(--fg);font-weight:500}
+.chip.on{background:var(--fg);color:#0b0d10;border-color:var(--fg)}
+.item{padding:9px 8px;border-radius:14px;gap:12px}
+.item .ic{width:38px;height:38px;border-radius:12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.item .t{font-size:15px}
+.card{background:var(--solid);border-radius:16px;padding:14px}
+.btn{height:44px;border-radius:14px;background:var(--fill)}
+.btn:hover{background:var(--fill-2)}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.primary:hover{background:#63afff}
+.btn.wide{width:100%}
+.inp{background:rgba(0,0,0,.28);border-radius:12px}
+.toggle{background:var(--solid);border-radius:16px}
+.sw{background:var(--fill-2)}
+.sw:checked{background:var(--accent)}
+.tstats div{background:var(--solid);border-radius:14px}
+.seg2{border-radius:12px;padding:3px}
+.seg2 button{border-radius:9px;color:var(--muted)}
+.seg2 button.on{background:var(--fill-2);color:var(--fg);box-shadow:none}
+.dlg{background:var(--solid-2);border:1px solid var(--line);border-radius:var(--r-xl)}
+.link{color:var(--muted);font-weight:500}
+.link:hover{color:var(--fg)}
+.ext{font-size:12.5px;color:var(--muted)}
+.ext a{color:var(--accent);text-decoration:none;font-weight:600}
+#toast{border-radius:16px}
+.pulse{background:var(--accent)}
+
+#ckTop,#recbar{width:max-content;max-width:calc(100% - 20px)}
+/* Steuerung rechts */
+#ctrl{top:14px;right:14px;gap:10px}
+.stack{border-radius:16px}
+.stack button{width:46px;height:46px}
+#b-compass{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;padding:0}
+#b-compass svg{transition:transform .1s linear}
+.pop{position:absolute;top:56px;right:56px;width:230px;border-radius:18px;padding:6px;display:flex;flex-direction:column;animation:popin .22s var(--ease);z-index:6}
+@keyframes popin{from{opacity:0;transform:translateX(8px) scale(.98)}}
+.pop-row{display:flex;align-items:center;justify-content:space-between;gap:10px;height:44px;padding:0 12px;border:0;background:none;border-radius:12px;color:var(--fg);font-weight:500;text-align:left}
+.pop-row:hover{background:var(--fill)}
+.pop-row .tg{width:38px;height:22px;border-radius:11px;background:var(--fill-2);position:relative;flex:none;transition:background .25s}
+.pop-row .tg::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .3s var(--ease)}
+.pop-row.on .tg{background:var(--accent)}
+.pop-row.on .tg::after{transform:translateX(16px)}
+.pop-row .ri{color:var(--muted);display:grid}
+.pop-sep{height:1px;background:var(--line);margin:4px 8px}
+#near{height:48px;border-radius:24px;padding:0 16px 0 6px}
+#near .ic{width:36px;height:36px;border-radius:12px}
+#panelOpen{position:absolute;z-index:9;top:14px;left:14px;width:46px;height:46px;border-radius:16px;display:grid;place-items:center;color:var(--fg);padding:0;animation:fadein .3s}
+#panel.collapsed{transform:translateX(calc(-100% - 28px));opacity:0;pointer-events:none}
+@media (min-width:641px){body.pcol #near,body.pcol #recbar{left:50%}}
+
+/* Marker im neuen Look */
+.me .d{background:var(--accent)}
+.me .p{background:rgba(77,163,255,.32)}
+.me .h{border-bottom-color:var(--accent)}
+.mk-cluster{background:rgba(18,20,25,.88);color:#fff;border:1.5px solid rgba(255,255,255,.7);box-shadow:0 4px 12px rgba(0,0,0,.45)}
+
+/* Tacho als Ring */
+#ckSpeed{background:radial-gradient(closest-side,#11141a 83%,transparent 84.5%),conic-gradient(from 225deg,var(--accent) 0 calc(var(--p,0)*270deg),rgba(255,255,255,.14) 0 270deg,transparent 0);color:#fff;box-shadow:0 14px 34px rgba(0,0,0,.5)}
+#ckSpeed b{font-weight:700}
+#ckSpeed span{color:var(--muted)}
+
+/* Startbildschirm */
+#splash{background:radial-gradient(120% 80% at 50% 35%,#132743 0%,#090b0e 62%)}
+#splash .logo{background:linear-gradient(180deg,#5aaeff,#2f86ef);border-radius:26px;box-shadow:0 18px 44px rgba(77,163,255,.35)}
+#splash .name{font-weight:700;letter-spacing:-.03em}
+
+/* ---------- Navigation ---------- */
+#navTop,#navBottom,#navPrev{display:none}
+body.nav #ckTop,body.nav #ckStats,body.nav #ckRace{display:none!important}
+#navTop{position:absolute;z-index:22;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(460px,calc(100% - 20px));border-radius:22px;padding:14px 16px;gap:14px;align-items:center;background:var(--glass-strong);animation:viewin .35s var(--ease)}
+body.nav #navTop{display:flex}
+#navTop .mi{width:58px;height:58px;border-radius:17px;background:var(--accent);color:#fff;display:grid;place-items:center;flex:none}
+#navTop .mi.arr{background:#30d158}
+#navTop .tx{min-width:0;flex:1}
+#navTop .md{font-size:30px;font-weight:700;letter-spacing:-.025em;line-height:1;font-variant-numeric:tabular-nums}
+#navTop .mt{font-size:16px;font-weight:500;margin-top:5px;line-height:1.25;overflow-wrap:anywhere}
+#navTop .then{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;color:var(--muted)}
+#navTop .then i{display:grid;width:22px;height:22px;border-radius:7px;background:var(--fill-2);color:var(--fg);place-items:center}
+#navBottom{position:absolute;z-index:22;left:136px;right:14px;bottom:calc(18px + env(safe-area-inset-bottom,0px));min-height:72px;border-radius:20px;padding:10px 10px 10px 16px;align-items:center;gap:10px;background:var(--glass-strong);animation:viewin .35s var(--ease)}
+body.nav #navBottom{display:flex}
+#navBottom .eta{display:flex;flex-direction:column;flex:1;min-width:0}
+#navBottom .eta b{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.1}
+#navBottom .eta span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nbtn{width:46px;height:46px;border-radius:15px;border:0;background:var(--fill);color:var(--fg);display:grid;place-items:center;flex:none;transition:transform .18s var(--ease)}
+.nbtn:active{transform:scale(.94)}
+.nbtn.end{background:var(--danger);color:#fff}
+.nbtn.done{width:auto;padding:0 18px;background:var(--accent);color:#fff;font-weight:700}
+#navPrev{position:absolute;z-index:25;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(460px,calc(100% - 20px));border-radius:24px;padding:16px;flex-direction:column;gap:14px;background:var(--glass-strong);animation:viewin .35s var(--ease)}
+body.navprev #navPrev{display:flex}
+body.navprev #panel,body.navprev #near,body.navprev #recbar,body.navprev #panelOpen{display:none!important}
+#navPrev .nh{display:flex;align-items:center;gap:12px}
+#navPrev .nh .ni{width:44px;height:44px;border-radius:14px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none}
+#navPrev .nh b{display:block;font-size:17px;font-weight:650;letter-spacing:-.015em}
+#navPrev .nh span{font-size:13px;color:var(--muted)}
+#navPrev .nsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#navPrev .nsum div{background:var(--solid);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column}
+#navPrev .nsum b{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+#navPrev .nsum span{font-size:12px;color:var(--muted)}
+@media (max-width:560px){#navBottom{left:130px;padding:8px 8px 8px 12px}#navBottom .eta b{font-size:19px}#navTop .md{font-size:26px}#navTop .mi{width:50px;height:50px}}
+
 /* ---------- Handy: ziehbares Sheet ---------- */
 @media (max-width:640px){
   #panel{top:auto;left:0;right:0;bottom:0;width:auto;max-height:none;height:calc(100% - 52px - env(safe-area-inset-top,0px));border-radius:20px 20px 0 0;border-left:0;border-right:0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom,0px);transform:translateY(100%);transition:transform .5s var(--ease);will-change:transform;touch-action:none}
@@ -360,20 +470,21 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
   #panel.full .pb,#panel.full .pad{touch-action:pan-y}
   #panel:not(.full) .pb,#panel:not(.full) .pad{overflow:hidden}
   .ph,.top,.grabwrap{user-select:none;-webkit-user-select:none}
-  .grabwrap{display:flex;justify-content:center;padding:7px 0 0;margin-bottom:-4px}
+  .grabwrap{display:flex;justify-content:center;padding:9px 0 7px;margin-bottom:-8px;position:relative;z-index:2;cursor:pointer}
   .grab{width:38px;height:5px;border-radius:3px;background:color-mix(in srgb,var(--fg) 22%,transparent);border:0;padding:0}
   .ph{padding-top:8px}
   .chips{touch-action:pan-x}
   #ctrl{top:calc(10px + env(safe-area-inset-top,0px));right:10px}
   .maplibregl-ctrl-top-right{top:calc(148px + env(safe-area-inset-top,0px))}
   .maplibregl-ctrl-top-right .maplibregl-ctrl{margin-right:10px}
-  #attrib{position:fixed;right:10px;bottom:0;transition:transform .5s var(--ease)}
+  #attrib{position:fixed;right:10px;bottom:0;transition:transform .5s var(--ease),opacity .3s}
   #attrib.dragging{transition:none}
   .maplibregl-ctrl-scale{display:none}
   #near{top:calc(10px + env(safe-area-inset-top,0px));left:10px;transform:none;max-width:calc(100% - 76px)}
   #recbar{top:calc(10px + env(safe-area-inset-top,0px));left:10px;transform:none}
-  .tabs{gap:14px}
-  .tabs button{font-size:21px}
+  #collapseBtn,#panelOpen{display:none!important}
+  #panel{transition:transform .5s var(--ease)}
+  .pop{right:56px}
   #near:active{transform:scale(.97)}
   #toast{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px))}
 }
@@ -397,6 +508,9 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
   <div><b data-ck="max">0</b><span>Max km/h</span></div>
 </div>
 <button id="ckRecenter" class="glass" hidden></button>
+<div id="navTop" class="glass" aria-live="polite"></div>
+<div id="navBottom" class="glass"></div>
+<div id="navPrev" class="glass"></div>
 <div id="perf" hidden>
   <div class="wrap">
     <div class="pf-top"><div><b>Beschleunigung</b><span class="pf-gps" id="pfGps">Warte auf GPS …</span></div><button class="pf-x" data-pf="close" aria-label="Schließen"></button></div>
@@ -422,10 +536,16 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 
 <div id="ctrl">
   <div class="stack glass">
-    <button id="b-labels" title="Straßen und Orte einblenden" aria-label="Beschriftung ein/aus"></button>
+    <button id="b-layers" title="Kartenoptionen" aria-label="Kartenoptionen" aria-expanded="false"></button>
+    <button id="b-cockpit" data-ck-open title="Cockpit" aria-label="Cockpit öffnen"></button>
     <button id="b-locate" title="Mein Standort" aria-label="Mein Standort"></button>
-    <button id="b-3d" class="t3d" title="3D-Gelände" aria-label="3D-Gelände ein/aus">3D</button>
-    <button id="b-cockpit" data-ck-open title="Cockpit (Fahrmodus)" aria-label="Cockpit öffnen"></button>
+  </div>
+  <button id="b-compass" class="glass" hidden title="Nach Norden ausrichten" aria-label="Nach Norden ausrichten"></button>
+  <div id="layersPop" class="glass pop" hidden>
+    <button class="pop-row" id="b-labels"><span>Straßen & Orte</span><i class="tg"></i></button>
+    <button class="pop-row" id="b-3d"><span>3D-Gelände</span><i class="tg"></i></button>
+    <div class="pop-sep"></div>
+    <button class="pop-row" data-pf-open><span>0–100 messen</span><span class="ri" id="popTimer"></span></button>
   </div>
 </div>
 
@@ -438,21 +558,26 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
   <button class="rb stop" data-rec="stop" aria-label="Aufzeichnung beenden"></button>
 </div>
 
+<button id="panelOpen" class="glass" hidden aria-label="Leiste öffnen"></button>
 <aside id="panel" class="glass">
   <div class="grabwrap"><button class="grab" id="grab" aria-label="Panel auf- oder zuklappen"></button></div>
   <section class="view" id="listView">
     <div class="ph">
-      <div class="row between">
+      <div class="row between" id="headRow">
         <div class="tabs" role="tablist"><button class="on" data-tab="spots" role="tab">Spots</button><button data-tab="tracks" role="tab">Strecken</button></div>
-        <div class="row" id="spotActions"><button class="here-btn press" id="hereBtn" title="Spot an deinem aktuellen Standort speichern"></button><button class="icon-btn accent press" id="addBtn" aria-label="Spot auf der Karte setzen" title="Spot auf der Karte setzen"></button></div>
+        <div class="row hdr-actions">
+          <button class="icon-btn" id="searchBtn" aria-label="Orte und Spots suchen" title="Suchen"></button>
+          <span class="row hdr-actions" id="spotActions"><button class="icon-btn" id="hereBtn" aria-label="Spot an meinem Standort speichern" title="Spot hier speichern"></button><button class="icon-btn accent" id="addBtn" aria-label="Spot auf der Karte setzen" title="Spot auf der Karte setzen"></button></span>
+          <button class="icon-btn" id="collapseBtn" aria-label="Leiste einklappen" title="Leiste einklappen"></button>
+        </div>
       </div>
-      <div class="phbody" id="spotsHead">
-        <div class="search"><span id="searchIc"></span><input id="q" type="search" placeholder="Spots oder Orte suchen" autocomplete="off" enterkeyhint="search"></div>
-        <div class="chips" id="chips"></div>
+      <div class="row" id="searchRow" hidden>
+        <div class="search"><span id="searchIc"></span><input id="q" type="search" placeholder="Stadt, Ort oder Spot" autocomplete="off" enterkeyhint="search"></div>
+        <button class="txtbtn" id="searchCancel">Abbrechen</button>
       </div>
       <div class="phbody" id="tracksHead" hidden></div>
     </div>
-    <div class="pb" id="listBody"></div>
+    <div class="pb"><div class="chips" id="chips"></div><div id="listBody"></div></div>
     <div class="pf">
       <button class="link" id="catsBtn">Kategorien</button>
       <button class="link" id="exportBtn">Exportieren</button>
@@ -503,6 +628,12 @@ const UI = {
   gauge:'<path d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/><path d="m12 13.5 4.2-4.2"/><circle cx="12" cy="13.5" r="1.4" fill="currentColor"/>',
   timer:'<circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.5M10 2.5h4M18.5 6.5 20 5"/>',
   share:'<path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/>',
+  here:'<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5"/>',
+  sidebar:'<rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15M14.5 10l-2 2 2 2"/>',
+  list:'<path d="M8 6.5h12M8 12h12M8 17.5h12"/><circle cx="4" cy="6.5" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="17.5" r="1" fill="currentColor"/>',
+  layers:'<path d="m12 3.5 8.5 4.6L12 12.7 3.5 8.1z"/><path d="m3.5 12.4 8.5 4.6 8.5-4.6"/><path d="m3.5 16.3 8.5 4.2 8.5-4.2"/>',
+  spkOn:'<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11"/>',
+  spkOff:'<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>',
   locate:'<path d="M3 11 21 3l-8 18-2-8z"/>', labels:'<path d="M5 7h14M12 7v12M8 19h8"/>',
   back:'<path d="M15 5 8 12l7 7"/>', close:'<path d="M6 6l12 12M18 6 6 18"/>',
   car:'<path d="M5 16v-5l2-5h10l2 5v5M3 16h18v3H3zM7 19v2M17 19v2"/>',
@@ -592,8 +723,13 @@ const map = new maplibregl.Map({
   dragRotate:true, maxPitch:0, fadeDuration:150, renderWorldCopies:true
 });
 map.touchZoomRotate.enableRotation();
-map.addControl(new maplibregl.NavigationControl({showCompass:true, visualizePitch:true}), 'top-right');
-map.addControl(new maplibregl.ScaleControl({unit:'metric'}), 'bottom-right');
+function updateCompass(){
+  const el = $('#b-compass'); if(!el) return;
+  const b = map.getBearing(), pt = map.getPitch(), show = Math.abs(b) > .5 || pt > .5;
+  el.hidden = !show;
+  if(show && el.firstElementChild) el.firstElementChild.style.transform = `rotate(${-b}deg)`;
+}
+map.on('rotate', updateCompass); map.on('pitch', updateCompass);
 
 let mapReady = false;
 const pendingSrc = {};
@@ -607,8 +743,8 @@ map.on('load', () => {
   map.addSource('acc', {type:'geojson', data:FC([])});
   map.addSource('spots', {type:'geojson', data:FC([]), cluster:true, clusterRadius:52, clusterMaxZoom:14});
   map.addLayer({id:'spots-q', type:'circle', source:'spots', paint:{'circle-radius':0, 'circle-opacity':0}});
-  map.addLayer({id:'acc-fill', type:'fill', source:'acc', paint:{'fill-color':'#0a7cff', 'fill-opacity':.14}});
-  map.addLayer({id:'acc-line', type:'line', source:'acc', paint:{'line-color':'#0a7cff', 'line-opacity':.5, 'line-width':1}});
+  map.addLayer({id:'acc-fill', type:'fill', source:'acc', paint:{'fill-color':'#4da3ff', 'fill-opacity':.14}});
+  map.addLayer({id:'acc-line', type:'line', source:'acc', paint:{'line-color':'#4da3ff', 'line-opacity':.5, 'line-width':1}});
   for(const id of ['track-all','track-view','track-live','track-ends']) map.addSource(id, {type:'geojson', data:FC([])});
   const rl = {'line-cap':'round', 'line-join':'round'};
   map.addLayer({id:'track-all-line', type:'line', source:'track-all', layout:rl, paint:{'line-color':'#ff9f0a', 'line-width':3, 'line-opacity':.6}});
@@ -617,6 +753,9 @@ map.on('load', () => {
   map.addLayer({id:'track-view-line', type:'line', source:'track-view', layout:rl, paint:{'line-color':'#ff9f0a', 'line-width':5}});
   map.addLayer({id:'track-live-case', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ffffff', 'line-width':8, 'line-opacity':.9}});
   map.addLayer({id:'track-live-line', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ff3b30', 'line-width':5}});
+  map.addSource('nav-route', {type:'geojson', data:FC([])});
+  map.addLayer({id:'nav-route-case', type:'line', source:'nav-route', layout:rl, paint:{'line-color':'#0b2f57', 'line-width':12, 'line-opacity':.9}});
+  map.addLayer({id:'nav-route-line', type:'line', source:'nav-route', layout:rl, paint:{'line-color':'#4da3ff', 'line-width':7.5}});
   for(const id of ['course-all','course-view','course-ends','draw-line','draw-pts']) map.addSource(id, {type:'geojson', data:FC([])});
   map.addLayer({id:'course-all-line', type:'line', source:'course-all', layout:rl, paint:{'line-color':'#bf5af2', 'line-width':3.5, 'line-opacity':.75}});
   map.addLayer({id:'course-all-hit', type:'line', source:'course-all', layout:rl, paint:{'line-color':'#000', 'line-width':20, 'line-opacity':0}});
@@ -696,7 +835,7 @@ let mode = null;
 let view = 'list';
 let geoResults = [], geoState = 'idle';
 let editError = '';
-let me = null;
+let me = null, searching = false, panelCollapsed = false;
 const visibleSpots = () => data.spots.filter(s => !filter.size || filter.has(s.cat));
 
 /* ================= Marker ================= */
@@ -727,8 +866,9 @@ function renderMarkers(){
   if(mapReady) map.getSource('spots')?.setData(FC(feats));
   scheduleMarkers();
 }
-let markerQueued = false;
+let markerQueued = false, markerTimer = null;
 function scheduleMarkers(){
+  if(ckOn){ if(markerTimer) return; markerTimer = setTimeout(() => { markerTimer = null; updateMarkers(); }, 700); return; }
   if(markerQueued) return; markerQueued = true;
   requestAnimationFrame(() => { markerQueued = false; updateMarkers(); });
 }
@@ -812,7 +952,7 @@ function drawDraftLine(){
 const panel = $('#panel');
 const mqMobile = matchMedia('(max-width:640px)');
 const mobile = () => mqMobile.matches;
-const SNAPS = ['peek', 'half', 'full'];
+const SNAPS = ['mini', 'peek', 'half', 'full'];
 let snap = 'peek', sheetY = 0;
 
 function peekVisible(){
@@ -823,6 +963,7 @@ function peekVisible(){
 }
 function snapY(name){
   const H = panel.offsetHeight;
+  if(name === 'mini') return Math.max(0, H - ($('.grabwrap').offsetHeight + (parseFloat(getComputedStyle(panel).paddingBottom) || 0) + 10));
   const vis = name === 'full' ? H : name === 'half' ? Math.min(H, Math.max(peekVisible() + 60, innerHeight * .5)) : peekVisible();
   return Math.max(0, H - vis);
 }
@@ -833,6 +974,7 @@ function setSheetY(y, animate){
   const at = $('#attrib');
   at.classList.toggle('dragging', !animate);
   at.style.transform = `translateY(${-(panel.offsetHeight - y) - 4}px)`;
+  at.style.opacity = (panel.offsetHeight - y) > innerHeight * .7 ? 0 : 1;
 }
 function setSnap(name, animate = true){
   if(!mobile()) return;
@@ -844,7 +986,7 @@ function visibleSheet(){ return mobile() ? Math.max(0, panel.offsetHeight - shee
 function camPad(){
   return mobile()
     ? {top:80, bottom:Math.min(visibleSheet(), innerHeight * .55) + 30, left:40, right:70}
-    : {top:70, bottom:60, left:390, right:90};
+    : {top:70, bottom:60, left:panelCollapsed ? 80 : 400, right:90};
 }
 
 /* Ziehen mit Schwung */
@@ -866,7 +1008,7 @@ function camPad(){
       try{ panel.setPointerCapture(e.pointerId); }catch(_){}
       if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
     }
-    const H = panel.offsetHeight, maxY = H - Math.min(peekVisible(), 90);
+    const maxY = snapY('mini');
     let y = start.sy + dy;
     if(y < 0) y = y / 3;                 // Gummiband oben
     if(y > maxY) y = maxY + (y - maxY) / 3;
@@ -886,7 +1028,7 @@ function camPad(){
         SNAPS.forEach((n, i) => { const d = Math.abs(snapY(n) - sheetY); if(d < bd){ bd = d; best = i; } });
         idx = best;
       }
-      setSnap(SNAPS[Math.max(0, Math.min(2, idx))]);
+      setSnap(SNAPS[Math.max(0, Math.min(SNAPS.length - 1, idx))]);
     }
     start = null; dragging = false;
   };
@@ -894,13 +1036,22 @@ function camPad(){
   panel.addEventListener('pointercancel', end);
   panel.addEventListener('click', e => { if(moved){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
 })();
-$('#grab').addEventListener('click', () => setSnap(snap === 'peek' ? 'half' : 'peek'));
+$('.grabwrap').addEventListener('click', () => setSnap(snap === 'mini' ? 'peek' : snap === 'peek' ? 'half' : 'peek'));
+function setCollapsed(c){
+  panelCollapsed = c;
+  panel.classList.toggle('collapsed', c); document.body.classList.toggle('pcol', c);
+  $('#panelOpen').hidden = !c;
+  try{ prefs.pcol = c; savePrefs(); }catch(e){}
+}
+$('#collapseBtn').addEventListener('click', () => setCollapsed(true));
+$('#panelOpen').addEventListener('click', () => setCollapsed(false));
 mqMobile.addEventListener?.('change', () => { if(mobile()) setSnap(snap, false); else { panel.style.transform = ''; $('#attrib').style.transform = ''; panel.classList.remove('full'); } });
 addEventListener('resize', () => mobile() && setSnap(snap, false));
 
 function show(v, snapTo){
   const changed = v !== view;
   view = v;
+  if(!mobile() && panelCollapsed && v !== 'list') setCollapsed(false);
   for(const id of ['listView','detailView','editView','modeView','trackView','trackSaveView','courseView','drawView']){
     const el = $('#' + id), on = id === v + 'View';
     el.hidden = !on;
@@ -957,6 +1108,24 @@ function renderList(){
 let qTimer;
 $('#q').addEventListener('input', () => { geoState = 'idle'; geoResults = []; clearTimeout(qTimer); qTimer = setTimeout(renderList, 80); });
 $('#q').addEventListener('focus', () => setSnap('full'));
+function openSearch(){
+  if(tab !== 'spots') setTab('spots');
+  if(!mobile() && panelCollapsed) setCollapsed(false);
+  searching = true;
+  $('#headRow').hidden = true; $('#searchRow').hidden = false; $('#chips').hidden = true;
+  setSnap('full'); renderList();
+  setTimeout(() => $('#q').focus(), 30);
+}
+function closeSearch(){
+  if(!searching) return;
+  searching = false; $('#q').value = ''; $('#q').blur(); geoState = 'idle';
+  $('#headRow').hidden = false; $('#searchRow').hidden = true; $('#chips').hidden = tab !== 'spots';
+  renderList();
+  if(mobile()) setSnap('peek');
+}
+$('#searchBtn').addEventListener('click', openSearch);
+$('#searchCancel').addEventListener('click', closeSearch);
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && searching) closeSearch(); });
 $('#q').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); geoSearch(); } });
 async function geoSearch(){
   const q = $('#q').value.trim(); if(!q) return;
@@ -974,11 +1143,11 @@ async function geoSearch(){
 }
 $('#listBody').addEventListener('click', e => {
   const it = e.target.closest('button'); if(!it) return;
-  if(it.dataset.id) return openDetail(it.dataset.id, true);
+  if(it.dataset.id){ if(searching) closeSearch(); return openDetail(it.dataset.id, true); }
   if(it.dataset.geosearch) return geoSearch();
   if(it.dataset.geo != null){
     const r = geoResults[+it.dataset.geo];
-    $('#q').blur(); setSnap('peek');
+    closeSearch(); setSnap('peek');
     setTimeout(() => {
       if(r.bb) map.fitBounds([[+r.bb[2], +r.bb[0]], [+r.bb[3], +r.bb[1]]], {padding:camPad(), maxZoom:16, duration:1400});
       else map.flyTo({center:[r.lng, r.lat], zoom:15, padding:camPad(), duration:1400});
@@ -1001,10 +1170,9 @@ function flyToSpot(s){
     map.fitBounds(b, {padding:camPad(), maxZoom:17, duration:1200});
   } else map.flyTo({center:LL(s), zoom:Math.max(map.getZoom(), 16), padding:camPad(), duration:1200});
 }
-function navLinks(p, label){
+function extLinks(p){
   const ll = `${p.lat},${p.lng}`;
-  return `<a class="btn primary" href="https://www.google.com/maps/dir/?api=1&destination=${ll}" target="_blank" rel="noopener">${svg(UI.nav,15)}${label}</a>
-          <a class="btn" href="https://maps.apple.com/?daddr=${ll}" target="_blank" rel="noopener">Apple Karten</a>`;
+  return `<div class="ext">Extern öffnen: <a href="https://www.google.com/maps/dir/?api=1&destination=${ll}" target="_blank" rel="noopener">Google Maps</a> · <a href="https://maps.apple.com/?daddr=${ll}" target="_blank" rel="noopener">Apple Karten</a></div>`;
 }
 function renderDetail(s){
   const cat = catById(s.cat);
@@ -1016,7 +1184,7 @@ function renderDetail(s){
       <div class="stats"><div><b>${fmtDist(d)}</b><span>Luftlinie</span></div><div><b>ca. ${fmtMin(walkMin(d))}</b><span>zu Fuß</span></div></div>
       ${s.parking.note ? `<div>${esc(s.parking.note)}</div>` : ''}
       <div class="coords"><span>${fmtCoord(s.parking)}</span><button class="txtbtn" data-copy="${fmtCoord(s.parking)}">Kopieren</button></div>
-      <div class="btns">${navLinks(s.parking, 'Zum Parkplatz')}</div>
+      ${extLinks(s.parking)}
     </div>`;
   } else if(s.walk){
     park = `<div class="card"><div class="h"><span class="pmark">P</span>Kein Parkplatz gesetzt</div><div class="muted">Bearbeite den Spot, um einen Parkplatz auf der Karte zu markieren.</div></div>`;
@@ -1024,14 +1192,14 @@ function renderDetail(s){
   $('#detailView').innerHTML = `
     <div class="top"><button class="txtbtn" data-act="back">${svg(UI.back,14)} Spots</button><button class="icon-btn press" data-act="back" aria-label="Schließen">${svg(UI.close,14)}</button></div>
     <div class="pad">
-      <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${cat.color}"><span class="ic">${ic(cat.icon,13)}</span>${esc(cat.name)}</span><h2>${esc(s.name)}</h2></div>
-      ${me ? `<div class="stats"><div><b>${fmtDist(dist(me, s))}</b><span>von dir entfernt (Luftlinie)</span></div></div>` : ''}
+      <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${cat.color}"><span class="ic">${ic(cat.icon,13)}</span>${esc(cat.name)}${me ? `<span class="muted" style="font-weight:500">· ${fmtDist(dist(me, s))} entfernt</span>` : ''}</span><h2>${esc(s.name)}</h2></div>
+      <button class="btn primary wide" data-act="nav">${svg(UI.nav,16)} ${s.walk && s.parking ? 'Zum Parkplatz navigieren' : 'Navigation starten'}</button>
       ${s.notes ? `<p class="notes">${esc(s.notes)}</p>` : ''}
       ${park}
       <div class="card">
         <div class="h">${s.walk ? 'Spot' : 'Mit dem Auto erreichbar'}</div>
         <div class="coords"><span>${fmtCoord(s)}</span><button class="txtbtn" data-copy="${fmtCoord(s)}">Kopieren</button></div>
-        ${s.walk ? '' : `<div class="btns">${navLinks(s, 'Navigation')}</div>`}
+        ${s.walk && s.parking ? '' : extLinks(s)}
       </div>
       <div class="btns"><button class="btn" data-act="edit">Bearbeiten</button><button class="btn danger" data-act="del">Löschen</button></div>
     </div>`;
@@ -1043,6 +1211,11 @@ $('#detailView').addEventListener('click', e => {
   const a = b.dataset.act;
   if(a === 'back') closeDetail();
   if(a === 'edit') startEdit(selected);
+  if(a === 'nav'){
+    const s = data.spots.find(x => x.id === selected); if(!s) return;
+    if(s.walk && s.parking) planNav(s.parking, s.name, {lat:s.lat, lng:s.lng});
+    else planNav({lat:s.lat, lng:s.lng}, s.name, null);
+  }
   if(a === 'del'){
     if(delArmed === selected){
       const s = data.spots.find(x => x.id === selected);
@@ -1080,7 +1253,7 @@ $('#modeView').addEventListener('click', e => {
   if(a === 'here') getHere().then(p => { if(p && mode) place(p); });
 });
 map.on('click', e => {
-  if(ckOn) return;
+  if(ckOn || navPrevOn) return;
   if(drawing){ addDrawPoint(e.lngLat); return; }
   if(mode) return place(e.lngLat);
   if(mapReady && (tab === 'tracks' || view === 'track' || view === 'course') && view !== 'edit' && view !== 'trackSave'){
@@ -1092,7 +1265,7 @@ map.on('click', e => {
   if(view === 'track'){ closeTrack(); return; }
   if(view === 'course'){ closeCourse(); return; }
   if(view === 'detail') closeDetail();
-  else if(mobile() && view === 'list' && snap !== 'peek'){ $('#q').blur(); setSnap('peek'); }
+  else if(mobile() && view === 'list' && !searching){ setSnap(snap === 'peek' ? 'mini' : 'peek'); }
 });
 map.on('contextmenu', e => { if(!mode && view !== 'edit'){ newDraft(); place(e.lngLat); } });
 function place(ll){
@@ -1316,8 +1489,8 @@ function onPos(p){
   if(!meMarker){
     const el = document.createElement('div'); el.className = 'me'; el.innerHTML = '<span class="p"></span><span class="h"></span><span class="d"></span>';
     meMarker = new maplibregl.Marker({element:el, anchor:'center'}).setLngLat(LL(me)).addTo(map);
-  } else meMarker.setLngLat(LL(me));
-  setSrc('acc', FC(acc > 5 ? [circlePoly(me, acc)] : []));
+  } else if(!ckOn) tweenMe(me);
+  setSrc('acc', FC(acc > 5 && !ckOn ? [circlePoly(me, acc)] : []));
   if(!ckOn){
     const hd = p.coords.heading, sp = p.coords.speed;
     if(hd != null && !isNaN(hd) && sp != null && sp > 1.5) setMeHeading(hd);
@@ -1333,6 +1506,19 @@ function onPos(p){
     if(view === 'detail' && selected){ const s = data.spots.find(x => x.id === selected); if(s){ const sc = $('#detailView .pad')?.scrollTop || 0; renderDetail(s); const pd = $('#detailView .pad'); if(pd) pd.scrollTop = sc; } }
   }
 }
+let meTween = 0;
+function tweenMe(to){
+  const from = meMarker.getLngLat(), a = {lat:from.lat, lng:from.lng};
+  cancelAnimationFrame(meTween);
+  if(dist(a, to) > 300){ meMarker.setLngLat(LL(to)); return; }
+  const t0 = performance.now(), D = 700;
+  const step = now => {
+    const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 3);
+    meMarker.setLngLat([a.lng + (to.lng - a.lng) * e, a.lat + (to.lat - a.lat) * e]);
+    if(k < 1) meTween = requestAnimationFrame(step);
+  };
+  meTween = requestAnimationFrame(step);
+}
 function renderNearest(){
   const el = $('#near');
   const list = visibleSpots();
@@ -1347,6 +1533,16 @@ function renderNearest(){
 $('#near').addEventListener('click', e => { const id = e.currentTarget.dataset.id; if(id && !mode && view !== 'edit') openDetail(id, true); });
 $('#b-locate').addEventListener('click', () => { if(rec && !rec.stopped) followMe = true; startGPS(true); });
 $('#b-labels').addEventListener('click', () => { prefs.labels = !prefs.labels; savePrefs(); applyLabels(); });
+$('#b-layers').addEventListener('click', e => {
+  e.stopPropagation();
+  const pop = $('#layersPop'); pop.hidden = !pop.hidden;
+  $('#b-layers').classList.toggle('on', !pop.hidden); $('#b-layers').setAttribute('aria-expanded', !pop.hidden);
+});
+document.addEventListener('click', e => {
+  const pop = $('#layersPop');
+  if(!pop.hidden && (!e.target.closest('#layersPop') || e.target.closest('[data-pf-open]'))){ pop.hidden = true; $('#b-layers').classList.remove('on'); $('#b-layers').setAttribute('aria-expanded', 'false'); }
+});
+$('#b-compass').addEventListener('click', () => map.easeTo({bearing:0, pitch:prefs.terrain ? map.getPitch() : 0, duration:600}));
 
 /* ================= Helfer ================= */
 let tt;
@@ -1395,7 +1591,8 @@ const segFeatures = (segs, props = {}) => segs.filter(sg => sg.length > 1).map(s
 function setTab(t){
   tab = t;
   document.querySelectorAll('.tabs button').forEach(b => { b.classList.toggle('on', b.dataset.tab === t); b.setAttribute('aria-selected', b.dataset.tab === t); });
-  $('#spotsHead').hidden = t !== 'spots';
+  if(searching && t !== 'spots') closeSearch();
+  $('#chips').hidden = t !== 'spots' || searching;
   $('#tracksHead').hidden = t !== 'tracks';
   $('#spotActions').hidden = t !== 'spots';
   if(t === 'tracks') renderTracksHead();
@@ -1672,10 +1869,45 @@ function bearing(a, b){
 }
 const ckPad = () => ({top:Math.round(innerHeight * .42), bottom:110, left:20, right:20});
 function ckZoom(v){ const k = (v || 0) * 3.6; return k < 15 ? 17.2 : k < 40 ? 16.6 : k < 70 ? 16 : k < 110 ? 15.3 : 14.6; }
-function moveCam(pt, dur = 1000){
-  if(!mapReady || !pt) return;
-  map.easeTo({center:LL(pt), bearing:ck.h != null ? ck.h : map.getBearing(), pitch:55, zoom:ckUserZoom != null ? ckUserZoom : ckZoom(ck.v),
-              padding:ckPad(), duration:dur, easing:t => t});
+const cam = {raf:0, last:0, fix:null, disp:null, bearing:null, zoom:null, hold:0};
+let userGesture = false, ckUserPitch = null;
+function offsetPt(p, brg, d){
+  const r = brg * Math.PI / 180;
+  return {lat:p.lat + d * Math.cos(r) / 110540, lng:p.lng + d * Math.sin(r) / (111320 * Math.cos(p.lat * Math.PI / 180))};
+}
+function camStart(){
+  if(cam.raf) return;
+  cam.last = 0;
+  const loop = now => {
+    cam.raf = requestAnimationFrame(loop);
+    if(cam.last && now - cam.last < 30) return;           // ≈ 30 FPS
+    const dt = cam.last ? Math.min(.1, (now - cam.last) / 1000) : .033;
+    cam.last = now;
+    camStep(now, dt);
+  };
+  cam.raf = requestAnimationFrame(loop);
+}
+function camStop(){ cancelAnimationFrame(cam.raf); cam.raf = 0; }
+function camStep(now, dt){
+  const f = cam.fix; if(!f) return;
+  const age = Math.min(2.5, Math.max(0, (now - f.t) / 1000));
+  let pred = {lat:f.lat, lng:f.lng}, brgT = f.h;
+  if(f.v > .8 && f.h != null) pred = offsetPt(pred, f.h, f.v * age);   // weiterrollen bis zum nächsten GPS-Punkt
+  if(nav && nav.active && !nav.arrived){ const sp = navSnap(pred); if(sp){ pred = sp.pt; if(f.v > 1 && sp.brg != null) brgT = sp.brg; } }
+  if(!cam.disp || dist(cam.disp, pred) > 250) cam.disp = pred;
+  else { const k = 1 - Math.exp(-dt / .3); cam.disp = {lat:cam.disp.lat + (pred.lat - cam.disp.lat) * k, lng:cam.disp.lng + (pred.lng - cam.disp.lng) * k}; }
+  if(brgT != null && f.v > 1.4){
+    if(cam.bearing == null) cam.bearing = brgT;
+    else { const d = ((brgT - cam.bearing + 540) % 360) - 180; cam.bearing = (cam.bearing + d * (1 - Math.exp(-dt / .5)) + 360) % 360; }
+  }
+  const zt = ckUserZoom != null ? ckUserZoom : ckZoom(f.v);
+  cam.zoom = cam.zoom == null ? zt : cam.zoom + (zt - cam.zoom) * (1 - Math.exp(-dt / 1.5));
+  if(meMarker){
+    meMarker.setLngLat(LL(cam.disp));
+    if(cam.bearing != null && meMarker.getElement().classList.contains('dir')) meMarker.setRotation(cam.bearing);
+  }
+  if(ckFollow && !userGesture && now > cam.hold && mapReady)
+    map.jumpTo({center:LL(cam.disp), bearing:cam.bearing != null ? cam.bearing : map.getBearing(), zoom:cam.zoom, pitch:ckUserPitch != null ? ckUserPitch : 55});
 }
 function enterCockpit(){
   if(ckOn) return;
@@ -1692,10 +1924,16 @@ function enterCockpit(){
   requestWake();
   clearInterval(ckTick); ckTick = setInterval(updateCockpitUI, 1000);
   renderCkTop(); updateRecUI(); updateCockpitUI();
-  if(me) moveCam(me, 1400);
+  cam.fix = me ? {lat:me.lat, lng:me.lng, t:performance.now(), v:0, h:null} : null;
+  cam.disp = null; cam.bearing = null; cam.zoom = null; ckUserPitch = null; userGesture = false;
+  map.easeTo({center:me ? LL(me) : map.getCenter(), zoom:ckZoom(0), pitch:55, padding:ckPad(), duration:1100});
+  cam.hold = performance.now() + 1150;
+  camStart();
 }
 function exitCockpit(){
   if(!ckOn) return;
+  if(nav && nav.active) endNav(true);
+  camStop();
   ckOn = false; document.body.classList.remove('cockpit');
   ckTarget = null; updateCourseLayers();
   if(ckWatch != null){ navigator.geolocation.clearWatch(ckWatch); ckWatch = null; }
@@ -1724,13 +1962,20 @@ function onDrivePos(p){
   onPos(p);
   setMeHeading((ck.v || 0) > 1.4 ? ck.h : null);
   updateCockpitUI();
-  if(ckFollow) moveCam(pt);
+  cam.fix = {lat:pt.lat, lng:pt.lng, t:performance.now(), v:ck.v || 0, h:ck.h};
+  if(nav && nav.active) onNavFix(pt, c.accuracy);
 }
 map.on('dragstart', () => { if(ckOn){ ckFollow = false; $('#ckRecenter').hidden = false; } });
-map.on('zoomend', e => { if(ckOn && e.originalEvent) ckUserZoom = map.getZoom(); });
+map.on('rotatestart', e => { if(ckOn && e.originalEvent){ ckFollow = false; $('#ckRecenter').hidden = false; } });
+map.on('zoomstart', e => { if(ckOn && e.originalEvent) userGesture = true; });
+map.on('zoomend', e => { if(ckOn && userGesture){ userGesture = false; ckUserZoom = map.getZoom(); cam.zoom = ckUserZoom; } });
+map.on('pitchstart', e => { if(ckOn && e.originalEvent) userGesture = true; });
+map.on('pitchend', e => { if(ckOn && userGesture){ userGesture = false; ckUserPitch = map.getPitch(); } });
 $('#ckRecenter').addEventListener('click', () => {
-  ckFollow = true; ckUserZoom = null; $('#ckRecenter').hidden = true;
-  moveCam(ck.last || me, 900);
+  ckFollow = true; ckUserZoom = null; ckUserPitch = null; $('#ckRecenter').hidden = true;
+  cam.hold = performance.now() + 700;
+  const c = cam.disp || ck.last || me;
+  if(c) map.easeTo({center:LL(c), bearing:cam.bearing != null ? cam.bearing : map.getBearing(), zoom:ckZoom(ck.v), pitch:55, duration:650});
 });
 function renderCkTop(){
   const h = $('#ckTop'), active = rec && !rec.stopped;
@@ -1741,7 +1986,7 @@ function renderCkTop(){
        <button class="rb" data-rec="toggle"></button>
        <button class="rb stop" data-rec="stop" aria-label="Aufzeichnung beenden">${svg(UI.stop, 16)}</button>
        <button class="rb" data-ck="close" aria-label="Cockpit schließen">${svg(UI.close, 15)}</button>`
-    : `<div class="tx"><b>Cockpit</b><span>Nicht aufgezeichnet</span></div>
+    : `<div class="tx"><b>Cockpit</b><span>Ohne Aufnahme</span></div>
        <button class="rb txt" data-pf-open aria-label="Beschleunigung messen">0–100</button>
        <button class="rb rec" data-rec="start" aria-label="Aufzeichnung starten"><span class="rdot"></span></button>
        <button class="rb" data-ck="close" aria-label="Cockpit schließen">${svg(UI.close, 15)}</button>`;
@@ -1752,6 +1997,7 @@ function updateCockpitUI(){
   const stale = !ck.ts || Date.now() - ck.ts > 6000;
   const kmh = ck.v == null ? null : ck.v * 3.6;
   $('[data-ck="v"]').textContent = stale || kmh == null ? '–' : String(kmh < 1 ? 0 : Math.round(kmh));
+  $('#ckSpeed').style.setProperty('--p', stale || kmh == null ? 0 : Math.min(1, kmh / 200).toFixed(3));
   let dst, time, max;
   if(rec && !rec.stopped){ dst = rec.dist; time = recElapsed(); max = rec.maxSpd; }
   else { dst = ck.dist; time = Date.now() - ck.start; max = ck.max; }
@@ -1762,6 +2008,235 @@ function updateCockpitUI(){
   $('[data-ck="max"]').textContent = String(Math.round(max * 3.6));
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && ckOn) exitCockpit(); });
+
+/* ================= Navigation ================= */
+let nav = null, navPrevOn = false;
+const ROUTERS = ['https://router.project-osrm.org/route/v1/driving/', 'https://routing.openstreetmap.de/routed-car/route/v1/driving/'];
+async function fetchRoute(a, b){
+  for(const base of ROUTERS){
+    try{
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 10000);
+      const r = await fetch(`${base}${a.lng.toFixed(6)},${a.lat.toFixed(6)};${b.lng.toFixed(6)},${b.lat.toFixed(6)}?overview=full&geometries=geojson&steps=true`, {signal:ctl.signal});
+      clearTimeout(to);
+      const j = await r.json();
+      if(j.code === 'Ok' && j.routes && j.routes[0] && j.routes[0].geometry.coordinates.length > 1) return j.routes[0];
+    }catch(e){}
+  }
+  return null;
+}
+function prepRoute(r){
+  const coords = r.geometry.coordinates;
+  const lat0 = coords[0][1], lng0 = coords[0][0], kx = Math.cos(lat0 * Math.PI / 180) * 111320, ky = 110540;
+  const xy = coords.map(q => [(q[0] - lng0) * kx, (q[1] - lat0) * ky]), cum = [0];
+  for(let i = 1; i < xy.length; i++) cum.push(cum[i-1] + Math.hypot(xy[i][0] - xy[i-1][0], xy[i][1] - xy[i-1][1]));
+  const L = cum[cum.length - 1] || 1;
+  const raw = (r.legs && r.legs[0] && r.legs[0].steps) || [], total = raw.reduce((t, x) => t + x.distance, 0) || 1, sc = L / total;
+  let acc = 0;
+  const steps = raw.map(x => {
+    const st = {type:x.maneuver.type, mod:x.maneuver.modifier, exit:x.maneuver.exit, name:x.name || '', ref:x.ref || '', dest:x.destinations || '', exits:x.exits || '', dur:x.duration, start:acc * sc};
+    acc += x.distance; st.end = acc * sc; return st;
+  });
+  return {coords, xy, cum, L, steps, dur:r.duration,
+    toXY:(lng, lat) => [(lng - lng0) * kx, (lat - lat0) * ky], toLL:(x, y) => ({lng:x / kx + lng0, lat:y / ky + lat0})};
+}
+function routeProject(R, p, near, back, ahead){
+  let best = {along:0, off:Infinity, i:1, x:0, y:0};
+  for(let i = 1; i < R.xy.length; i++){
+    if(near != null && (R.cum[i] < near - back || R.cum[i-1] > near + ahead)) continue;
+    const a = R.xy[i-1], b = R.xy[i], dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx*dx + dy*dy;
+    const f = l2 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2)) : 0;
+    const x = a[0] + f * dx, y = a[1] + f * dy, off = Math.hypot(x - p[0], y - p[1]);
+    if(off < best.off) best = {along:R.cum[i-1] + f * Math.sqrt(l2), off, i, x, y};
+  }
+  return best;
+}
+function navSnap(pt){
+  const R = nav.route, p = R.toXY(pt.lng, pt.lat), pr = routeProject(R, p, nav.prog, 40, 260);
+  if(pr.off > 30) return null;
+  let i = pr.i, a = R.xy[i-1], b = R.xy[i];
+  while(Math.hypot(b[0] - a[0], b[1] - a[1]) < 2 && i < R.xy.length - 1){ i++; a = R.xy[i-1]; b = R.xy[i]; }
+  const brg = Math.hypot(b[0] - a[0], b[1] - a[1]) < 2 ? null : (Math.atan2(b[0] - a[0], b[1] - a[1]) * 180 / Math.PI + 360) % 360;
+  return {pt:R.toLL(pr.x, pr.y), brg};
+}
+function remainingCoords(R, prog){
+  let i = 1; while(i < R.cum.length - 1 && R.cum[i] < prog) i++;
+  const a = R.xy[i-1], b = R.xy[i], seg = (R.cum[i] - R.cum[i-1]) || 1, f = Math.max(0, Math.min(1, (prog - R.cum[i-1]) / seg));
+  const s0 = R.toLL(a[0] + f * (b[0] - a[0]), a[1] + f * (b[1] - a[1]));
+  return [[s0.lng, s0.lat], ...R.coords.slice(i)];
+}
+const routeFC = coords => FC(coords.length > 1 ? [{type:'Feature', properties:{}, geometry:{type:'LineString', coordinates:coords}}] : []);
+
+/* Anweisungen */
+const DIRW = {left:'links', right:'rechts', 'slight left':'leicht links', 'slight right':'leicht rechts', 'sharp left':'scharf links', 'sharp right':'scharf rechts', straight:'geradeaus', uturn:'wenden'};
+const cap = t => t ? t[0].toUpperCase() + t.slice(1) : t;
+const low = t => t ? t[0].toLowerCase() + t.slice(1) : t;
+const isMan = st => st.type === 'arrive' || !(['new name','continue','notification'].includes(st.type) && (!st.mod || st.mod === 'straight'));
+function instr(st){
+  if(!st) return '';
+  const road = st.name || st.ref, onto = road ? ` auf ${road}` : '', d = DIRW[st.mod] || '';
+  const toward = st.dest ? ` Richtung ${st.dest.split(',')[0].split(':').pop().trim()}` : onto;
+  switch(st.type){
+    case 'depart': return road ? `Losfahren auf ${road}` : 'Losfahren';
+    case 'arrive': return st.mod === 'left' ? 'Ziel liegt links' : st.mod === 'right' ? 'Ziel liegt rechts' : 'Ziel erreicht';
+    case 'end of road': return `Am Ende der Straße ${d.replace('leicht ', '').replace('scharf ', '') || 'abbiegen'} abbiegen${onto}`.replace('abbiegen abbiegen', 'abbiegen');
+    case 'turn': return st.mod === 'uturn' ? 'Wenden' : st.mod === 'straight' ? `Geradeaus weiter${onto}` : `${cap(d)} abbiegen${onto}`;
+    case 'continue': case 'new name': return st.mod === 'uturn' ? 'Wenden' : /left|right/.test(st.mod || '') ? `${cap(d)} halten${onto}` : `Weiter${onto || ' geradeaus'}`;
+    case 'merge': return `Einfädeln${onto}`;
+    case 'on ramp': return `Auffahrt nehmen${toward}`;
+    case 'off ramp': return `Ausfahrt${st.exits ? ' ' + st.exits.split(';')[0] : ''} nehmen${toward}`;
+    case 'fork': return `An der Gabelung ${/left/.test(st.mod || '') ? 'links' : 'rechts'} halten${toward}`;
+    case 'roundabout': case 'rotary': case 'roundabout turn': return st.exit ? `Im Kreisverkehr die ${st.exit}. Ausfahrt nehmen${onto}` : `In den Kreisverkehr fahren${onto}`;
+    case 'exit roundabout': case 'exit rotary': return `Kreisverkehr verlassen${onto}`;
+    default: return `Weiter${onto}`;
+  }
+}
+const NAVI = {
+  straight:'<path d="M12 20V5M6.5 10.5 12 5l5.5 5.5"/>',
+  left:'<path d="M16 20v-6.5A4.5 4.5 0 0 0 11.5 9H5M9 5 5 9l4 4"/>',
+  right:'<path d="M8 20v-6.5A4.5 4.5 0 0 1 12.5 9H19M15 5l4 4-4 4"/>',
+  'slight left':'<path d="M14.5 20v-6L8.5 8M8 14V8h6"/>',
+  'slight right':'<path d="M9.5 20v-6l6-6M10 8h6v6"/>',
+  'sharp left':'<path d="M15 20V7L7 15M7 9v6h6"/>',
+  'sharp right':'<path d="M9 20V7l8 8M11 15h6V9"/>',
+  uturn:'<path d="M8 20v-9a4 4 0 0 1 8 0v4.5M12.5 12 16 15.5l3.5-3.5"/>',
+  round:'<circle cx="12" cy="9" r="4.5"/><path d="M12 13.5V20M15.5 5.5 18.5 3M18.5 6V3h-3"/>',
+  arrive:'<path d="M6 21V4h11l-2 4 2 4H6"/>'
+};
+const navIcon = st => !st ? NAVI.straight : st.type === 'arrive' ? NAVI.arrive : /roundabout|rotary/.test(st.type) ? NAVI.round : (NAVI[st.mod] || NAVI.straight);
+const fmtNav = m => m < 25 ? 'Jetzt' : m < 100 ? `${Math.round(m / 10) * 10} m` : m < 975 ? `${Math.round(m / 50) * 50} m` : m < 10000 ? `${(m / 1000).toFixed(1).replace('.', ',')} km` : `${Math.round(m / 1000)} km`;
+const spokenDist = m => m < 1000 ? `${Math.max(10, Math.round(m / 50) * 50 || Math.round(m / 10) * 10)} Metern` : `${(m / 1000).toFixed(1).replace('.0', '').replace('.', ',')} Kilometern`;
+const fmtDurNav = sec => { const m = Math.max(1, Math.round(sec / 60)); return m < 60 ? `${m} Min` : `${Math.floor(m / 60)} h ${m % 60} Min`; };
+const clock = sec => new Date(Date.now() + sec * 1000).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+
+function speak(text){
+  if(!nav || nav.mute || !('speechSynthesis' in window) || !text) return;
+  try{
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'de-DE'; u.rate = 1.02;
+    const v = speechSynthesis.getVoices().find(x => /^de/i.test(x.lang)); if(v) u.voice = v;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+function navState(){
+  const R = nav.route, prog = nav.prog;
+  let i = R.steps.findIndex((st, k) => k > 0 && st.start > prog - 3 && isMan(st));
+  if(i < 0) i = R.steps.length - 1;
+  const st = R.steps[i] || null, d = st ? Math.max(0, st.start - prog) : R.L - prog;
+  let then = null;
+  if(st) for(let k = i + 1; k < R.steps.length; k++) if(isMan(R.steps[k])){ if(R.steps[k].start - st.start < 220) then = R.steps[k]; break; }
+  let rem = 0;
+  R.steps.forEach(x => { if(x.end <= prog) return; const len = (x.end - x.start) || 1; rem += x.dur * Math.min(1, (x.end - Math.max(prog, x.start)) / len); });
+  if(!R.steps.length) rem = R.dur * (1 - prog / R.L);
+  return {i, st, d, then, remDist:Math.max(0, R.L - prog), remTime:rem};
+}
+
+/* Vorschau & Start */
+async function planNav(target, name, walkTo){
+  if(ckOn) exitCockpit();
+  if(nav) endNav();
+  const here = await getHere(); if(!here) return;
+  toast('Route wird berechnet …');
+  const r = await fetchRoute(here, target);
+  if(!r){ toast('Route konnte nicht berechnet werden. Prüfe deine Internetverbindung.'); return; }
+  hideToast();
+  nav = {active:false, dest:{lat:target.lat, lng:target.lng}, name, walkTo, route:prepRoute(r), prog:0, off:0, lastReroute:0, said:{}, mute:!!prefs.navMute, arrived:false};
+  navPrevOn = true; document.body.classList.add('navprev');
+  setSrc('nav-route', routeFC(nav.route.coords));
+  renderNavPrev();
+  const c = nav.route.coords, b = c.reduce((bb, q) => bb.extend(q), new maplibregl.LngLatBounds(c[0], c[0]));
+  map.fitBounds(b, {padding:{top:80, bottom:mobile() ? 270 : 250, left:50, right:mobile() ? 50 : 80}, maxZoom:16, duration:1200});
+}
+function renderNavPrev(){
+  const R = nav.route, walk = nav.walkTo ? dist(nav.dest, nav.walkTo) : 0;
+  $('#navPrev').innerHTML = `
+    <div class="nh"><span class="ni">${svg(UI.nav, 20)}</span><div><b>${esc(nav.name)}</b><span>${nav.walkTo ? `Zum Parkplatz · danach ca. ${fmtMin(walkMin(walk))} zu Fuß` : 'Mit dem Auto'}</span></div></div>
+    <div class="nsum"><div><b>${fmtDurNav(R.dur)}</b><span>Fahrzeit</span></div><div><b>${fmtNav(R.L).replace('Jetzt', '0 m')}</b><span>Strecke</span></div><div><b>${clock(R.dur)}</b><span>Ankunft</span></div></div>
+    <div class="btns"><button class="btn" data-nav="cancel">Abbrechen</button><button class="btn primary" data-nav="go">${svg(UI.nav, 16)} Los</button></div>`;
+}
+function startNav(){
+  if(!nav) return;
+  navPrevOn = false; document.body.classList.remove('navprev');
+  nav.active = true; document.body.classList.add('nav');
+  const s = navState();
+  speak(s.st && s.st.type !== 'arrive' && s.d < 3000 ? `Route gestartet. In ${spokenDist(s.d)} ${low(instr(s.st))}.` : 'Route gestartet. Folge der Straße.');
+  if(s.st) nav.said[s.i + 'f'] = 1;
+  enterCockpit();
+  if(!ckOn){ endNav(); return; }
+  renderNav();
+}
+function endNav(fromExit){
+  if(!nav) return;
+  const wasActive = nav.active;
+  nav = null; navPrevOn = false;
+  document.body.classList.remove('nav', 'navprev');
+  setSrc('nav-route', FC([]));
+  try{ speechSynthesis.cancel(); }catch(e){}
+  if(wasActive && !fromExit && ckOn) exitCockpit();
+  if(mobile()) setSnap(snap, false);
+}
+
+/* Fortschritt */
+function onNavFix(pt, acc){
+  if(!nav || !nav.active || nav.arrived) return;
+  const R = nav.route, pr = routeProject(R, R.toXY(pt.lng, pt.lat), nav.prog, 80, 600);
+  if(pr.off > 45 && acc <= 40) nav.off++; else nav.off = 0;
+  if(pr.off <= 45 && pr.along > nav.prog) nav.prog = pr.along;
+  if(nav.off >= 3 && Date.now() - nav.lastReroute > 10000){ reroute(pt); return; }
+  if(R.L - nav.prog < 30 || dist(pt, nav.dest) < 25){ arrive(); return; }
+  setSrc('nav-route', routeFC(remainingCoords(R, nav.prog)));
+  renderNav(); navVoice();
+}
+function navVoice(){
+  const s = navState(); if(!s.st) return;
+  const v = (ck && ck.v) || 0, far = Math.max(350, v * 22), near = Math.max(55, v * 5), k = s.i;
+  const txt = instr(s.st);
+  if(s.d <= near && !nav.said[k + 'n']){ nav.said[k + 'n'] = nav.said[k + 'f'] = 1; speak(txt + (s.then ? `, dann ${low(instr(s.then))}` : '')); }
+  else if(s.d <= far && s.d > near * 2 && !nav.said[k + 'f']){ nav.said[k + 'f'] = 1; speak(`In ${spokenDist(s.d)} ${low(txt)}`); }
+}
+async function reroute(pt){
+  nav.lastReroute = Date.now(); nav.off = 0;
+  toast('Neue Route wird berechnet …'); speak('Route wird neu berechnet.');
+  const r = await fetchRoute(pt, nav.dest);
+  if(!nav || !nav.active) return;
+  if(!r){ toast('Neue Route gerade nicht verfügbar.'); return; }
+  nav.route = prepRoute(r); nav.prog = 0; nav.said = {};
+  setSrc('nav-route', routeFC(nav.route.coords)); renderNav();
+}
+function arrive(){
+  nav.arrived = true;
+  setSrc('nav-route', FC([]));
+  const walk = nav.walkTo ? dist(nav.dest, nav.walkTo) : 0;
+  speak(walk ? `Parkplatz erreicht. Ab hier zu Fuß, etwa ${walkMin(walk)} Minuten.` : 'Du hast dein Ziel erreicht.');
+  renderNav();
+}
+function renderNav(){
+  if(!nav || !nav.active) return;
+  const top = $('#navTop'), bot = $('#navBottom');
+  if(nav.arrived){
+    const walk = nav.walkTo ? dist(nav.dest, nav.walkTo) : 0;
+    top.innerHTML = `<span class="mi arr">${svg(NAVI.arrive, 30, 2.4)}</span><div class="tx"><div class="md">${nav.walkTo ? 'Parkplatz erreicht' : 'Angekommen'}</div><div class="mt">${esc(nav.name)}</div></div>`;
+    bot.innerHTML = `<div class="eta"><b>${nav.walkTo ? `${fmtDist(walk)} zu Fuß` : 'Ziel erreicht'}</b><span>${nav.walkTo ? `ca. ${fmtMin(walkMin(walk))} bis zum Spot` : clock(0) + ' Uhr'}</span></div><button class="nbtn done" data-nav="end">Fertig</button>`;
+    return;
+  }
+  const s = navState();
+  const thenHTML = s.then && s.d < 600 ? `<div class="then">Dann <i>${svg(navIcon(s.then), 14, 2.4)}</i>${esc(instr(s.then))}</div>` : '';
+  const html = `<span class="mi">${svg(navIcon(s.st), 32, 2.4)}</span><div class="tx"><div class="md">${fmtNav(s.d)}</div><div class="mt">${esc(instr(s.st))}</div>${thenHTML}</div>`;
+  if(top._h !== html){ top.innerHTML = html; top._h = html; }
+  const bh = `<div class="eta"><b>${clock(s.remTime)}</b><span>${fmtDurNav(s.remTime)} · ${fmtNav(s.remDist).replace('Jetzt', '0 m')}</span></div>
+    <button class="nbtn" data-nav="mute" aria-label="${nav.mute ? 'Ton an' : 'Ton aus'}">${svg(nav.mute ? UI.spkOff : UI.spkOn, 20)}</button>
+    <button class="nbtn end" data-nav="end" aria-label="Navigation beenden">${svg(UI.close, 18, 2.6)}</button>`;
+  if(bot._h !== bh){ bot.innerHTML = bh; bot._h = bh; }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-nav]'); if(!b) return;
+  const a = b.dataset.nav;
+  if(a === 'go') startNav();
+  if(a === 'cancel') endNav();
+  if(a === 'end') endNav();
+  if(a === 'mute' && nav){ nav.mute = !nav.mute; prefs.navMute = nav.mute; savePrefs(); if(nav.mute) try{ speechSynthesis.cancel(); }catch(e){} renderNav(); }
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && navPrevOn) endNav(); });
+setInterval(() => { if(nav && nav.active && !nav.arrived) renderNav(); }, 15000);
 
 /* ================= Beschleunigung ================= */
 const PKEY = 'meine-spots-runs';
@@ -2344,11 +2819,17 @@ try{
 }catch(e){ rec = null; }
 
 /* ================= Start ================= */
-$('#addBtn').innerHTML = svg(UI.plus, 16, 2.6);
-$('#hereBtn').innerHTML = svg(UI.locate, 14) + 'Hier speichern';
+$('#addBtn').innerHTML = svg(UI.plus, 18, 2.4);
+$('#hereBtn').innerHTML = svg(UI.here, 19);
+$('#searchBtn').innerHTML = svg(UI.search, 18);
+$('#collapseBtn').innerHTML = svg(UI.sidebar, 18);
+$('#panelOpen').innerHTML = svg(UI.list, 20);
 $('#searchIc').innerHTML = svg(UI.search, 15);
-$('#b-locate').innerHTML = svg(UI.locate, 18);
-$('#b-labels').innerHTML = svg(UI.labels, 18);
+$('#b-locate').innerHTML = svg(UI.locate, 19);
+$('#b-layers').innerHTML = svg(UI.layers, 20);
+$('#popTimer').innerHTML = svg(UI.timer, 17);
+$('#b-compass').innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 3.5 15.2 12H8.8z" fill="#ff5a5f"/><path d="M12 20.5 8.8 12h6.4z" fill="#d5dae2"/></svg>';
+if(prefs.pcol && !mobile()) setCollapsed(true);
 $('#b-3d').classList.toggle('on', !!prefs.terrain);
 $('#recbar [data-rec="stop"]').innerHTML = svg(UI.stop, 16);
 $('#recbar [data-ck-open]').innerHTML = svg(UI.gauge, 18);
