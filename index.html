@@ -183,6 +183,9 @@ body.cockpit #attrib{transform:none!important;top:auto;bottom:calc(env(safe-area
 #ckStats div{display:flex;flex-direction:column;min-width:0}
 #ckStats b{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 #ckStats span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+#ckStats b{transform-origin:left center}
+#ckStats .mx.hit b{animation:mxhit .8s cubic-bezier(.2,.8,.2,1)}
+@keyframes mxhit{0%{transform:scale(1)}30%{transform:scale(1.16);color:var(--accent)}100%{transform:scale(1)}}
 #ckRecenter{position:absolute;z-index:20;right:14px;bottom:calc(102px + env(safe-area-inset-bottom,0px));height:40px;padding:0 14px;border-radius:20px;align-items:center;gap:6px;font-weight:600;color:var(--accent);border:1px solid var(--line)}
 @media (max-width:560px){#ckStats{grid-template-columns:1fr 1fr}#ckStats b{font-size:17px}#ckRecenter{bottom:calc(150px + env(safe-area-inset-bottom,0px))}}
 @media (min-width:641px){#recbar{left:calc(50% + 182px)}}
@@ -607,8 +610,8 @@ body.navprev #panel,body.navprev #near,body.navprev #recbar,body.navprev #panelO
 <div id="ckStats" class="glass">
   <div><b data-ck="dist">0 m</b><span>Distanz</span></div>
   <div><b data-ck="time">0:00</b><span>Zeit</span></div>
-  <div><b data-ck="avg">0</b><span>Ø km/h</span></div>
-  <div><b data-ck="max">0</b><span>Max km/h</span></div>
+  <div><b data-ck="avg">0</b><span data-ck="avgl">Ø km/h</span></div>
+  <div class="mx"><b data-ck="max">0</b><span>Max km/h</span></div>
 </div>
 <button id="ckRecenter" class="glass" hidden></button>
 <div id="navTop" class="glass" aria-live="polite"></div>
@@ -1905,7 +1908,7 @@ function fitAll(animate){
 const TKEY = 'meine-spots-tracks', RKEY = 'meine-spots-rec';
 let tracks = [];
 try{ tracks = JSON.parse(localStorage.getItem(TKEY) || '[]'); if(!Array.isArray(tracks)) tracks = []; }catch(e){ tracks = []; }
-let rec = null, recWatch = null, recTick = null, wake = null, followMe = true, lastPersist = 0;
+let rec = null, recWatch = null, recTick = null, wake = null, followMe = true, lastPersist = 0, spr = {};
 let tab = 'spots', selTrack = null, trackRenaming = false, trackDelArmed = false, discardArmed = false;
 
 function saveTracks(){
@@ -1975,23 +1978,26 @@ function startRec(){
   if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
   if(rec && rec.stopped){ openTrackSave(); return; }
   if(rec) return;
-  rec = {id:uid(), start:Date.now(), segs:[[]], dist:0, active:0, runFrom:Date.now(), maxSpd:0, last:null, weak:false};
-  followMe = true;
+  rec = {id:uid(), start:Date.now(), segs:[[]], dist:0, active:0, runFrom:Date.now(), maxSpd:0, last:null, weak:false, best:{}};
+  followMe = true; spr = {};
+  beep(0, .01, .001); // Ton für Sprint-Zeiten im Klick freischalten
   startWatch(); startGPS(false); requestWake(); startTick();
   persistRec(true); renderTracksHead(); updateRecUI(); renderNearest();
-  if(mobile()) setSnap('peek');
-  toast('Aufzeichnung läuft');
+  // Direkt in den Fahrmodus: Cockpit mit laufender Aufnahme
+  if(!ckOn && !mode && view !== 'edit') enterCockpit();
+  else if(mobile() && !ckOn) setSnap('peek');
+  toast(ckOn ? 'Aufnahme läuft – gute Fahrt' : 'Aufzeichnung läuft');
 }
 function pauseRec(){
   if(!rec || !rec.runFrom) return;
-  rec.active += Date.now() - rec.runFrom; rec.runFrom = null; rec.last = null;
+  rec.active += Date.now() - rec.runFrom; rec.runFrom = null; rec.last = null; spr = {};
   stopWatch(); releaseWake();
   persistRec(true); renderTracksHead(); updateRecUI();
 }
 function resumeRec(){
   if(!rec || rec.runFrom || rec.stopped) return;
   if(rec.segs[rec.segs.length - 1].length) rec.segs.push([]);
-  rec.runFrom = Date.now(); rec.last = null; followMe = true;
+  rec.runFrom = Date.now(); rec.last = null; followMe = true; spr = {};
   startWatch(); requestWake(); startTick();
   persistRec(true); renderTracksHead(); updateRecUI();
 }
@@ -2010,8 +2016,48 @@ function stopRec(){
   }
   renderTracksHead(); updateRecUI(); renderNearest();
 }
+/* Sprints während der Aufnahme automatisch messen */
+const SPRINTS = [[0,100],[100,150],[100,200]];
+function sprintFeed(p){
+  if(!rec || !rec.runFrom || rec.stopped || perfOn){ spr = {}; return; }
+  const c = p.coords, t = p.timestamp || Date.now(), pt = {lat:c.latitude, lng:c.longitude};
+  if(spr.prev && (t - spr.prev.t > 3000 || t <= spr.prev.t)) spr = {};   // GPS-Lücke → neu ansetzen
+  const pv = spr.prev;
+  let v = (c.speed != null && !isNaN(c.speed) && c.speed >= 0) ? c.speed * 3.6 : null;
+  if(v == null && pv && t - pv.t >= 500) v = dist(pv, pt) / ((t - pv.t) / 1000) * 3.6;
+  if(v == null || !(c.accuracy <= 25)){ spr = {}; return; }
+  const cur = {v, t, ...pt};
+  SPRINTS.forEach(([a, b]) => {
+    const k = pkey(a, b), s = spr[k] || (spr[k] = {st:'idle'});
+    if(s.st === 'run'){
+      s.d += dist(pv, cur); s.max = Math.max(s.max, v);
+      if(v >= b){ s.st = 'idle'; const sec = (interp(pv, cur, b) - s.t0) / 1000; if(sec > .5) sprintDone(a, b, sec, s.d, c.accuracy); }
+      else if(v < s.max - 8 || t - s.t0 > (a ? 60000 : 40000)) s.st = 'idle';
+    }
+    if(s.st === 'run') return;
+    if(a === 0){
+      if(v < 3) s.st = 'ready';
+      else if(s.st === 'ready' && pv){ s.st = 'run'; s.t0 = pv.v < 3 ? interp(pv, cur, 1) : pv.t; s.max = v; s.d = 0; }
+    } else if(pv && pv.v < a && v >= a){ s.st = 'run'; s.t0 = interp(pv, cur, a); s.max = v; s.d = 0; }
+  });
+  spr.prev = cur;
+}
+function sprintDone(a, b, sec, d, acc){
+  sec = Math.round(sec * 100) / 100;
+  const k = pkey(a, b), best = runs.filter(r => pkey(r.from, r.to) === k).reduce((m, r) => Math.min(m, r.time), Infinity);
+  runs.unshift({id:uid(), from:a, to:b, time:sec, dist:Math.round(d || 0), date:Date.now(), hz:0, acc:Math.round(acc || 0), auto:true}); saveRuns();
+  rec.best = rec.best || {};
+  if(!rec.best[k] || sec < rec.best[k]) rec.best[k] = sec;
+  persistRec(true);
+  beep(1046, .18, .3);
+  toast(`${a}–${b} km/h in ${fmtS(sec)}${sec < best ? ' · neue Bestzeit' : ''}`);
+  updateCockpitUI();
+}
+const recBestTxt = r => { const b = r && r.best || {}; return SPRINTS.map(([a, z]) => b[pkey(a, z)] ? [`${a}–${z}`, fmtS(b[pkey(a, z)])] : null).filter(Boolean); };
+
 function onRecPos(p){
   feedLive(p);
+  sprintFeed(p);
   if(!rec || !rec.runFrom) return;
   const c = p.coords, ts = p.timestamp || Date.now();
   if(c.accuracy > 35){ if(!rec.weak){ rec.weak = true; updateRecUI(); } return; }
@@ -2058,7 +2104,7 @@ function renderTracksHead(){
   if(!rec){
     h.innerHTML = segHTML + `<button class="btn rec-start" data-rec="start"><span class="rdot"></span>Aufzeichnung starten</button>
       <div class="btns"><button class="btn" data-ck-open>${svg(UI.gauge, 17)} Cockpit</button><button class="btn" data-pf-open>${svg(UI.timer, 17)} 0–100</button></div>
-      <div class="hint">Lass den Bildschirm an. Im Hintergrund pausiert das Handy die Ortung.</div>`;
+      <div class="hint">Startet direkt das Cockpit. 0–100, 100–150 und 100–200 werden beim Fahren automatisch gemessen. Bildschirm anlassen.</div>`;
   } else if(rec.stopped){
     h.innerHTML = segHTML + `<button class="btn primary" data-rec="opensave">Beendete Aufzeichnung speichern</button>`;
   } else {
@@ -2098,6 +2144,7 @@ function openTrackSave(){
         <div><b>${fmtDur(rec.active)}</b><span>Dauer</span></div>
         <div><b>${fmtSpd(avg)}</b><span>Ø Tempo</span></div>
         <div><b>${fmtSpd(rec.maxSpd)}</b><span>Max. Tempo</span></div>
+        ${recBestTxt(rec).map(([k, v]) => `<div><b>${v}</b><span>${k} km/h</span></div>`).join('')}
       </div>
       <div class="muted">Die Strecke wird nur auf diesem Gerät gespeichert.</div>
     </div>`;
@@ -2110,6 +2157,7 @@ $('#trackSaveView').addEventListener('click', e => {
   if(b.dataset.ts === 'save'){
     const t = {id:rec.id, name:($('#t-name').value.trim() || 'Strecke'), created:rec.start, dist:Math.round(rec.dist), dur:rec.active, maxSpd:rec.maxSpd,
                segs:rec.segs.filter(sg => sg.length)};
+    if(rec.best && Object.keys(rec.best).length) t.best = rec.best;
     tracks.unshift(t);
     if(!saveTracks()){ tracks.shift(); return; }
     rec = null; persistRec(true); drawLive(); renderTracksHead();
@@ -2230,6 +2278,7 @@ function renderTrackView(){
         <div><b>${fmtDur(t.dur)}</b><span>Dauer</span></div>
         <div><b>${fmtSpd(avg)}</b><span>Ø Tempo</span></div>
         <div><b>${fmtSpd(t.maxSpd || 0)}</b><span>Max. Tempo</span></div>
+        ${recBestTxt(t).map(([k, v]) => `<div><b>${v}</b><span>${k} km/h</span></div>`).join('')}
       </div>
       <button class="btn" data-tv="course">${svg(ICONS.flag,15)} Als Rennstrecke speichern</button>
       <button class="btn" data-tv="gpx">${svg(UI.share,15)} Als GPX exportieren</button>
@@ -2352,7 +2401,7 @@ function exitCockpit(){
   if(!ckOn) return;
   if(nav && nav.active) endNav(true);
   camStop(); hideGhost(); $('#ckLimit').classList.remove('show'); $('#ckSpeed').classList.remove('over');
-  ckOn = false; document.body.classList.remove('cockpit');
+  ckOn = false; document.body.classList.remove('cockpit', 'ckrec');
   car3d.on = false; document.body.classList.remove('car3d'); if(mapReady) map.triggerRepaint();
   ckTarget = null; updateCourseLayers();
   if(ckWatch != null){ navigator.geolocation.clearWatch(ckWatch); ckWatch = null; }
@@ -2418,16 +2467,26 @@ function updateCockpitUI(){
   const kmh = ck.v == null ? null : ck.v * 3.6;
   const vtxt = stale || kmh == null ? '–' : String(kmh < 1 ? 0 : Math.round(kmh));
   $('[data-ck="v"]').textContent = vtxt; $('#ckSpeed').classList.toggle('w3', vtxt.length >= 3);
-  $('#ckSpeed').style.setProperty('--p', stale || kmh == null ? 0 : Math.min(1, kmh / 200).toFixed(3));
+  const recOn = !!(rec && !rec.stopped);
+  $('#ckSpeed').style.setProperty('--p', stale || kmh == null ? 0 : Math.min(1, kmh / (recOn ? 260 : 200)).toFixed(3));
   $('#ckSpeed').classList.toggle('over', !stale && kmh != null && limitNow && limitNow.v != null && kmh > limitNow.v + 3);
+  document.body.classList.toggle('ckrec', recOn);
   let dst, time, max;
-  if(rec && !rec.stopped){ dst = rec.dist; time = recElapsed(); max = rec.maxSpd; }
+  if(recOn){ dst = rec.dist; time = recElapsed(); max = rec.maxSpd; }
   else { dst = ck.dist; time = Date.now() - ck.start; max = ck.max; }
   const avg = time > 0 ? dst / (time / 1000) : 0;
   $('[data-ck="dist"]').textContent = fmtKm(dst);
   $('[data-ck="time"]').textContent = fmtDur(time);
-  $('[data-ck="avg"]').textContent = String(Math.round(avg * 3.6));
-  $('[data-ck="max"]').textContent = String(Math.round(max * 3.6));
+  // Beim Aufnehmen zählt Performance: beste 0–100 dieser Fahrt statt Ø
+  const b100 = recOn && rec.best && rec.best['0–100'];
+  $('[data-ck="avgl"]').textContent = recOn ? '0–100' : 'Ø km/h';
+  $('[data-ck="avg"]').textContent = recOn ? (b100 ? fmtS(b100) : '–') : String(Math.round(avg * 3.6));
+  const mx = Math.round(max * 3.6), mEl = $('[data-ck="max"]');
+  if(mEl.textContent !== String(mx)){
+    mEl.textContent = String(mx);
+    if(recOn && mx >= 30 && ck.mxShown != null && mx > ck.mxShown){ const p = mEl.parentNode; p.classList.remove('hit'); void p.offsetWidth; p.classList.add('hit'); }
+    ck.mxShown = mx;
+  }
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && ckOn) exitCockpit(); });
 
@@ -2435,12 +2494,12 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape' && ckOn) exitC
 function carSVG(kind){
   const ghost = kind === 'ghost';
   const paint = ghost ? '<stop offset="0" stop-color="#7a2fb0"/><stop offset=".5" stop-color="#c67cf5"/><stop offset="1" stop-color="#7a2fb0"/>'
-                      : '<stop offset="0" stop-color="#070a10"/><stop offset=".22" stop-color="#121a28"/><stop offset=".5" stop-color="#22324d"/><stop offset=".78" stop-color="#121a28"/><stop offset="1" stop-color="#070a10"/>';
+                      : '<stop offset="0" stop-color="#04060b"/><stop offset=".22" stop-color="#0b1426"/><stop offset=".5" stop-color="#1b3263"/><stop offset=".78" stop-color="#0b1426"/><stop offset="1" stop-color="#04060b"/>';
   const id = ghost ? 'g' : 'c';
   return `<svg class="${ghost ? '' : 'car'}" viewBox="0 0 48 96" aria-hidden="true">
     <defs><linearGradient id="${id}p" x1="0" x2="1" y1="0" y2="0">${paint}</linearGradient>
       <linearGradient id="${id}w" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3a4d6e"/><stop offset="1" stop-color="#0a0f18"/></linearGradient></defs>
-    <path d="M24 3C33 3 39 6 40.5 13L42 24C42.6 28 42 32 41.4 36L41 58C41.6 62 42.4 67 42 72L41 84C40 90 34 93 24 93S8 90 7 84L6 72C5.6 67 6.4 62 7 58L6.6 36C6 32 5.4 28 6 24L7.5 13C9 6 15 3 24 3Z" fill="url(#${id}p)" stroke="${ghost ? '#e3b8ff' : '#2c3a52'}" stroke-width=".8"/>
+    <path d="M24 3C33 3 39 6 40.5 13L42 24C42.6 28 42 32 41.4 36L41 58C41.6 62 42.4 67 42 72L41 84C40 90 34 93 24 93S8 90 7 84L6 72C5.6 67 6.4 62 7 58L6.6 36C6 32 5.4 28 6 24L7.5 13C9 6 15 3 24 3Z" fill="url(#${id}p)" stroke="${ghost ? '#e3b8ff' : '#24396a'}" stroke-width=".8"/>
     <path d="M6.6 36l-3.4 1.2.5 2.6 3.1-.7zM41.4 36l3.4 1.2-.5 2.6-3.1-.7z" fill="${ghost ? '#c67cf5' : '#0d131d'}"/>
     <path d="M17 10q-1 10 0 19M31 10q1 10 0 19" stroke="rgba(255,255,255,.1)" stroke-width=".8" fill="none"/>
     <path d="M11.5 33Q24 27.5 36.5 33L34.6 43.5Q24 41 13.4 43.5Z" fill="url(#${id}w)"/>
@@ -2458,8 +2517,8 @@ function carSVG(kind){
 /* Prozedurales Coupé-Modell (Meter, vorne = +X, oben = +Y, rechts = +Z) */
 function buildCar(THREE){
   const g = new THREE.Group();
-  const paint = new THREE.MeshPhysicalMaterial({color:0x111b2e, metalness:.72, roughness:.34, clearcoat:1, clearcoatRoughness:.05, envMapIntensity:1.1});
-  const glass = new THREE.MeshPhysicalMaterial({color:0x020305, metalness:.1, roughness:.03, clearcoat:1, clearcoatRoughness:.02, envMapIntensity:1.4});
+  const paint = new THREE.MeshPhysicalMaterial({color:0x0e1d42, metalness:1, roughness:.4, clearcoat:.65, clearcoatRoughness:.07, envMapIntensity:.9}); // BMW Carbonschwarz Metallic (416): Tiefschwarz, im Licht metallisches Dunkelblau
+  const glass = new THREE.MeshPhysicalMaterial({color:0x020305, metalness:.1, roughness:.03, clearcoat:1, clearcoatRoughness:.02, envMapIntensity:.8});
   const black = new THREE.MeshStandardMaterial({color:0x07090c, metalness:.2, roughness:.55});
   const tire = new THREE.MeshStandardMaterial({color:0x050505, roughness:.92});
   const rim = new THREE.MeshStandardMaterial({color:0x1d2127, metalness:.9, roughness:.25});
@@ -2529,7 +2588,7 @@ function buildCar(THREE){
 function carEnv(THREE, renderer){
   const c = document.createElement('canvas'); c.width = 256; c.height = 128;
   const x = c.getContext('2d'), gr = x.createLinearGradient(0, 0, 0, 128);
-  gr.addColorStop(0, '#c9d7f0'); gr.addColorStop(.42, '#6d7f9e'); gr.addColorStop(.5, '#1e2430'); gr.addColorStop(1, '#07080b');
+  gr.addColorStop(0, '#93a7cf'); gr.addColorStop(.42, '#4f6286'); gr.addColorStop(.5, '#1e2430'); gr.addColorStop(1, '#07080b');
   x.fillStyle = gr; x.fillRect(0, 0, 256, 128);
   x.fillStyle = 'rgba(255,255,255,.9)'; x.fillRect(60, 20, 40, 10); x.fillRect(170, 26, 30, 8);
   const tex = new THREE.CanvasTexture(c); tex.mapping = THREE.EquirectangularReflectionMapping;
@@ -2582,7 +2641,12 @@ function addCarLayer(){
       const sc = mc.meterInMercatorCoordinateUnits() * Math.max(1, 86 / (4.7 * ppm));
       this.car.rotation.y = (90 - car3d.brg) * Math.PI / 180;
       const l = new THREE.Matrix4().makeTranslation(mc.x, mc.y, mc.z).scale(new THREE.Vector3(sc, -sc, sc)).multiply(rotX);
-      this.camera.projectionMatrix = new THREE.Matrix4().fromArray(matrix).multiply(l);
+      const M = new THREE.Matrix4().fromArray(matrix).multiply(l);
+      // echte Kameraposition im Auto-Raum, damit Lack-Reflexionen stimmen
+      const cp = new THREE.Vector4(0, 0, 1, 0).applyMatrix4(M.clone().invert());
+      if(Math.abs(cp.w) > 1e-12) this.camera.position.set(cp.x / cp.w, cp.y / cp.w, cp.z / cp.w);
+      this.camera.updateMatrixWorld(true);
+      this.camera.projectionMatrix = M.multiply(this.camera.matrixWorld);
       this.renderer.resetState(); this.renderer.render(this.scene, this.camera);
     }
   });
@@ -3136,7 +3200,7 @@ function renderPerf(){
 function renderRuns(){
   const bests = {};
   runs.forEach(r => { const k = pkey(r.from, r.to); if(!bests[k] || r.time < bests[k].time) bests[k] = r; });
-  const html = runs.length ? runs.slice(0, 30).map(r => `<div class="pf-row"><span class="k">${r.from}–${r.to}</span><span class="v">${fmtS(r.time)}</span>${bests[pkey(r.from, r.to)] === r ? '<span class="pf-best">Best</span>' : ''}<span class="d">${fmtDate(r.date)}<br>${r.dist} m · ±${r.acc} m</span></div>`).join('')
+  const html = runs.length ? runs.slice(0, 30).map(r => `<div class="pf-row"><span class="k">${r.from}–${r.to}</span><span class="v">${fmtS(r.time)}</span>${bests[pkey(r.from, r.to)] === r ? '<span class="pf-best">Best</span>' : ''}<span class="d">${fmtDate(r.date)}<br>${r.auto ? 'Fahrt · ' : ''}${r.dist} m · ±${r.acc} m</span></div>`).join('')
     : '<div class="pf-empty">Noch keine Messungen.</div>';
   const l = $('#pfList'); if(l._h !== html){ l.innerHTML = html; l._h = html; }
   $('#pfClear').hidden = !runs.length;
