@@ -2103,7 +2103,7 @@ window.addEventListener('hashchange', handleHash);
 /* ================= Gruppe: Workshop & Bestenlisten =================
    Datenbank: Firebase Firestore (kostenlos). Die Konfiguration kommt hier rein, sobald das Projekt angelegt ist.
    Geschützt über einen langen Gruppen-Code im Pfad (groups/<code>/…) – ohne Code sieht niemand etwas. */
-const FB = null;   // z. B. {apiKey:'AIza…', projectId:'jamsis-spots'}
+const FB = {apiKey:'AIzaSyDPD8Bpe1WkswwwSThBUKjlKwDiCAKE4Tw', projectId:'jamsis-spots'};   // Firebase-Projekt der Gruppe (öffentlich, kein Geheimnis)
 const WSKEY = 'meine-spots-ws';
 const WS = {spots:[], runs:[], courses:[], efforts:[], loaded:0, busy:false, err:null};
 try{ Object.assign(WS, JSON.parse(localStorage.getItem(WSKEY) || '{}'), {busy:false, err:null}); }catch(e){}
@@ -2543,7 +2543,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.3';
+const VERSION = '2026.10.04.4';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
