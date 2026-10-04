@@ -112,7 +112,7 @@ h2{font-size:22px;font-weight:700;margin:0;letter-spacing:-.015em;text-wrap:bala
 body.cockpit #panel,body.cockpit #near,body.cockpit #recbar,body.cockpit #ctrl,body.cockpit .maplibregl-ctrl-top-right,body.cockpit .maplibregl-ctrl-bottom-right{display:none!important}
 body.cockpit #ckTop,body.cockpit #ckSpeed{display:flex}
 body.cockpit #ckStats{display:grid}
-body.cockpit #ckRecenter:not([hidden]){display:inline-flex}
+body.cockpit #ckRecenter{display:inline-flex}
 /* ---------- Beschleunigung ---------- */
 #perf{position:fixed;inset:0;z-index:60;background:rgba(9,10,12,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#f2f2f7;overflow-y:auto;overscroll-behavior:contain;
   padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:16px;animation:fadein .25s;color-scheme:dark}
@@ -205,8 +205,14 @@ body.cockpit #attrib,body.replay #attrib{transform:none!important;top:auto;botto
 #ckStats b{transform-origin:left center}
 #ckStats .mx.hit b{animation:mxhit .8s cubic-bezier(.2,.8,.2,1)}
 @keyframes mxhit{0%{transform:scale(1)}30%{transform:scale(1.16);color:var(--accent)}100%{transform:scale(1)}}
-#ckRecenter{position:absolute;z-index:20;right:124px;bottom:calc(102px + env(safe-area-inset-bottom,0px));height:40px;padding:0 14px;border-radius:20px;align-items:center;gap:6px;font-weight:600;color:var(--accent);border:1px solid var(--line)}
-@media (max-width:560px){#ckStats{grid-template-columns:1fr 1fr}#ckStats b{font-size:17px}#ckRecenter{bottom:calc(150px + env(safe-area-inset-bottom,0px))}}
+#ckRecenter{position:absolute;z-index:21;right:14px;bottom:calc(152px + env(safe-area-inset-bottom,0px));height:46px;min-width:46px;padding:0 12px;border-radius:23px;justify-content:center;align-items:center;gap:7px;font-weight:700;font-size:14px;color:var(--accent);border:1px solid var(--line);transition:background-color .2s,color .2s,transform .15s var(--ease)}
+#ckRecenter:active{transform:scale(.94)}
+#ckRecenter span{display:none}
+#ckRecenter.off{background:var(--accent);color:var(--accent-fg,#fff);border-color:transparent;box-shadow:0 6px 18px rgba(0,0,0,.35);padding:0 16px 0 13px}
+#ckRecenter.off span{display:inline}
+body.cockpit.gon #ckRecenter{bottom:calc(290px + env(safe-area-inset-bottom,0px))}
+body.cockpit.nav #ckRecenter{bottom:calc(118px + env(safe-area-inset-bottom,0px))}
+@media (max-width:560px){#ckStats{grid-template-columns:1fr 1fr}#ckStats b{font-size:17px}#ckRecenter{bottom:calc(200px + env(safe-area-inset-bottom,0px))}body.cockpit.gon #ckRecenter{bottom:calc(328px + env(safe-area-inset-bottom,0px))}body.cockpit.nav #ckRecenter{bottom:calc(112px + env(safe-area-inset-bottom,0px))}}
 @media (min-width:641px){#recbar{left:calc(50% + 182px)}}
 .search{display:flex;align-items:center;gap:6px;background:var(--fill);border-radius:11px;padding:0 10px;height:38px;color:var(--muted)}
 .search input{flex:1;min-width:0;border:0;background:none;outline:none;height:100%;color:var(--fg);font-size:16px}
@@ -1338,7 +1344,7 @@ body.nav #ckLive,body.replay #ckLive{display:none!important}
   <div><b data-ck="avg">0</b><span>Ø km/h</span></div>
   <div class="mx"><b data-ck="max">0</b><span>Max km/h</span></div>
 </div>
-<button id="ckRecenter" class="glass" hidden></button>
+<button id="ckRecenter" class="glass" aria-label="Auf das Auto zentrieren"></button>
 <button id="ckLive" class="glass" hidden aria-pressed="false" aria-label="Live-Standort teilen"><span class="lv-dot"></span><b>Live</b><span class="lv-avs"></span></button>
 <div id="gMeter" class="glass" aria-hidden="true">
   <svg viewBox="0 0 100 100"><circle class="gr" cx="50" cy="50" r="44"/><circle class="gr" cx="50" cy="50" r="22"/><path class="gx" d="M50 6v88M6 50h88"/><text class="gt" x="50" y="4">Bremsen</text><circle id="gDot" class="gd" cx="50" cy="50" r="7"/></svg>
@@ -4027,7 +4033,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.05.20';
+const VERSION = '2026.10.05.21';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -5242,7 +5248,7 @@ function enterCockpit(){
   document.body.classList.toggle('gon', onOff('gforce')); gStart(); gRender(null);
   if(meMarker){ meMarker.setRotationAlignment('map'); meMarker.setPitchAlignment('map'); }
   ck = {start:Date.now(), dist:0, max:0, v:null, h:null, last:null, ts:0};
-  ckFollow = true; ckUserZoom = null; $('#ckRecenter').hidden = true;
+  ckFollow = true; ckUserZoom = null; ckFollowUI();
   $('#q').blur();
   map.setMaxPitch(70);
   ckWatch = navigator.geolocation.watchPosition(onDrivePos, err => {
@@ -5252,11 +5258,27 @@ function enterCockpit(){
   clearInterval(ckTick); ckTick = setInterval(updateCockpitUI, 1000);
   rwCk.t = 0; rwCk.r = null; rwCk.warned = '';
   renderCkTop(); updateRecUI(); updateCockpitUI(); liveUI();
-  cam.fix = me ? {lat:me.lat, lng:me.lng, t:performance.now(), v:0, h:null} : null;
+  const fresh = me && Date.now() - meTime < 120000;   // alter Standort würde irgendwohin zentrieren
+  cam.fix = fresh ? {lat:me.lat, lng:me.lng, t:performance.now(), v:0, h:null} : null;
   cam.disp = null; cam.bearing = null; cam.zoom = null; ckUserPitch = null; userGesture = false;
-  map.easeTo({center:me ? LL(me) : map.getCenter(), zoom:ckZoom(0), pitch:55, padding:ckPad(), duration:1100});
+  map.easeTo({center:fresh ? LL(me) : map.getCenter(), zoom:ckZoom(0), pitch:55, padding:ckPad(), duration:1100});
   cam.hold = performance.now() + 1150;
+  if(!fresh) toast('Suche GPS …');
+  // schnell einen aktuellen Punkt holen; der erste Punkt im Cockpit zentriert immer genau aufs Auto
+  navigator.geolocation.getCurrentPosition(p => { if(ckOn && !ck.got) onDrivePos(p); }, () => {}, {enableHighAccuracy:true, maximumAge:15000, timeout:10000});
   camStart();
+}
+function ckFollowUI(){ const b = $('#ckRecenter'); b.classList.toggle('off', !ckFollow); b.setAttribute('aria-label', ckFollow ? 'Auf das Auto zentrieren' : 'Zentrieren – Karte folgt wieder dem Auto'); }
+function ckBestPos(){
+  const f = cam.fix; if(f && performance.now() - f.t < 120000) return {lat:f.lat, lng:f.lng};
+  return me && Date.now() - meTime < 120000 ? {...me} : null;
+}
+function ckCenter(dur = 650){
+  ckFollow = true; userGesture = false; ckUserZoom = null; ckUserPitch = null; ckFollowUI();
+  const c = ckBestPos(); if(!c){ toast('Suche GPS …'); return; }
+  cam.disp = c; cam.zoom = ckZoom(ck.v);
+  cam.hold = performance.now() + dur + 60;
+  map.easeTo({center:LL(c), bearing:cam.bearing != null ? cam.bearing : map.getBearing(), zoom:cam.zoom, pitch:55, padding:ckPad(), duration:dur});
 }
 function exitCockpit(){
   if(!ckOn) return;
@@ -5296,23 +5318,19 @@ function onDrivePos(p){
   setMeHeading((ck.v || 0) > 1.4 ? ck.h : null);
   updateCockpitUI();
   cam.fix = {lat:pt.lat, lng:pt.lng, t:performance.now(), v:ck.v || 0, h:ck.h};
+  if(!ck.got){ ck.got = true; if(ckFollow) ckCenter(700); }
   if(onOff('limit')) limitFix(pt); else if(limitNow){ showLimit(null); }
   if(nav && nav.active) onNavFix(pt, c.accuracy);
   liveFeed(pt, ck.v, (ck.v || 0) > 1.4 ? ck.h : null, c.accuracy);
   if(prefs.park && ck.dist > 200 && dist(pt, prefs.park) > 300){ delete prefs.park; savePrefs(); renderPark(); }   // weggefahren: alter Parkplatz gilt nicht mehr
 }
-map.on('dragstart', () => { if(ckOn){ ckFollow = false; $('#ckRecenter').hidden = false; } });
-map.on('rotatestart', e => { if(ckOn && e.originalEvent){ ckFollow = false; $('#ckRecenter').hidden = false; } });
+map.on('dragstart', () => { if(ckOn){ ckFollow = false; ckFollowUI(); } });
+map.on('rotatestart', e => { if(ckOn && e.originalEvent){ ckFollow = false; ckFollowUI(); } });
 map.on('zoomstart', e => { if(ckOn && e.originalEvent) userGesture = true; });
 map.on('zoomend', e => { if(ckOn && userGesture){ userGesture = false; ckUserZoom = map.getZoom(); cam.zoom = ckUserZoom; } });
 map.on('pitchstart', e => { if(ckOn && e.originalEvent) userGesture = true; });
 map.on('pitchend', e => { if(ckOn && userGesture){ userGesture = false; ckUserPitch = map.getPitch(); } });
-$('#ckRecenter').addEventListener('click', () => {
-  ckFollow = true; ckUserZoom = null; ckUserPitch = null; $('#ckRecenter').hidden = true;
-  cam.hold = performance.now() + 700;
-  const c = cam.disp || ck.last || me;
-  if(c) map.easeTo({center:LL(c), bearing:cam.bearing != null ? cam.bearing : map.getBearing(), zoom:ckZoom(ck.v), pitch:55, duration:650});
-});
+$('#ckRecenter').addEventListener('click', () => ckCenter(650));
 function renderCkTop(){
   const h = $('#ckTop'), active = rec && !rec.stopped;
   h.classList.toggle('paused', !!(active && !rec.runFrom));
@@ -5566,7 +5584,7 @@ function liveUI(){
 function liveFocus(id){
   const p = live.peers.get(id); if(!p) return;
   const c = p.disp || p;
-  if(ckOn){ ckFollow = false; $('#ckRecenter').hidden = false; cam.hold = performance.now() + 900; map.easeTo({center:LL(c), zoom:Math.max(map.getZoom(), 15), duration:800}); return; }
+  if(ckOn){ ckFollow = false; ckFollowUI(); cam.hold = performance.now() + 900; map.easeTo({center:LL(c), zoom:Math.max(map.getZoom(), 15), duration:800}); return; }
   if(mobile() && snap === 'full') setSnap('peek');
   map.flyTo({center:LL(c), zoom:Math.max(map.getZoom(), 14.5), padding:camPad(), duration:1100});
 }
@@ -7509,7 +7527,7 @@ $('#b-3d').classList.toggle('on', !!prefs.terrain);
 $('#recbar [data-rec="stop"]').innerHTML = svg(UI.stop, 16);
 $('#recbar [data-ck-open]').innerHTML = svg(UI.gauge, 18);
 $('#b-cockpit').innerHTML = svg(UI.gauge, 19);
-$('#ckRecenter').innerHTML = svg(UI.locate, 15) + 'Zentrieren';
+$('#ckRecenter').innerHTML = svg(UI.locate, 19) + '<span>Zentrieren</span>';
 $('#perf [data-pf="close"]').innerHTML = svg(UI.close, 15);
 $('#rpBar [data-rp="close"]').innerHTML = svg(UI.close, 16);
 $('#death [data-dl="close"]').innerHTML = svg(UI.close, 15);
