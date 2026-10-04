@@ -758,15 +758,85 @@ body.car3d .rp-car{visibility:hidden}
 .ws-paste.top{margin:-2px 0 4px 6px}
 .ws-chips{margin:2px -8px 8px!important;padding:0 14px!important}
 .ws-lb{padding:0 8px}
-.lb-row.me .lb-time::after{content:"Du";font-size:10.5px;font-weight:800;margin-left:7px;padding:2px 6px;border-radius:6px;background:var(--accent-soft);color:var(--accent);vertical-align:2px}
-.ws-course{border-radius:14px}
-.ws-course.open{background:var(--solid);margin:2px 0 6px}
-.ws-cbody{display:flex;flex-direction:column;gap:10px;padding:0 12px 12px}
+.lb-row.is-me .lb-time::after{content:"Du";font-size:10.5px;font-weight:800;margin-left:7px;padding:2px 6px;border-radius:6px;background:var(--accent-soft);color:var(--accent);vertical-align:2px}
+.ws-course{border-radius:16px;background:var(--solid);border:1px solid var(--line);margin:0 6px 8px;overflow:hidden}
+.ws-chead{display:flex;align-items:center;gap:11px;width:100%;padding:11px 12px;border:0;background:none;color:var(--fg);text-align:left}
+.ws-chead .ic{width:36px;height:36px;border-radius:11px;background:var(--c);color:#fff;display:grid;place-items:center;flex:none}
+.ws-chead .tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.ws-chead .tx b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws-chead .tx span{font-size:12px;color:var(--muted)}
+.ws-cbest{display:flex;align-items:center;gap:6px;flex:none;font-variant-numeric:tabular-nums}
+.ws-cbest b{font-size:14px}
+.ws-chev{color:var(--muted);display:grid;transition:transform .25s var(--ease)}
+.ws-course.open .ws-chev{transform:rotate(180deg)}
+.ws-cbody{display:flex;flex-direction:column;gap:12px;padding:2px 12px 14px}
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:8px;margin:6px 6px 4px}
+.pd{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;color:var(--fg);padding:0;min-width:0}
+.pd.empty{visibility:hidden}
+.pd-av{position:relative;display:grid;margin-bottom:4px}
+.pd-av .uav{box-shadow:0 0 0 3px var(--ring,var(--fill-2)),0 8px 20px -8px rgba(0,0,0,.6)}
+.pd.p1{--ring:#ffd60a;--ped:linear-gradient(180deg,rgba(255,214,10,.32),rgba(255,214,10,.08))}
+.pd.p2{--ring:#d1d1d6;--ped:linear-gradient(180deg,rgba(209,209,214,.26),rgba(209,209,214,.06))}
+.pd.p3{--ring:#d58a4a;--ped:linear-gradient(180deg,rgba(213,138,74,.28),rgba(213,138,74,.07))}
+.pd-n{font-size:13.5px;font-weight:700;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd-t{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.pd.p1 .pd-t{font-size:20px}
+.pd-d{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pd-b{display:grid;place-items:center;width:100%;margin-top:6px;border-radius:12px 12px 4px 4px;background:var(--ped);font:900 22px/1 "Grenze Gotisch",var(--font);font-style:normal;color:var(--ring)}
+.pd.p1 .pd-b{height:62px;font-size:30px}.pd.p2 .pd-b{height:44px}.pd.p3 .pd-b{height:32px}
+.pd.is-me .pd-n::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:5px;vertical-align:2px}
+.pd-rows{display:flex;flex-direction:column;margin:6px 6px 2px;border-radius:14px;background:var(--solid);border:1px solid var(--line);overflow:hidden}
+.pd-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:0;border-top:1px solid var(--line);background:none;color:var(--fg);text-align:left;width:100%}
+.pd-row:first-child{border-top:0}
+.pd-row.is-me{background:var(--accent-soft)}
+.pd-rk{width:18px;font-weight:800;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+.pd-rn{flex:1;min-width:0;display:flex;flex-direction:column;font-weight:600}
+.pd-rn small,.pd-rt small{font-size:11.5px;color:var(--muted);font-weight:500}
+.pd-rt{display:flex;flex-direction:column;align-items:flex-end;font-weight:800;font-variant-numeric:tabular-nums}
+.ws-cbody .podium,.ws-cbody .pd-rows{margin-left:0;margin-right:0}
+.ws-head .tx[role=button]{cursor:pointer}
+.ws-seg button{font-size:13px}
+.crew-board{display:flex;flex-direction:column;gap:2px;margin:2px 6px 6px}
+.crew-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border:0;border-radius:14px;background:none;color:var(--fg);text-align:left;width:100%;transition:background-color .15s}
+.crew-row:active{background:var(--fill)}
+.crew-row.is-me{background:var(--accent-soft)}
+.crew-rk{width:18px;text-align:center;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.crew-row:first-child .crew-rk{color:#ffd60a}
+.crew-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.crew-n{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crew-bar{height:8px;border-radius:4px;background:var(--fill);overflow:hidden}
+.crew-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#bf5af2));animation:crewgrow .6s var(--ease)}
+@keyframes crewgrow{from{width:0}}
+.crew-km{display:flex;align-items:baseline;gap:3px;flex:none;font-variant-numeric:tabular-nums}
+.crew-km b{font-size:18px;font-weight:800}
+.crew-km small{font-size:12px;color:var(--muted)}
+.crew-nd{padding:4px 10px 10px;font-size:12px}
+.crew-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 6px 8px}
+.crew-card{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 10px 12px;border:1px solid var(--line);border-radius:18px;background:var(--solid);color:var(--fg);text-align:center;min-width:0;transition:transform .18s var(--ease)}
+.crew-card:active{transform:scale(.97)}
+.crew-card.is-me{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.crew-cav{display:grid;margin-bottom:4px}
+.crew-card b{font-size:15px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crew-card span{font-size:12.5px;color:var(--muted)}
+.crew-card small{font-size:11.5px;color:var(--muted)}
+.crew-spark{width:100%;max-width:130px;height:30px;margin:4px 0 2px}
+.crew-spark rect{fill:var(--fill-2)}
+.crew-spark rect.on{fill:var(--accent)}
+.crew-dlg .pad{align-items:stretch}
+.crew-hero{display:flex;flex-direction:column;align-items:center;gap:8px;padding:4px 0 2px}
+.crew-big{border:0;background:none;padding:0;border-radius:50%;display:grid;transition:transform .2s var(--ease)}
+.crew-big:active{transform:scale(.96)}
+.crew-big .uav{box-shadow:0 0 0 4px var(--accent-soft),0 14px 34px -12px rgba(0,0,0,.6)}
+.crew-chart{display:block;width:100%;height:auto}
+.crew-chart .bar{fill:var(--fill-2);transition:fill .15s}
+.crew-chart .bar.on{fill:var(--accent)}
+.crew-link{width:100%;border:0;background:none;color:var(--fg);text-align:left}
+#lightbox .lb-avatar{width:min(84vw,420px);height:auto;border-radius:50%;box-shadow:0 30px 80px -20px rgba(0,0,0,.8)}
 .mk-ws .pin{box-shadow:0 0 0 2.5px #fff,0 0 0 5px var(--accent),0 4px 12px rgba(0,0,0,.45)}
 .mk-ws .by{position:absolute;right:-7px;top:-7px;width:19px;height:19px;border-radius:50%;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .mk-ws.sel .pin{transform:rotate(-45deg) scale(1.22)}
 .btn.on-ws{color:#30d158}
-.uav{display:inline-grid;place-items:center;border-radius:50%;object-fit:cover;flex:none;color:#fff;font-weight:800;line-height:1;vertical-align:middle;box-shadow:0 0 0 1.5px var(--glass-strong)}
+.uav{display:inline-grid;place-items:center;border-radius:50%;object-fit:cover;flex:none;color:#fff!important;font-weight:800;line-height:1;vertical-align:middle;box-shadow:0 0 0 1.5px var(--glass-strong)}
 .ws-by{display:inline-flex;align-items:center;gap:6px}
 .ws-faces{display:flex;align-items:center;margin-top:3px}
 .ws-faces .uav{margin-right:-6px}
@@ -2176,8 +2246,8 @@ async function avatarFrom(file){
   const url = URL.createObjectURL(file);
   try{
     const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
-    const w = img.naturalWidth, h = img.naturalHeight, sz = Math.min(w, h), c = document.createElement('canvas'); c.width = c.height = 192;
-    c.getContext('2d').drawImage(img, (w - sz) / 2, (h - sz) / 2, sz, sz, 0, 0, 192, 192);
+    const w = img.naturalWidth, h = img.naturalHeight, sz = Math.min(w, h), c = document.createElement('canvas'); c.width = c.height = 288;
+    c.getContext('2d').drawImage(img, (w - sz) / 2, (h - sz) / 2, sz, sz, 0, 0, 288, 288);
     return c.toDataURL('image/jpeg', .82);
   }finally{ URL.revokeObjectURL(url); }
 }
@@ -2270,9 +2340,10 @@ function wsRefreshUI(){
 }
 async function pushMember(){
   if(!myName() || WS.rulesOld) return;
-  const sig = myName() + '|' + (prefs.avatar || '').length + '|' + (prefs.avatar || '').slice(-24);
+  const st = onOff('shareStats') ? memberStats() : null;
+  const sig = myName() + '|' + (prefs.avatar || '').length + '|' + (prefs.avatar || '').slice(-24) + '|' + JSON.stringify(st);
   if(prefs.memberSig === sig && WS.members.some(m => m._id === myId())) return;
-  const obj = {name:myName(), av:okImg(prefs.avatar) || '', at:Date.now()};
+  const obj = {name:myName(), av:okImg(prefs.avatar) || '', st, at:Date.now()};
   try{ await fsPut('members', myId(), obj); prefs.memberSig = sig; savePrefs(); wsUpsert(WS.members, {...obj, _id:myId()}); }
   catch(e){ if(/403/.test(e.message)) WS.rulesOld = true; }
 }
@@ -2383,14 +2454,14 @@ function renderWorkshop(){
   const people = new Set([...WS.spots, ...WS.runs, ...WS.efforts].map(x => x.by).filter(Boolean)); if(myName()) people.add(myName());
   WS.members.forEach(m => m.name && people.add(m.name));
   const faces = [{dev:myId(), name:myName()}, ...WS.members.filter(m => m._id !== myId()).map(m => ({dev:m._id, name:m.name}))].slice(0, 6);
-  const head = `<div class="ws-head"><div class="tx"><b>${esc(grp().name)}</b><span class="ws-faces">${faces.map(f => avHTML(f.dev, f.name, 22)).join('')}<em>${people.size} ${people.size === 1 ? 'Mitglied' : 'Mitglieder'}${WS.busy ? ' · lädt …' : WS.loaded ? ` · ${ago(WS.loaded)}` : ''}</em></span></div>
+  const head = `<div class="ws-head"><div class="tx" data-wss="crew" role="button" title="Crew ansehen"><b>${esc(grp().name)}</b><span class="ws-faces">${faces.map(f => avHTML(f.dev, f.name, 22)).join('')}<em>${people.size} ${people.size === 1 ? 'Mitglied' : 'Mitglieder'}${WS.busy ? ' · lädt …' : ''}</em></span></div>
       <button class="icon-btn" data-wsa="sync" aria-label="Aktualisieren" title="Aktualisieren">${svg('<path d="M20 11a8 8 0 0 0-14.6-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.6 4.5L20 16m0 4v-4h-4"/>', 17)}</button>
       <button class="btn primary ws-inv" data-wsa="invite">Einladen</button></div>
     ${WS.err ? `<div class="ws-err">${esc(WS.err)}</div>` : ''}
     ${WS.rulesOld ? `<div class="ws-err">Für Profilbilder und Fahrten müssen die Firebase-Regeln noch aktualisiert werden.</div>` : ''}
     ${!prefs.avatar ? `<button class="ws-avtip" data-wsa="avatar">${avHTML(myId(), myName(), 28)}<span>Profilbild hinzufügen</span></button>` : ''}
-    <div class="seg2 ws-seg"><button data-wss="spots" class="${wsSub === 'spots' ? 'on' : ''}">Spots</button><button data-wss="drives" class="${wsSub === 'drives' ? 'on' : ''}">Fahrten</button><button data-wss="lb" class="${wsSub === 'lb' ? 'on' : ''}">Bestenlisten</button></div>`;
-  body.innerHTML = head + (wsSub === 'lb' ? wsBoardsHTML() : wsSub === 'drives' ? wsDrivesHTML() : wsSpotsHTML());
+    <div class="seg2 ws-seg"><button data-wss="spots" class="${wsSub === 'spots' ? 'on' : ''}">Spots</button><button data-wss="drives" class="${wsSub === 'drives' ? 'on' : ''}">Fahrten</button><button data-wss="lb" class="${wsSub === 'lb' ? 'on' : ''}">Bestzeiten</button><button data-wss="crew" class="${wsSub === 'crew' ? 'on' : ''}">Crew</button></div>`;
+  body.innerHTML = head + (wsSub === 'lb' ? wsBoardsHTML() : wsSub === 'drives' ? wsDrivesHTML() : wsSub === 'crew' ? wsCrewHTML() : wsSpotsHTML());
 }
 function wsSpotsHTML(){
   const list = WS.spots.slice().sort((a, b) => (b.at || 0) - (a.at || 0));
@@ -2403,33 +2474,149 @@ function wsSpotsHTML(){
       ${saved || mine ? `<span class="ws-ok">${svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>', 15, 2.6)}</span>` : `<span class="ws-add" data-wsave="${esc(w._id)}" role="button" aria-label="Speichern">${svg(UI.plus, 15, 2.6)}</span>`}</button>`;
   }).join('');
 }
+const crewName = (dev, by) => dev === myId() ? 'Du' : ((WS.members.find(m => m._id === dev) || {}).name || by || '?');
+function podiumHTML(rows, fmt, sub){
+  if(!rows.length) return '';
+  const top = rows.slice(0, 3), order = [top[1], top[0], top[2]];
+  const pod = `<div class="podium">${order.map(r => {
+    if(!r) return '<div class="pd empty"></div>';
+    const place = r === top[0] ? 1 : r === top[1] ? 2 : 3;
+    return `<button class="pd p${place}${r.dev === myId() ? ' is-me' : ''}" data-crew="${esc(r.dev)}">
+      <span class="pd-av">${avHTML(r.dev, r.by, place === 1 ? 66 : 52)}</span>
+      <b class="pd-n">${esc(crewName(r.dev, r.by))}</b><span class="pd-t">${fmt(r.time)}</span>
+      <span class="pd-d">${place === 1 ? 'Bestzeit' : fmtDelta(r.time - top[0].time)}</span>
+      <i class="pd-b">${place}</i></button>`;
+  }).join('')}</div>`;
+  const rest = rows.slice(3).map((r, i) => `<button class="pd-row${r.dev === myId() ? ' is-me' : ''}" data-crew="${esc(r.dev)}"><span class="pd-rk">${i + 4}</span>${avHTML(r.dev, r.by, 32)}
+      <span class="pd-rn">${esc(crewName(r.dev, r.by))}<small>${sub(r)}</small></span><span class="pd-rt">${fmt(r.time)}<small>${fmtDelta(r.time - rows[0].time)}</small></span></button>`).join('');
+  return pod + (rest ? `<div class="pd-rows">${rest}</div>` : '');
+}
 function wsBoardsHTML(){
   const keys = [...new Set(WS.runs.map(r => `${r.from}-${r.to}`))].sort((a, b) => { const [a1, a2] = a.split('-').map(Number), [b1, b2] = b.split('-').map(Number); return a1 - b1 || a2 - b2; });
   if(!wsRunKey || !keys.includes(wsRunKey)) wsRunKey = keys.includes('0-100') ? '0-100' : keys[0];
   let html = `<div class="sec">Beschleunigung</div>`;
   if(!keys.length) html += `<div class="empty" style="padding:10px">Noch keine Zeiten. Miss eine 0–100, deine Bestzeit wird automatisch geteilt.</div>`;
   else {
-    html += `<div class="chips ws-chips">${keys.map(k => `<button class="chip ${k === wsRunKey ? 'on' : ''}" data-wsk="${k}">${k.replace('-', '–')}</button>`).join('')}</div>`;
+    html += `<div class="chips ws-chips">${keys.map(k => `<button class="chip ${k === wsRunKey ? 'on' : ''}" data-wsk="${k}">${k.replace('-', '–')} km/h</button>`).join('')}</div>`;
     const rows = WS.runs.filter(r => `${r.from}-${r.to}` === wsRunKey).sort((a, b) => a.time - b.time);
-    html += `<div class="lb ws-lb">${rows.map((r, i) => `<div class="lb-row${r.dev === myId() ? ' me' : ''}"><span class="lb-rank ${i < 3 ? 'r' + (i + 1) : ''}">${i + 1}</span>${avHTML(r.dev, r.by, 32)}
-      <div style="display:flex;flex-direction:column;min-width:0"><span class="lb-time">${fmtS(r.time)}</span><span class="lb-sub">${esc(r.by || '?')} · Ø ${fmtGn(r.ga)} G · ${fmtDate(r.date)}</span></div>
-      <span class="lb-delta">${i ? fmtDelta(r.time - rows[0].time) : ''}</span></div>`).join('')}</div>`;
+    html += podiumHTML(rows, fmtS, r => `Ø ${fmtGn(r.ga)} G · ${new Date(r.date).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}`);
   }
   html += `<div class="sec">Rennstrecken</div>`;
   if(!WS.courses.length) html += `<div class="empty" style="padding:10px">Noch keine Rennstrecke geteilt. Öffne eine Rennstrecke und tippe auf „In den Workshop“.</div>`;
   else html += WS.courses.slice().sort((a, b) => (b.at || 0) - (a.at || 0)).map(c => {
     const rows = WS.efforts.filter(f => f.course === c._id).sort((a, b) => a.time - b.time), have = courses.some(x => x.id === c._id), open = wsOpenCourse === c._id;
     return `<div class="ws-course${open ? ' open' : ''}">
-      <button class="item" data-wsc="${esc(c._id)}"><span class="ic" style="--c:#bf5af2">${svg(ICONS.flag, 16)}</span>
-        <span class="tx"><span class="t">${esc(c.name)}</span><span class="s">${fmtKm(c.len || 0)} · von ${c.dev === myId() ? 'dir' : esc(c.by || '?')}${rows[0] ? ` · Bestzeit ${fmtLap(rows[0].time)} (${esc(rows[0].by || '?')})` : ''}</span></span></button>
-      ${open ? `<div class="ws-cbody">${rows.length ? `<div class="lb">${rows.map((f, i) => `<div class="lb-row${f.dev === myId() ? ' me' : ''}"><span class="lb-rank ${i < 3 ? 'r' + (i + 1) : ''}">${i + 1}</span>${avHTML(f.dev, f.by, 32)}
-          <div style="display:flex;flex-direction:column"><span class="lb-time">${fmtLap(f.time)}</span><span class="lb-sub">${esc(f.by || '?')} · ${c.len ? Math.round(c.len / f.time * 3.6) + ' km/h Ø · ' : ''}${fmtDate(f.date)}</span></div>
-          <span class="lb-delta">${i ? fmtDelta(f.time - rows[0].time) : ''}</span></div>`).join('')}</div>` : '<div class="muted">Noch keine Zeiten auf dieser Strecke.</div>'}
+      <button class="ws-chead" data-wsc="${esc(c._id)}"><span class="ic" style="--c:#bf5af2">${svg(ICONS.flag, 16)}</span>
+        <span class="tx"><b>${esc(c.name)}</b><span>${fmtKm(c.len || 0)} · von ${esc(crewName(c.dev, c.by))}</span></span>
+        ${rows[0] ? `<span class="ws-cbest">${avHTML(rows[0].dev, rows[0].by, 26)}<b>${fmtLap(rows[0].time)}</b></span>` : '<span class="ws-cbest muted">keine Zeit</span>'}
+        <span class="ws-chev">${svg('<path d="m6 9 6 6 6-6"/>', 16)}</span></button>
+      ${open ? `<div class="ws-cbody">${rows.length ? podiumHTML(rows, fmtLap, f => `${c.len ? Math.round(c.len / f.time * 3.6) + ' km/h Ø · ' : ''}${new Date(f.date).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}`) : '<div class="muted">Noch keine Zeiten auf dieser Strecke.</div>'}
         ${have ? '<div class="muted">Ist bei deinen Rennstrecken. Deine Bestzeit wird automatisch geteilt.</div>' : `<button class="btn primary" data-wscsave="${esc(c._id)}">${svg(UI.plus, 15)} Strecke übernehmen und mitfahren</button>`}</div>` : ''}
     </div>`;
   }).join('');
   return `<div class="ws-boards">${html}</div>`;
 }
+
+/* Crew: Mitglieder, Wochen-Kilometer, Profile */
+let crewPeriod = 'wk';
+function memberStats(){
+  const wk0 = weekStart(Date.now()), weeks = [];
+  for(let i = 7; i >= 0; i--) weeks.push([weekStart(wk0 - i * 7 * 864e5 + 3 * 3600e3), 0]);
+  let km = 0, n = 0, top = 0, h = 0;
+  tracks.forEach(t => { const w = weekStart(t.created), bk = weeks.find(x => x[0] === w); if(bk) bk[1] += (t.dist || 0) / 1000; km += (t.dist || 0) / 1000; n++; top = Math.max(top, (t.maxSpd || 0) * 3.6); h += (t.dur || 0) / 3600000; });
+  return {wk:weeks.map(([st, k]) => [st, +k.toFixed(1)]), km:+km.toFixed(1), n, top:Math.round(top), h:+h.toFixed(1)};
+}
+function crewList(){
+  const map = new Map();
+  WS.members.forEach(m => map.set(m._id, {dev:m._id, name:m.name || '?', st:m.st || null}));
+  map.set(myId(), {dev:myId(), name:myName() || 'Ich', st:onOff('shareStats') ? memberStats() : (map.get(myId()) || {}).st || null});
+  [...WS.spots, ...WS.runs, ...WS.drives, ...WS.efforts].forEach(x => { if(x.dev && !map.has(x.dev)) map.set(x.dev, {dev:x.dev, name:x.by || '?', st:null}); });
+  return [...map.values()];
+}
+function weekKm(st, back){ if(!st || !st.wk) return null; const w = weekStart(Date.now() - back * 7 * 864e5); const hit = st.wk.find(x => x[0] === w); return hit ? hit[1] : 0; }
+function periodKm(st, p){
+  if(!st) return null;
+  if(p === 'wk') return weekKm(st, 0);
+  if(p === 'lwk') return weekKm(st, 1);
+  if(p === '4w') return [0, 1, 2, 3].reduce((a, i) => a + (weekKm(st, i) || 0), 0);
+  return st.km || 0;
+}
+const PERIODS = [['wk', 'Diese Woche'], ['lwk', 'Letzte Woche'], ['4w', '4 Wochen'], ['all', 'Gesamt']];
+function sparkSVG(st, w = 120, h = 30){
+  if(!st || !st.wk) return '';
+  const vals = [7, 6, 5, 4, 3, 2, 1, 0].map(i => weekKm(st, i) || 0), mx = Math.max(1, ...vals), bw = w / vals.length;
+  return `<svg class="crew-spark" viewBox="0 0 ${w} ${h}" aria-hidden="true">${vals.map((v, i) => { const bh = Math.max(2, v / mx * (h - 2)); return `<rect x="${(i * bw + 1.5).toFixed(1)}" y="${(h - bh).toFixed(1)}" width="${(bw - 3).toFixed(1)}" height="${bh.toFixed(1)}" rx="2" class="${i === 7 ? 'on' : ''}"/>`; }).join('')}</svg>`;
+}
+function wsCrewHTML(){
+  const list = crewList().map(m => ({...m, v:periodKm(m.st, crewPeriod)}));
+  const ranked = list.filter(m => m.v != null).sort((a, b) => b.v - a.v), mx = Math.max(1, ...ranked.map(m => m.v));
+  const label = PERIODS.find(p => p[0] === crewPeriod)[1];
+  let html = `<div class="chips ws-chips">${PERIODS.map(([k, n]) => `<button class="chip ${k === crewPeriod ? 'on' : ''}" data-crewp="${k}">${n}</button>`).join('')}</div>`;
+  html += `<div class="crew-board">${ranked.length ? ranked.map((m, i) => `<button class="crew-row${m.dev === myId() ? ' is-me' : ''}" data-crew="${esc(m.dev)}">
+      <span class="crew-rk">${i + 1}</span>${avHTML(m.dev, m.name, 38)}
+      <span class="crew-main"><span class="crew-n">${esc(crewName(m.dev, m.name))}</span><span class="crew-bar"><i style="width:${Math.max(2, m.v / mx * 100).toFixed(1)}%"></i></span></span>
+      <span class="crew-km"><b>${m.v < 100 ? m.v.toFixed(1).replace('.', ',') : Math.round(m.v).toLocaleString('de-DE')}</b><small>km</small></span></button>`).join('')
+    : '<div class="muted" style="padding:10px 4px">Noch keine Kilometer geteilt.</div>'}</div>`;
+  const noData = list.filter(m => m.v == null);
+  if(noData.length) html += `<div class="muted crew-nd">Ohne Kilometer: ${noData.map(m => esc(m.name)).join(', ')} (ältere App-Version oder Teilen ausgeschaltet)</div>`;
+  html += `<div class="sec">Mitglieder</div><div class="crew-grid">${list.sort((a, b) => (b.v || 0) - (a.v || 0)).map(m => `<button class="crew-card${m.dev === myId() ? ' is-me' : ''}" data-crew="${esc(m.dev)}">
+      <span class="crew-cav" data-crewav="${esc(m.dev)}">${avHTML(m.dev, m.name, 64)}</span>
+      <b>${esc(crewName(m.dev, m.name))}</b>
+      <span>${m.st ? `${(weekKm(m.st, 0) || 0).toFixed(0)} km diese Woche` : 'keine Fahrdaten'}</span>
+      ${sparkSVG(m.st)}
+      <small>${m.st ? `${Math.round(m.st.km).toLocaleString('de-DE')} km · ${m.st.n} Fahrt${m.st.n === 1 ? '' : 'en'}` : '&nbsp;'}</small></button>`).join('')}</div>
+    <div class="muted crew-nd">${label}: geteilt werden nur Kilometer pro Woche, keine Strecken. Ausschalten in den Einstellungen unter „Gruppe“.</div>`;
+  return html;
+}
+function zoomAvatar(dev){
+  const m = dev === myId() ? {av:prefs.avatar, name:myName()} : WS.members.find(x => x._id === dev), av = okImg(m && m.av);
+  if(!av) return false;
+  $('#lightbox').innerHTML = `<img src="${av}" alt="" class="lb-avatar"><button class="lb-x" aria-label="Schließen">${svg(UI.close, 18, 2.4)}</button><span class="lb-c">${esc(crewName(dev, m.name))}</span>`;
+  $('#lightbox').hidden = false; return true;
+}
+let crewOpen = null;
+function openCrew(dev){
+  const m = crewList().find(x => x.dev === dev); if(!m) return;
+  crewOpen = dev;
+  const st = m.st, bestRuns = WS.runs.filter(r => r.dev === dev).sort((a, b) => a.from - b.from || a.to - b.to);
+  const spots = WS.spots.filter(x => x.dev === dev), drives = WS.drives.filter(x => x.dev === dev).sort((a, b) => (b.created || 0) - (a.created || 0));
+  const vals = [7, 6, 5, 4, 3, 2, 1, 0].map(i => ({i, v:st ? weekKm(st, i) || 0 : 0}));
+  const mx = Math.max(1, ...vals.map(x => x.v)), W = 300, H = 110, bw = W / 8;
+  const chart = st ? `<svg viewBox="0 0 ${W} ${H + 18}" class="crew-chart" role="img" aria-label="Kilometer pro Woche">${vals.map((x, k) => { const bh = Math.max(3, x.v / mx * H);
+      return `<rect class="bar${x.i === 0 ? ' on' : ''}" data-cw="${k}" x="${(k * bw + 4).toFixed(1)}" y="${(H - bh).toFixed(1)}" width="${(bw - 8).toFixed(1)}" height="${bh.toFixed(1)}" rx="4"/>
+        <text class="ax" x="${(k * bw + bw / 2).toFixed(1)}" y="${H + 14}" text-anchor="middle">${x.i === 0 ? 'Diese' : new Date(weekStart(Date.now() - x.i * 7 * 864e5)).toLocaleDateString('de-DE', {day:'numeric', month:'numeric'})}</text>`; }).join('')}</svg>` : '';
+  $('#modal').innerHTML = `<div class="dlg crew-dlg" role="dialog" aria-modal="true" aria-label="Profil">
+    <div class="top" style="padding:12px 14px"><span></span><button class="txtbtn bold" data-crewx>Fertig</button></div>
+    <div class="pad" style="padding-top:0;gap:14px">
+      <div class="crew-hero"><button class="crew-big" data-crewav="${esc(dev)}" aria-label="Profilbild vergrößern">${avHTML(dev, m.name, 112)}</button><h2>${esc(crewName(dev, m.name))}</h2>${dev === myId() ? '<button class="txtbtn" data-crewme>Profilbild ändern</button>' : ''}</div>
+      ${st ? `<div class="tstats">
+        <div><b>${(weekKm(st, 0) || 0).toFixed(1).replace('.', ',')} km</b><span>Diese Woche</span></div>
+        <div><b>${Math.round(st.km).toLocaleString('de-DE')} km</b><span>Gesamt</span></div>
+        <div><b>${st.n}</b><span>Fahrten · ${Math.round(st.h)} h</span></div>
+        <div><b>${st.top} km/h</b><span>Top-Speed</span></div></div>
+      <div class="st-h"><span>Kilometer pro Woche</span><em id="crewCap">Diese Woche ${(weekKm(st, 0) || 0).toFixed(1).replace('.', ',')} km</em></div>
+      <div class="st-chart" id="crewChart">${chart}</div>` : '<div class="muted">Teilt noch keine Kilometer.</div>'}
+      ${bestRuns.length ? `<div class="st-h"><span>Bestzeiten</span></div><div class="st-list">${bestRuns.map(r => `<div class="st-row"><span class="k">${r.from}–${r.to} km/h</span><span class="v">${fmtS(r.time)}<small>Ø ${fmtGn(r.ga)} G</small></span></div>`).join('')}</div>` : ''}
+      ${drives.length ? `<div class="st-h"><span>Geteilte Fahrten</span></div><div class="st-list">${drives.slice(0, 8).map(d => `<button class="st-row crew-link" data-crewdrv="${esc(d._id)}"><span class="k">${esc(d.name)}</span><span class="v">${fmtKmS(d.dist || 0)}<small>${new Date(d.created || d.at).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}</small></span></button>`).join('')}</div>` : ''}
+      ${spots.length ? `<div class="st-h"><span>Geteilte Spots</span></div><div class="st-list">${spots.slice(0, 8).map(x => `<button class="st-row crew-link" data-crewspot="${esc(x._id)}"><span class="k">${esc(x.name)}</span><span class="v">${esc((x.cat && x.cat.name) || '')}</span></button>`).join('')}</div>` : ''}
+    </div></div>`;
+  $('#modal').hidden = false;
+  const ch = $('#crewChart');
+  if(ch){
+    const pick = k => { ch.querySelectorAll('.bar').forEach(b => b.classList.toggle('on', +b.dataset.cw === k)); const x = vals[k]; $('#crewCap').textContent = `${x.i === 0 ? 'Diese Woche' : 'Woche ab ' + new Date(weekStart(Date.now() - x.i * 7 * 864e5)).toLocaleDateString('de-DE', {day:'numeric', month:'short'})} ${x.v.toFixed(1).replace('.', ',')} km`; };
+    ch.addEventListener('pointerover', e => { const t = e.target.closest('[data-cw]'); if(t) pick(+t.dataset.cw); });
+    ch.addEventListener('click', e => { const t = e.target.closest('[data-cw]'); if(t) pick(+t.dataset.cw); });
+  }
+}
+$('#modal').addEventListener('click', e => {
+  if(!crewOpen) return;
+  if(!$('#modal .crew-dlg')){ crewOpen = null; return; }
+  if(e.target.id === 'modal' || e.target.closest('[data-crewx]')){ crewOpen = null; $('#modal').hidden = true; return; }
+  const av = e.target.closest('[data-crewav]'); if(av){ zoomAvatar(av.dataset.crewav); return; }
+  if(e.target.closest('[data-crewme]')){ $('#avFile').click(); return; }
+  const dv = e.target.closest('[data-crewdrv]'); if(dv){ crewOpen = null; $('#modal').hidden = true; openWsDrive(dv.dataset.crewdrv); return; }
+  const sp = e.target.closest('[data-crewspot]'); if(sp){ crewOpen = null; $('#modal').hidden = true; openWsSpot(sp.dataset.crewspot); }
+});
 $('#listBody').addEventListener('click', e => {
   if(!(tab === 'spots' && spotView === 'ws')) return;
   const a = e.target.closest('[data-wsa]');
@@ -2445,6 +2632,9 @@ $('#listBody').addEventListener('click', e => {
   const sv = e.target.closest('[data-wsave]');
   if(sv){ e.stopPropagation(); const w = WS.spots.find(x => x._id === sv.dataset.wsave); if(w) wsSaveSpot(w).then(() => renderList()); return; }
   const ss = e.target.closest('[data-wss]'); if(ss){ wsSub = ss.dataset.wss; renderList(); return; }
+  const cp = e.target.closest('[data-crewp]'); if(cp){ crewPeriod = cp.dataset.crewp; renderList(); return; }
+  const cav = e.target.closest('.crew-card [data-crewav]'); if(cav && zoomAvatar(cav.dataset.crewav)) return;
+  const cr = e.target.closest('[data-crew]'); if(cr){ openCrew(cr.dataset.crew); return; }
   const kk = e.target.closest('[data-wsk]'); if(kk){ wsRunKey = kk.dataset.wsk; renderList(); return; }
   const cc = e.target.closest('[data-wsc]'); if(cc){ wsOpenCourse = wsOpenCourse === cc.dataset.wsc ? null : cc.dataset.wsc; renderList(); return; }
   const cs = e.target.closest('[data-wscsave]');
@@ -2696,7 +2886,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.7';
+const VERSION = '2026.10.04.8';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -2743,6 +2933,7 @@ function renderSettings(){
         <div class="set-row"><span>${esc(grp().name)}<small>Workshop und Bestenlisten werden mit dieser Gruppe geteilt</small></span></div>
         <button class="set-row" data-st="avatar"><span>Profilbild<small>Sehen die anderen in der Gruppe</small></span><span class="ri">${avHTML(myId(), myName(), 34)}</span></button>
         <button class="set-row" data-st="gname"><span>Dein Name</span><span class="ri">${esc(myName() || '–')}${svg('<path d="M15 5 8 12l7 7"/>', 14).replace('<svg', '<svg style="transform:scaleX(-1)"')}</span></button>
+        <button class="set-row${onOff('shareStats') ? ' on' : ''}" data-st="tg" data-k="shareStats" role="switch" aria-checked="${onOff('shareStats')}"><span>Wochen-Kilometer teilen<small>Nur km pro Woche und Anzahl Fahrten, keine Strecken</small></span><i class="tg"></i></button>
         <button class="set-row" data-st="ginvite"><span>Freunde einladen</span><span class="ri">${svg(UI.share, 16)}</span></button>
         <button class="set-row" data-st="gleave"><span style="color:var(--danger)">Gruppe verlassen</span></button>` : `
         <button class="set-row" data-st="gcreate"><span>Gruppe erstellen</span>${chev}</button>
@@ -2772,7 +2963,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'theme'){ prefs.theme = b.dataset.v; savePrefs(); applyTheme(); renderSettings(); }
   if(a === 'accent'){ prefs.accent = b.dataset.v; savePrefs(); applyTheme(); renderSettings(); if(view === 'track') updateTrackLayers(); }
   if(a === 'cam'){ prefs.cam = b.dataset.v; savePrefs(); renderSettings(); }
-  if(a === 'tg'){ const k = b.dataset.k; prefs[k] = !onOff(k); savePrefs(); b.classList.toggle('on', prefs[k]); b.setAttribute('aria-checked', prefs[k]); if(k === 'gforce' && prefs[k]) gStart(); }
+  if(a === 'tg'){ const k = b.dataset.k; prefs[k] = !onOff(k); savePrefs(); b.classList.toggle('on', prefs[k]); b.setAttribute('aria-checked', prefs[k]); if(k === 'gforce' && prefs[k]) gStart(); if(k === 'shareStats' && grp()) pushMember().then(wsCache).catch(() => {}); }
   if(a === 'avatar'){ $('#avFile').click(); return; }
   if(a === 'gname') openGroupDlg('name', {then:() => { prefs.memberSig = ''; pushMember().catch(() => {}); pushBests().catch(() => {}); }});
   if(a === 'ginvite') shareURL(inviteURL(), `Gruppe ${grp().name}`, `Komm in unsere Gruppe „${grp().name}“ bei Jamsis Spots:`);
@@ -3193,7 +3384,7 @@ $('#trackSaveView').addEventListener('click', e => {
     if(!saveTracks()){ tracks.shift(); return; }
     rec = null; persistRec(true); drawLive(); renderTracksHead();
     renderList(); openTrack(t.id, false);
-    fetchPlace(t);
+    fetchPlace(t); if(grp()) setTimeout(() => pushMember().then(wsCache).catch(() => {}), 1500);
     const found = scanTrack(t);
     toast(found.length ? `Strecke gespeichert · ${found.length} neue Zeit${found.length > 1 ? 'en' : ''} auf Rennstrecken` : 'Strecke gespeichert');
   } else {
