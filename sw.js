@@ -1,7 +1,7 @@
 /* Jamsis Spots – Service Worker: App offline starten + Kartenkacheln zwischenspeichern */
-const V = 'v20';
+const V = 'v21';
 const APP = 'app-' + V, RT = 'tiles-rt', SAVED = 'tiles-saved';
-const SHELL = ['./', './index.html', './lib/maplibre-gl.js', './lib/maplibre-gl.css', './lib/three.min.js', './lib/fonts/grenze-gotisch-latin-800-normal.woff2', './lib/fonts/grenze-gotisch-latin-900-normal.woff2', './manifest.webmanifest', './icon-192.png', './apple-touch-icon.png', './favicon.png'];
+const SHELL = ['./', './index.html', './lib/maplibre-gl.js', './lib/maplibre-gl.css', './lib/fonts/geist-latin-wght-normal.woff2', './lib/fonts/geist-latin-ext-wght-normal.woff2', './lib/fonts/grenze-gotisch-latin-800-normal.woff2', './lib/fonts/grenze-gotisch-latin-900-normal.woff2', './manifest.webmanifest', './icon-192.png', './apple-touch-icon.png', './favicon.png'];
 const isTile = u => /(^|\.)arcgisonline\.com$/.test(u.hostname) || /elevation-tiles-prod/.test(u.pathname);
 
 self.addEventListener('install', e => {
@@ -23,6 +23,29 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if(req.method !== 'GET') return;
   const url = new URL(req.url);
+
+  // Clean-Karte (OpenFreeMap): Kacheln ohne Versionsnummer speichern, Schriften dauerhaft, Kachel-Info mit Rückfall
+  if(url.hostname === 'tiles.openfreemap.org'){
+    const m = url.pathname.match(/^\/planet\/[^/]+\/(\d+)\/(\d+)\/(\d+)\.pbf$/);
+    const key = m ? `https://tiles.openfreemap.org/planet/_/${m[1]}/${m[2]}/${m[3]}.pbf` : url.pathname.startsWith('/fonts/') ? req.url : null;
+    if(key){
+      e.respondWith((async () => {
+        const hit = await caches.match(key, {ignoreVary:true});
+        if(hit) return hit;
+        try{
+          const res = await fetch(req);
+          if(res.ok){ const copy = res.clone(); caches.open(RT).then(c => c.put(key, copy)).then(() => { if(++puts % 100 === 0) trim(); }).catch(() => {}); }
+          return res;
+        }catch(err){ return new Response('', {status:504, statusText:'offline'}); }
+      })());
+      return;
+    }
+    if(url.pathname === '/planet'){
+      e.respondWith(fetch(req).then(res => { if(res.ok){ const copy = res.clone(); caches.open(RT).then(c => c.put(req.url, copy)); } return res; })
+        .catch(() => caches.match(req.url).then(hit => hit || new Response('', {status:504}))));
+      return;
+    }
+  }
 
   // Kartenkacheln: erst Speicher (gespeicherte Gebiete + zuletzt gesehen), dann Netz
   if(isTile(url)){

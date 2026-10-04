@@ -12,11 +12,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Spots">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap">
+<link rel="preload" href="lib/maplibre-gl.js" as="script">
+<link rel="preload" href="lib/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="lib/maplibre-gl.css">
 <style>
+@font-face{font-family:"Geist";font-style:normal;font-display:swap;font-weight:100 900;src:url(lib/fonts/geist-latin-wght-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Geist";font-style:normal;font-display:swap;font-weight:100 900;src:url(lib/fonts/geist-latin-ext-wght-normal.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 @font-face{font-family:"Grenze Gotisch";font-weight:800;font-style:normal;font-display:swap;src:url(lib/fonts/grenze-gotisch-latin-800-normal.woff2) format("woff2")}
 @font-face{font-family:"Grenze Gotisch";font-weight:900;font-style:normal;font-display:swap;src:url(lib/fonts/grenze-gotisch-latin-900-normal.woff2) format("woff2")}
 /* Layout: Vollbild-Satellitenkarte, dunkles Glas-Interface. Panel links (Handy: ziehbares Sheet), Steuerung rechts. Bewusst nur ein dunkles Theme. */
@@ -881,6 +882,35 @@ body.car3d .rp-car{visibility:hidden}
 .rx.fresh .rx-b b{color:#ff9f0a}
 .pd-rn .rx.mini{justify-content:flex-start}
 
+/* ---------- Einführung ---------- */
+#onb{position:fixed;inset:0;z-index:70;overflow-y:auto;background:radial-gradient(90% 50% at 50% -10%,color-mix(in srgb,var(--accent) 30%,transparent),transparent 70%),var(--page);color:var(--fg);padding:calc(16px + env(safe-area-inset-top,0px)) 18px calc(24px + env(safe-area-inset-bottom,0px));animation:fadein .3s}
+.onb-wrap{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:18px;min-height:100%}
+.onb-dots{display:flex;gap:6px;justify-content:center;padding-top:4px}
+.onb-dots i{width:7px;height:7px;border-radius:4px;background:var(--fill-2);transition:width .3s var(--ease),background-color .3s}
+.onb-dots i.on{width:22px;background:var(--accent)}
+.onb-dots i.done{background:color-mix(in srgb,var(--accent) 55%,transparent)}
+.onb-card{display:flex;flex-direction:column;gap:14px;animation:viewin .35s var(--ease)}
+.onb-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:24px 0 6px}
+.onb-logo{width:88px;height:88px;border-radius:24px;display:grid;place-items:center;background:linear-gradient(160deg,#5fb0ff,#0a7cff);box-shadow:0 18px 40px -12px rgba(10,124,255,.7)}
+.onb-hero h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:6px 0 0}
+.onb-hero p,.onb-head p{color:var(--muted);font-size:15px;line-height:1.45;margin:0}
+.onb-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.onb-list li{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:16px;background:var(--solid);border:1px solid var(--line)}
+.onb-list b{font-size:15px}
+.onb-list span{font-size:13px;color:var(--muted)}
+.onb-head{display:flex;flex-direction:column;gap:6px;padding-top:18px}
+.onb-ic{font-size:40px;line-height:1}
+.onb-head h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 0}
+.onb-steps{margin:0;padding:0 0 0 22px;display:flex;flex-direction:column;gap:10px;font-size:15px;line-height:1.4}
+.onb-key{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;background:var(--fill);vertical-align:middle}
+.onb-note{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border-radius:16px;background:color-mix(in srgb,#ff9f0a 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,#ff9f0a 40%,transparent);font-size:14px;line-height:1.45}
+.onb-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.onb-av{display:flex;flex-direction:column;align-items:center;gap:8px;border:0;background:none;color:var(--accent);font-weight:600;align-self:center}
+.onb-av .uav{box-shadow:0 0 0 4px var(--accent-soft),0 14px 30px -12px rgba(0,0,0,.6)}
+.onb-or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px}
+.onb-or::before,.onb-or::after{content:'';flex:1;height:1px;background:var(--line)}
+.btn.wide{width:100%}
+
 /* ---------- Aufgeräumt: Crew-Kopf, News, Schrift ---------- */
 :root{--fs1:15px;--fs2:13px}
 .tabs button{padding:0 12px}
@@ -1260,6 +1290,7 @@ body.nav #ckLive,body.replay #ckLive{display:none!important}
     <p class="dl-foot">Risk-Score 0–100. „Was wäre wenn“ ist Physik-Schätzung: 1 s Reaktion, trockene Straße, Reifen bis etwa 1 G, Auto rund 1,5 t. Alles bleibt auf diesem Gerät.</p>
   </div>
 </div>
+<div id="onb" hidden role="dialog" aria-modal="true" aria-label="Willkommen"><div class="onb-wrap" id="onbBody"></div></div>
 <div id="review" hidden role="dialog" aria-modal="true" aria-label="Rückblick"><div class="rv-wrap" id="rvBody"></div></div>
 <div id="attrib">Bilder © Esri, Maxar, Earthstar Geographics · Höhen © Mapzen</div>
 
@@ -1589,10 +1620,11 @@ setTimeout(hideSplash, 3500);
 function applyLabels(){
   const base = BASES[prefs.base] ? prefs.base : 'sat';
   if(mapReady){
-    if(base === 'vec') vecEnsure();
+    const hyb = base === 'sat' && prefs.labels && useHybrid();
+    if(base === 'vec' || hyb) vecEnsure();
     for(const k of Object.keys(BASES)) if(!BASES[k].vector) map.setLayoutProperty(k, 'visibility', k === base ? 'visible' : 'none');
-    vecShow(base === 'vec');
-    for(const l of ['roads','places']) map.setLayoutProperty(l, 'visibility', base === 'sat' && prefs.labels ? 'visible' : 'none');
+    vecShow(base === 'vec'); hybShow(hyb);
+    for(const l of ['roads','places']) map.setLayoutProperty(l, 'visibility', base === 'sat' && prefs.labels && !hyb ? 'visible' : 'none');
     map.setLayoutProperty('darkref', 'visibility', base === 'dark' && prefs.labels ? 'visible' : 'none');
   }
   $('#b-labels').classList.toggle('on', prefs.labels);
@@ -1607,10 +1639,10 @@ const VEC_SRC = 'https://tiles.openfreemap.org/planet';
 const VEC_PAL = {
   light:{land:'#f5f3ee', urban:'#efece6', park:'#d6ebc4', wood:'#cfe6bf', water:'#a9d3f2', waterTx:'#3f78a8', bld:'#e7e3da', bldLine:'#dad5ca',
     minor:'#ffffff', minorCase:'#dfdad0', sec:'#ffffff', secCase:'#d3cdc1', pri:'#fde9a8', priCase:'#e3c87a', mot:'#f8c56a', motCase:'#d7a24a', rail:'#cbc6bc',
-    border:'#b6a8c8', tx:'#3a3a3c', txSoft:'#6e6e73', halo:'#ffffff', city:'#1c1c1e'},
+    border:'#b6a8c8', tx:'#3a3a3c', txSoft:'#6e6e73', halo:'#ffffff', city:'#1c1c1e', hillX:.28, hillS:'rgba(80,62,34,.55)', hillH:'rgba(255,255,255,.35)'},
   dark:{land:'#1d2023', urban:'#22262a', park:'#1d3024', wood:'#1b2a20', water:'#14324a', waterTx:'#6fa3cf', bld:'#2a2e33', bldLine:'#33383e',
     minor:'#363a40', minorCase:'#24272b', sec:'#454a52', secCase:'#2a2d31', pri:'#6b6553', priCase:'#3d3a30', mot:'#a87b3e', motCase:'#5c4422', rail:'#3c4046',
-    border:'#6d6280', tx:'#d9d9de', txSoft:'#9a9aa0', halo:'#121416', city:'#f2f2f7'}
+    border:'#6d6280', tx:'#d9d9de', txSoft:'#9a9aa0', halo:'#121416', city:'#f2f2f7', hillX:.35, hillS:'rgba(0,0,0,.6)', hillH:'rgba(255,255,255,.05)'}
 };
 let vecOn = false, vecPalKey = null;
 const vName = ['coalesce', ['get', 'name:de'], ['get', 'name_de'], ['get', 'name']];
@@ -1628,9 +1660,13 @@ function vecLayers(P){
     {id:'v-wood', type:'fill', source:'ofm', 'source-layer':'landcover', filter:['in', ['get', 'class'], ['literal', ['wood', 'forest']]], paint:{'fill-color':P.wood, 'fill-opacity':['interpolate', ['linear'], ['zoom'], 5, .45, 12, P === VEC_PAL.dark ? .75 : 1]}},
     {id:'v-grass', type:'fill', source:'ofm', 'source-layer':'landcover', filter:['in', ['get', 'class'], ['literal', ['grass', 'meadow', 'park']]], paint:{'fill-color':P.park, 'fill-opacity':.55}},
     {id:'v-park', type:'fill', source:'ofm', 'source-layer':'park', paint:{'fill-color':P.park, 'fill-opacity':.85}},
+    {id:'v-hill', type:'hillshade', source:'demhs', maxzoom:16, paint:{'hillshade-exaggeration':P.hillX, 'hillshade-shadow-color':P.hillS, 'hillshade-highlight-color':P.hillH, 'hillshade-accent-color':P.hillS, 'hillshade-illumination-anchor':'viewport'}},
     {id:'v-water', type:'fill', source:'ofm', 'source-layer':'water', paint:{'fill-color':P.water}},
     {id:'v-waterway', type:'line', source:'ofm', 'source-layer':'waterway', minzoom:8, layout:{'line-cap':'round'}, paint:{'line-color':P.water, 'line-width':zw(8, .6, 13, 1.6, 18, 5)}},
-    {id:'v-building', type:'fill', source:'ofm', 'source-layer':'building', minzoom:14, paint:{'fill-color':P.bld, 'fill-outline-color':P.bldLine, 'fill-opacity':['interpolate', ['linear'], ['zoom'], 14, 0, 15, 1]}},
+    {id:'v-building', type:'fill-extrusion', source:'ofm', 'source-layer':'building', minzoom:14, filter:['!=', ['get', 'hide_3d'], true],
+      paint:{'fill-extrusion-color':P.bld, 'fill-extrusion-opacity':.9, 'fill-extrusion-vertical-gradient':true,
+        'fill-extrusion-height':['interpolate', ['linear'], ['zoom'], 14, 0, 15.5, ['coalesce', ['get', 'render_height'], 6]],
+        'fill-extrusion-base':['interpolate', ['linear'], ['zoom'], 14, 0, 15.5, ['coalesce', ['get', 'render_min_height'], 0]]}},
     {id:'v-tunnel', type:'line', source:'ofm', 'source-layer':'transportation', minzoom:12, filter:['==', ['get', 'brunnel'], 'tunnel'], layout:{'line-join':'round'}, paint:{'line-color':P.secCase, 'line-width':zw(12, 1, 18, 8), 'line-opacity':.5, 'line-dasharray':[2, 1.5]}},
     {id:'v-rail', type:'line', source:'ofm', 'source-layer':'transportation', minzoom:10, filter:['==', ['get', 'class'], 'rail'], paint:{'line-color':P.rail, 'line-width':zw(10, .6, 16, 2), 'line-dasharray':[3, 2]}},
     ...road('v-minor', ['minor', 'service', 'track', 'path'], P.minor, P.minorCase, [12, .5, 14, 2, 18, 12], 12),
@@ -1653,16 +1689,55 @@ function vecLayers(P){
       layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 2, 11, 6, 15], 'text-transform':'uppercase', 'text-letter-spacing':.08, 'text-max-width':7}, paint:{...txt, 'text-color':P.txSoft}}
   ];
 }
+// scharfe Straßen und Namen über dem Satellitenbild (wie „Hybrid“ bei Apple)
+function hybLayers(){
+  const txt = {'text-color':'#ffffff', 'text-halo-color':'rgba(0,0,0,.78)', 'text-halo-width':1.5, 'text-halo-blur':.5};
+  const ln = (id, classes, col, w, minz) => ({id, type:'line', source:'ofm', 'source-layer':'transportation', minzoom:minz, filter:['all', ['in', ['get', 'class'], ['literal', classes]], ['!=', ['get', 'brunnel'], 'tunnel']],
+    layout:{'line-cap':'round', 'line-join':'round'}, paint:{'line-color':col, 'line-width':zw(...w)}});
+  return [
+    ln('h-minor', ['minor', 'service'], 'rgba(255,255,255,.28)', [13, .5, 18, 6], 13),
+    ln('h-sec', ['secondary', 'tertiary'], 'rgba(255,255,255,.42)', [9, .4, 14, 2, 18, 10], 9),
+    ln('h-pri', ['primary', 'trunk'], 'rgba(255,226,140,.62)', [7, .5, 14, 3, 18, 14], 7),
+    ln('h-mot', ['motorway'], 'rgba(255,200,90,.75)', [5, .6, 14, 4, 18, 18], 5),
+    {id:'h-border', type:'line', source:'ofm', 'source-layer':'boundary', filter:['all', ['<=', ['to-number', ['get', 'admin_level'], 99], 4], ['!=', ['to-number', ['get', 'maritime'], 0], 1]], paint:{'line-color':'rgba(255,255,255,.55)', 'line-width':1.2, 'line-dasharray':[3, 2]}},
+    {id:'h-lbl-water', type:'symbol', source:'ofm', 'source-layer':'water_name', layout:{'text-field':vName, 'text-font':['Noto Sans Italic'], 'text-size':12}, paint:{...txt, 'text-color':'#cfe8ff'}},
+    {id:'h-lbl-road', type:'symbol', source:'ofm', 'source-layer':'transportation_name', minzoom:13, filter:['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor']]],
+      layout:{'symbol-placement':'line', 'text-field':vName, 'text-font':['Noto Sans Regular'], 'text-size':['interpolate', ['linear'], ['zoom'], 13, 10, 17, 13], 'symbol-spacing':320}, paint:{...txt}},
+    {id:'h-lbl-village', type:'symbol', source:'ofm', 'source-layer':'place', minzoom:10, filter:['in', ['get', 'class'], ['literal', ['village', 'hamlet', 'suburb', 'neighbourhood']]],
+      layout:{'text-field':vName, 'text-font':['Noto Sans Regular'], 'text-size':['interpolate', ['linear'], ['zoom'], 10, 11, 15, 14], 'text-max-width':8}, paint:{...txt}},
+    {id:'h-lbl-town', type:'symbol', source:'ofm', 'source-layer':'place', minzoom:7, filter:['==', ['get', 'class'], 'town'],
+      layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 7, 11, 14, 16], 'text-max-width':8}, paint:{...txt}},
+    {id:'h-lbl-city', type:'symbol', source:'ofm', 'source-layer':'place', minzoom:4, filter:['==', ['get', 'class'], 'city'],
+      layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 4, 12, 12, 20], 'text-max-width':8}, paint:{...txt}},
+    {id:'h-lbl-country', type:'symbol', source:'ofm', 'source-layer':'place', maxzoom:7, filter:['in', ['get', 'class'], ['literal', ['country', 'state']]],
+      layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 2, 11, 6, 15], 'text-transform':'uppercase', 'text-letter-spacing':.08, 'text-max-width':7}, paint:{...txt, 'text-color':'rgba(255,255,255,.85)'}}
+  ];
+}
 const vecIds = () => vecLayers(VEC_PAL.light).map(l => l.id);
+const hybIds = () => hybLayers().map(l => l.id);
+let hybOn = false, ofmOk = 0, ofmFail = 0, ofmBad = false;
+const useHybrid = () => !ofmBad;
 function vecEnsure(){
-  if(!mapReady) return;
+  if(!mapReady || !map.getLayer) return;
   const key = curTheme() === 'light' ? 'light' : 'dark';
   if(vecPalKey === key && map.getLayer('v-land')) return;
   if(!map.getSource('ofm')) map.addSource('ofm', {type:'vector', url:VEC_SRC, attribution:'© OpenFreeMap © OpenMapTiles · Daten © OpenStreetMap'});
+  if(!map.getSource('demhs')) map.addSource('demhs', {type:'raster-dem', tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'], encoding:'terrarium', tileSize:256, maxzoom:13});
   vecIds().forEach(id => { if(map.getLayer(id)) map.removeLayer(id); });
   vecLayers(VEC_PAL[key]).forEach(l => map.addLayer({...l, layout:{...(l.layout || {}), visibility:vecOn ? 'visible' : 'none'}}, 'roads'));
+  if(!map.getLayer('h-minor')) hybLayers().forEach(l => map.addLayer({...l, layout:{...(l.layout || {}), visibility:'none'}}, 'roads'));
   vecPalKey = key;
 }
+function hybShow(on){
+  hybOn = on;
+  if(!mapReady || !map.getLayer || !map.getLayer('h-minor')) return;
+  hybIds().forEach(id => map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'));
+}
+map.on('data', e => { if(e.dataType === 'source' && e.sourceId === 'ofm' && e.tile) ofmOk++; });
+map.on('error', e => {
+  if(!(e.sourceId === 'ofm' || /openfreemap/.test(String(e.error?.url || e.error?.message || '')))) return;
+  if(++ofmFail >= 4 && !ofmOk && !ofmBad){ ofmBad = true; applyLabels(); }
+});
 function vecShow(on){
   vecOn = on;
   if(!mapReady || !map.getLayer || !map.getLayer('v-land')) return;
@@ -2483,14 +2558,104 @@ function handleHash(){
   const q = new URLSearchParams(h);
   try{
     if(q.get('spot')){
+      hashSpot = true;
       const o = JSON.parse(b64d(q.get('spot')));
       if(typeof o.a === 'number' && typeof o.o === 'number') showIncoming(o);
     } else if(q.get('join')){
-      openGroupDlg('join', {code:q.get('join'), name:q.get('g') || 'Gruppe'});
+      if(onbNeeded()) onbInvite = {code:q.get('join'), name:q.get('g') || 'Gruppe'};
+      else openGroupDlg('join', {code:q.get('join'), name:q.get('g') || 'Gruppe'});
     }
   }catch(e){ toast('Der Link ist kaputt oder unvollständig.'); }
   try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
 }
+/* ================= Einführung für neue Freunde ================= */
+let hashSpot = false, onbInvite = null, onbStep = 0, onbInstall = null, onbErr = '';
+const isStandalone = () => navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); onbInstall = e; if(!$('#onb').hidden) renderOnb(); });
+function onbNeeded(){
+  if(prefs.onb || /[?&]noonb\b/.test(location.search)) return false;
+  if(myName() && grp()) return false;
+  const own = data.spots.filter(x => !String(x.id).startsWith('bsp')).length;
+  return !own && !tracks.length;
+}
+function onbSteps(){ return ['hello', ...(isStandalone() ? [] : ['install']), 'me', 'group', 'done']; }
+function openOnb(){ onbStep = 0; onbErr = ''; $('#onb').hidden = false; renderOnb(); }
+function closeOnb(){ $('#onb').hidden = true; prefs.onb = 1; savePrefs(); refreshAll(); }
+function onbInviteLink(){ return onbInvite ? `${appURL()}#join=${onbInvite.code}&g=${encodeURIComponent(onbInvite.name)}` : ''; }
+function renderOnb(){
+  const steps = onbSteps(), k = steps[Math.min(onbStep, steps.length - 1)];
+  const dots = `<div class="onb-dots">${steps.map((x, i) => `<i class="${i === onbStep ? 'on' : i < onbStep ? 'done' : ''}"></i>`).join('')}</div>`;
+  const shareIc = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+  let body = '';
+  if(k === 'hello') body = `<div class="onb-hero"><div class="onb-logo"><svg viewBox="0 0 24 24" width="46" height="46" aria-hidden="true"><path d="M12 2.5c-4 0-7 3-7 7 0 5.2 7 12 7 12s7-6.8 7-12c0-4-3-7-7-7z" fill="#fff"/><circle cx="12" cy="9.5" r="2.8" fill="#0a7cff"/></svg></div>
+      <h1>Jamsis Spots</h1><p>${onbInvite ? `Du wurdest in „${esc(onbInvite.name)}“ eingeladen. In einer Minute bist du dabei.` : 'Deine Karte für Spots, Fahrten und die Crew.'}</p></div>
+    <ul class="onb-list"><li><b>📍 Spots merken</b><span>Aussichtspunkte, Parkplätze, Fotospots – mit Fotos und Navigation</span></li>
+      <li><b>🛣️ Fahrten aufzeichnen</b><span>Cockpit, Tempo-Verlauf, Rennstrecken und Geister-Rennen</span></li>
+      <li><b>👥 Mit der Crew teilen</b><span>News, Bestzeiten, Live-Standort und Wochenrückblick</span></li></ul>
+    <button class="btn primary wide" data-onb="next">Los geht's</button>`;
+  if(k === 'install'){
+    const ios = isIOS();
+    body = `<div class="onb-head"><span class="onb-ic">📲</span><h2>Zum Home-Bildschirm</h2><p>Dann startet Jamsis Spots wie eine normale App, im Vollbild und auch ohne Netz.</p></div>
+      ${ios ? `<ol class="onb-steps"><li>Unten in Safari auf <b class="onb-key">${shareIc} Teilen</b> tippen</li><li><b>„Zum Home-Bildschirm“</b> wählen</li><li>Die App über das neue Symbol öffnen</li></ol>
+        ${onbInvite ? `<div class="onb-note"><b>Wichtig fürs iPhone:</b> Die Home-Bildschirm-App hat einen eigenen Speicher. Kopier jetzt den Einladungslink und füg ihn dort in der App wieder ein.<button class="btn wide" data-onb="copyinv">Einladungslink kopieren</button></div>` : ''}`
+      : onbInstall ? `<button class="btn primary wide" data-onb="install">App installieren</button>`
+      : `<ol class="onb-steps"><li>Im Browser-Menü <b>„App installieren“</b> oder <b>„Zum Startbildschirm“</b> wählen</li><li>Oder einfach hier im Browser weitermachen</li></ol>`}
+      <div class="onb-btns"><button class="btn" data-onb="next">Später</button><button class="btn primary" data-onb="next">Weiter</button></div>`;
+  }
+  if(k === 'me') body = `<div class="onb-head"><span class="onb-ic">👋</span><h2>Wie heißt du?</h2><p>So sehen dich deine Freunde in der Crew.</p></div>
+      <button class="onb-av" data-onb="avatar" aria-label="Profilbild wählen">${avHTML(myId(), myName() || '?', 96)}<span>${prefs.avatar ? 'Bild ändern' : 'Profilbild wählen'}</span></button>
+      <label class="f">Dein Name<input class="inp" id="onb-name" maxlength="24" placeholder="z. B. Jamsi" value="${esc(myName())}" autocomplete="nickname"></label>
+      <div class="err">${esc(onbErr)}</div>
+      <button class="btn primary wide" data-onb="name">Weiter</button>`;
+  if(k === 'group'){
+    if(grp()) body = `<div class="onb-head"><span class="onb-ic">✅</span><h2>Du bist in „${esc(grp().name)}“</h2><p>Spots, Fahrten und Bestzeiten der Crew findest du unten unter „Crew“.</p></div>
+      <button class="btn primary wide" data-onb="next">Weiter</button>`;
+    else if(onbInvite) body = `<div class="onb-head"><span class="onb-ic">👥</span><h2>„${esc(onbInvite.name)}“ beitreten?</h2><p>Danach siehst du die Spots, Fahrten und Bestzeiten der Crew und kannst selbst etwas teilen.</p></div>
+      <div class="err">${esc(onbErr)}</div>
+      <button class="btn primary wide" data-onb="join">Beitreten</button><button class="txtbtn" data-onb="next" style="align-self:center">Nicht jetzt</button>`;
+    else body = `<div class="onb-head"><span class="onb-ic">👥</span><h2>Bist du in einer Crew?</h2><p>Füg den Einladungslink ein, den dir ein Freund geschickt hat. Oder starte eine eigene Crew.</p></div>
+      <label class="f">Einladungslink<input class="inp" id="onb-link" placeholder="https://…#join=…" autocomplete="off"></label>
+      ${navigator.clipboard && navigator.clipboard.readText ? '<button class="txtbtn" data-onb="paste" style="align-self:flex-start">Aus der Zwischenablage einfügen</button>' : ''}
+      <div class="err">${esc(onbErr)}</div>
+      <button class="btn primary wide" data-onb="link">Beitreten</button>
+      <div class="onb-or"><span>oder</span></div>
+      <div class="onb-btns"><button class="btn" data-onb="create">Eigene Crew starten</button><button class="btn" data-onb="next">Später</button></div>`;
+  }
+  if(k === 'done') body = `<div class="onb-head"><span class="onb-ic">🎉</span><h2>Fertig${myName() ? ', ' + esc(myName()) : ''}!</h2><p>Erlaub noch deinen Standort, damit die Karte weiß, wo du bist, und das Cockpit funktioniert.</p></div>
+      <button class="btn primary wide" data-onb="gps">Standort erlauben und los</button><button class="txtbtn" data-onb="close" style="align-self:center">Ohne Standort weiter</button>`;
+  $('#onbBody').innerHTML = dots + `<div class="onb-card">${body}</div>`;
+  if(k === 'me') setTimeout(() => { const i = $('#onb-name'); if(i && !i.value) i.focus(); }, 80);
+}
+function onbJoin(code, gname){
+  prefs.group = {code, name:gname || 'Gruppe'}; delete prefs.wsSeen; delete prefs.feedSeen; savePrefs();
+  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.loaded = 0; wsSub = 'feed';
+  syncSpotsHead(); wsSync(true);
+}
+$('#onb').addEventListener('click', async e => {
+  const b = e.target.closest('[data-onb]'); if(!b) return;
+  const a = b.dataset.onb, next = () => { onbErr = ''; onbStep++; renderOnb(); };
+  if(a === 'next') return next();
+  if(a === 'install' && onbInstall){ onbInstall.prompt(); try{ await onbInstall.userChoice; }catch(_){} onbInstall = null; return next(); }
+  if(a === 'copyinv'){ copy(onbInviteLink()); return; }
+  if(a === 'avatar'){ $('#avFile').click(); return; }
+  if(a === 'name'){
+    const v = ($('#onb-name').value || '').trim(); if(!v){ onbErr = 'Gib deinen Namen ein.'; return renderOnb(); }
+    prefs.myName = v; savePrefs(); return next();
+  }
+  if(a === 'join' && onbInvite){ onbJoin(onbInvite.code, onbInvite.name); toast(`Willkommen in „${onbInvite.name}“`); return next(); }
+  if(a === 'paste'){ try{ $('#onb-link').value = (await navigator.clipboard.readText()).trim(); }catch(_){ onbErr = 'Einfügen ging nicht – halt das Feld gedrückt und wähle „Einsetzen“.'; renderOnb(); } return; }
+  if(a === 'link'){
+    const raw = ($('#onb-link').value || '').trim(), m = raw.match(/join=([a-z0-9]{20,})/i), code = m ? m[1] : raw.replace(/[^a-z0-9]/gi, '');
+    if(code.length < 20){ onbErr = 'Das sieht nicht nach einem Einladungslink aus. Kopier den ganzen Link.'; return renderOnb(); }
+    const gm = raw.match(/[?&#]g=([^&]+)/), gname = gm ? decodeURIComponent(gm[1]) : 'Gruppe';
+    onbJoin(code, gname); toast(`Willkommen in „${gname}“`); return next();
+  }
+  if(a === 'create'){ onbJoin(newCode(), `${myName() || 'Meine'}s Crew`); toast('Crew erstellt – lad deine Freunde unter „Crew“ ein'); return next(); }
+  if(a === 'gps'){ prefs.gps = true; savePrefs(); closeOnb(); startGPS(true); return; }
+  if(a === 'close') closeOnb();
+});
+
 function showIncoming(o){
   incoming = o;
   const dup = data.spots.find(s => Math.abs(s.lat - o.a) < 1e-5 && Math.abs(s.lng - o.o) < 1e-5);
@@ -2600,6 +2765,7 @@ $('#avFile').addEventListener('change', async e => {
   try{ prefs.avatar = await avatarFrom(f); savePrefs(); }catch(_){ toast('Das Bild konnte nicht gelesen werden.'); return; }
   toast('Profilbild gespeichert');
   if(!$('#modal').hidden && $('#modal [aria-label="Einstellungen"]')) renderSettings();
+  if(!$('#onb').hidden) renderOnb();
   wsRefreshUI(); if(grp()) pushMember().then(() => { wsCache(); wsRefreshUI(); });
 });
 
@@ -3516,7 +3682,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.15';
+const VERSION = '2026.10.04.16';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4779,26 +4945,31 @@ async function liveWatch(){
   liveUnwatch();
   if(!code){ live.peers.clear(); liveRender(); return; }
   live.code = code; live.first = true;
+  if(live.on || fbx) return liveRealtime(code);
+  livePoll(code);   // leise nachsehen; das Echtzeit-Paket (≈300 KB) kommt erst, wenn jemand live ist
+}
+async function liveRealtime(code){
   const x = await fbLoad();
-  if(live.code !== code) return;
+  if(live.code !== code || live.mode === 'rt') return;
   if(x){
     try{
-      live.mode = 'rt';
+      clearTimeout(live.poll); live.mode = 'rt';
       live.unsub = x.fs.onSnapshot(x.fs.collection(x.db, 'groups', code, 'live'),
         qs => { if(live.code === code) liveIngest(qs.docs.map(d => liveParse(d.id, d.data()))); },
-        () => { if(live.code !== code) return; live.unsub = null; livePoll(code); });
+        () => { if(live.code !== code) return; live.unsub = null; live.mode = null; livePoll(code); });
       return;
-    }catch(e){ live.unsub = null; }
+    }catch(e){ live.unsub = null; live.mode = null; }
   }
-  livePoll(code);
+  clearTimeout(live.poll); live.mode = null; livePoll(code);
 }
 function livePoll(code){
-  live.mode = 'poll';
+  clearTimeout(live.poll); live.mode = 'poll';
   const tick = async () => {
     if(live.code !== code) return;
     try{ const arr = await fsList('live'); if(live.code === code) liveIngest(arr.map(v => liveParse(v._id, v))); }catch(e){}
-    if(live.code !== code) return;
+    if(live.code !== code || live.mode !== 'poll') return;
     const busy = live.on || liveFresh().length > 0;
+    if(busy && (fbx || !fbTry || Date.now() - fbTry > 60000)){ liveRealtime(code); return; }
     clearTimeout(live.poll); live.poll = setTimeout(tick, busy ? 4000 : 45000);
   };
   tick();
@@ -4946,7 +5117,7 @@ function liveStart(){
   if(!needGroup(liveStart)) return;
   if(!prefs.liveOk){ openLiveConsent(); return; }
   live.on = true; live.until = Date.now() + LIVE_MAX; live.lastSent = null; live.fails = 0;
-  liveWatch();
+  liveWatch(); if(live.code && live.mode !== 'rt') liveRealtime(live.code);
   toast(`Live an – „${grp().name}“ sieht dich auf der Karte`);
   liveUI();
   if(ck.last && ck.ts && Date.now() - ck.ts < 10000) liveFeed(ck.last, ck.v, (ck.v || 0) > 1.4 ? ck.h : null, 0);
@@ -5612,21 +5783,29 @@ const saveOff = () => { try{ localStorage.setItem(OKEY, JSON.stringify(offAreas)
 let offDetail = 16, offJob = null, offDelArmed = null;
 const lon2x = (lon, z) => Math.floor((lon + 180) / 360 * 2 ** z);
 const lat2y = (lat, z) => { const r = lat * Math.PI / 180; return Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * 2 ** z); };
+// Vektorkacheln: im Speicher ohne Versionsnummer, damit sie nach einem Karten-Update weiter passen
+const OFM_KEY = 'https://tiles.openfreemap.org/planet/_/{z}/{x}/{y}.pbf';
+const DEM_TPL = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+const OFM_GLYPHS = ['Noto Sans Regular', 'Noto Sans Bold', 'Noto Sans Italic'].flatMap(f => ['0-255', '256-511', '8192-8447'].map(r => `https://tiles.openfreemap.org/fonts/${encodeURIComponent(f)}/${r}.pbf`));
 function areaURLs(a){
-  const tpl = [BASES[a.base].url, ...(a.labels ? (a.base === 'sat' ? OVERLAYS : a.base === 'dark' ? [DARK_REF] : []) : [])], out = [];
-  const [w, sB, e, n] = a.bbox;
-  for(let z = 6; z <= Math.min(a.maxZ, BASES[a.base].maxz || 19); z++){
-    const x0 = lon2x(w, z), x1 = lon2x(e, z), y0 = lat2y(n, z), y1 = lat2y(sB, z);
-    for(let x = x0; x <= x1; x++) for(let y = y0; y <= y1; y++) for(const t of tpl) out.push(t.replace('{z}', z).replace('{x}', x).replace('{y}', y));
+  const out = [], [w, sB, e, n] = a.bbox;
+  const grid = (tpl, z0, z1) => { for(let z = z0; z <= z1; z++){ const x0 = lon2x(w, z), x1 = lon2x(e, z), y0 = lat2y(n, z), y1 = lat2y(sB, z);
+    for(let x = x0; x <= x1; x++) for(let y = y0; y <= y1; y++) out.push(tpl.replace('{z}', z).replace('{x}', x).replace('{y}', y)); } };
+  const vecTiles = a.base === 'vec' || (a.base === 'sat' && a.labels && a.hyb);
+  if(!BASES[a.base].vector){
+    const tpl = [BASES[a.base].url, ...(a.labels && !vecTiles ? (a.base === 'sat' ? OVERLAYS : a.base === 'dark' ? [DARK_REF] : []) : [])];
+    tpl.forEach(t => grid(t, 6, Math.min(a.maxZ, BASES[a.base].maxz || 19)));
   }
+  if(vecTiles){ grid(OFM_KEY, 6, Math.min(a.maxZ, 14)); out.push(...OFM_GLYPHS); }
+  if(a.base === 'vec') grid(DEM_TPL, 6, Math.min(a.maxZ, 11));
   return out;
 }
 function curArea(){
-  const b = map.getBounds(), base = BASES[prefs.base] && !BASES[prefs.base].vector ? prefs.base : prefs.base === 'vec' ? 'street' : 'sat';
-  return {bbox:[b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], maxZ:offDetail, base, labels:(base === 'sat' || base === 'dark') && prefs.labels};
+  const b = map.getBounds(), base = BASES[prefs.base] ? prefs.base : 'sat';
+  return {bbox:[b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], maxZ:offDetail, base, labels:(base === 'sat' || base === 'dark' || base === 'vec') && prefs.labels, hyb:base === 'sat' && useHybrid()};
 }
 function offEstimate(a){
-  const n = areaURLs(a).length, perTile = a.labels ? (a.base === 'sat' ? (BASES.sat.kb + 2 * 7) / 3 : (BASES[a.base].kb + 6) / 2) : BASES[a.base].kb;
+  const n = areaURLs(a).length, perTile = a.base === 'vec' ? 18 : a.labels ? (a.base === 'sat' ? (a.hyb ? BASES.sat.kb * .85 : (BASES.sat.kb + 2 * 7) / 3) : (BASES[a.base].kb + 6) / 2) : BASES[a.base].kb;
   return {n, mb: n * perTile / 1024};
 }
 const fmtMB = mb => mb < 1 ? `${Math.max(1, Math.round(mb * 1024))} KB` : mb < 100 ? `${mb.toFixed(1).replace('.', ',')} MB` : `${Math.round(mb)} MB`;
@@ -5669,6 +5848,11 @@ async function offSave(){
     const j = await r.json(), ad = j.address || {};
     name = ad.city || ad.town || ad.village || ad.municipality || ad.county || name;
   }catch(e){}
+  let ofmTpl = null;
+  if(urls.some(u => u.startsWith('https://tiles.openfreemap.org/planet/_/'))){
+    try{ const tj = await (await fetch(VEC_SRC)).json(); ofmTpl = tj.tiles[0]; }catch(e){ toast('Die Clean-Karte ist gerade nicht erreichbar.'); return; }
+  }
+  const src = u => ofmTpl && u.startsWith('https://tiles.openfreemap.org/planet/_/') ? ofmTpl.replace('{z}/{x}/{y}', u.split('/_/')[1].replace('.pbf', '')) : u;
   const job = offJob = {total:urls.length, done:0, bytes:0, fail:0, stop:false};
   renderOffline();
   const cache = await caches.open(TILE_CACHE);
@@ -5679,7 +5863,7 @@ async function offSave(){
       try{
         let hit = await cache.match(u);
         if(!hit){
-          const r = await fetch(u, {mode:'cors'});
+          const r = await fetch(src(u), {mode:'cors'});
           if(!r.ok) throw 0;
           const b = await r.blob();
           await cache.put(u, new Response(b, {headers:{'content-type':r.headers.get('content-type') || 'image/jpeg'}}));
@@ -6613,7 +6797,10 @@ $('#rpBar [data-rp="close"]').innerHTML = svg(UI.close, 16);
 $('#death [data-dl="close"]').innerHTML = svg(UI.close, 15);
 applyLabels(); syncSpotsHead(); refreshAll();
 handleHash();
-if(grp()) setTimeout(() => wsSync(false), 1500);
+if(onbNeeded()){ if(!hashSpot) openOnb(); } else if(!prefs.onb){ prefs.onb = 1; savePrefs(); }
+const idle = (f, t) => window.requestIdleCallback ? requestIdleCallback(f, {timeout:t}) : setTimeout(f, Math.min(t, 1500));
+if(grp()) idle(() => wsSync(false), 3000);
+setTimeout(() => idle(() => { if(navigator.serviceWorker && navigator.serviceWorker.controller && !car3d.ready) fetch('lib/three.min.js').catch(() => {}); }, 20000), 15000);
 renderPark();
 if(rec){
   setTab('tracks'); renderTracksHead(); updateRecUI(); renderNearest();
