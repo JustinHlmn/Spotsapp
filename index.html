@@ -854,7 +854,7 @@ body.car3d .rp-car{visibility:hidden}
 .seg2.ws-seg button .nw{position:absolute;top:5px;right:6px;min-width:9px;width:9px;height:9px;padding:0;margin:0;font-size:0}
 .seg2 button .nw{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:0 5px;margin-left:5px;border-radius:9px;background:#ff3b30;color:#fff;font-size:11px;font-weight:800;font-style:normal;vertical-align:1px;line-height:1}
 .tabs button.dot{position:relative}
-.tabs button.dot::after{content:'';position:absolute;top:5px;right:7px;width:8px;height:8px;border-radius:50%;background:#ff3b30}
+.tabs button.dot::after{content:'';position:absolute;top:3px;right:3px;width:8px;height:8px;border-radius:50%;background:#ff3b30}
 .chip .nwdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3b30;margin-left:6px;vertical-align:1px}
 .pd{position:relative}
 .pd .nw-tag{position:absolute;top:-6px;left:50%;transform:translateX(-50%);margin:0;z-index:2}
@@ -880,30 +880,57 @@ body.car3d .rp-car{visibility:hidden}
 .rx.fresh .rx-b b{color:#ff9f0a}
 .pd-rn .rx.mini{justify-content:flex-start}
 
+/* ---------- Aufgeräumt: Crew-Kopf, News, Schrift ---------- */
+:root{--fs1:15px;--fs2:13px}
+.tabs button{padding:0 12px}
+.ws-head2{margin:0 6px 10px;border-radius:14px;background:var(--solid);border:1px solid var(--line);overflow:hidden}
+.wh-top{display:flex;align-items:center;gap:10px;width:100%;padding:8px 12px;border:0;background:none;color:var(--fg);text-align:left}
+.wh-top .ws-faces{margin:0}
+.wh-top b{font-size:var(--fs1);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wh-top small{font-size:var(--fs2);color:var(--muted)}
+.wh-chev{color:var(--muted);display:grid;transition:transform .25s var(--ease)}
+.ws-head2.open .wh-chev{transform:rotate(180deg)}
+.wh-acts{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 10px 10px}
+.wh-acts .btn{height:38px;font-size:14px}
+.ws-paste{display:block;margin:6px auto 10px}
+.nwd{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b30;flex:none}
+.seg2 button .nw.nwd{min-width:8px;width:8px;height:8px;padding:0;margin-left:6px;font-size:0;vertical-align:2px}
+.feed{display:flex;flex-direction:column;margin:0 6px 8px}
+.feed-day{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:12px 6px 4px}
+.feed-day:first-child{padding-top:4px}
+.feed-row{display:flex;align-items:center;gap:10px;padding:7px 6px;border:0;background:none;color:var(--fg);text-align:left;width:100%;border-radius:12px;min-width:0}
+.feed-row:active,.feed-row:hover{background:var(--fill)}
+.feed-av{position:relative;display:grid;flex:none}
+.feed-av i{position:absolute;right:-5px;bottom:-4px;font-size:11px;font-style:normal;line-height:1}
+.feed-row.live .feed-av .uav{box-shadow:0 0 0 2px #30d158}
+.feed-tx{flex:1;min-width:0;font-size:var(--fs2);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-tx b{color:var(--fg);font-weight:600}
+.feed-t{flex:none;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+.feed-row.new .feed-t::after{content:'';width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.feed-row.live .feed-t{color:#30d158;font-weight:700}
+.rv-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 6px 6px}
+.rv-card{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--solid);color:var(--fg);text-align:left;min-width:0}
+.rv-card .ic{font-size:20px;flex:none}
+.rv-card .tx{display:flex;flex-direction:column;min-width:0;flex:1}
+.rv-card b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv-card small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv-card .nwd{position:absolute;top:8px;right:8px}
+.item .t,.crew-n,.pd-rn,.lb-time{font-size:var(--fs1)}
+.item .s,.pd-rn small,.lb-sub,.crew-km small{font-size:var(--fs2)}
+.pd-b{font:800 20px/1 var(--font)!important;letter-spacing:-.01em}
+.pd.p1 .pd-b{font-size:26px!important}
+.rv-at{font:800 17px/1.1 var(--font)!important;letter-spacing:-.01em}
+.rv-aw.big .rv-at{font-size:22px!important}
+.rk-go{font:700 14px/1 var(--font)!important}
+@media (min-width:641px){
+  #panel{width:420px}
+  #recbar,#near{left:calc(50% + 212px)}
+}
+
 /* ---------- News ---------- */
 .seg2.ws-seg button{padding-left:2px;padding-right:2px}
-.feed{display:flex;flex-direction:column;margin:0 6px 8px;border-radius:16px;background:var(--solid);border:1px solid var(--line);overflow:hidden}
-.feed-row{display:flex;align-items:flex-start;gap:12px;padding:11px 12px;border:0;border-top:1px solid var(--line);background:none;color:var(--fg);text-align:left;width:100%}
-.feed-row:first-child{border-top:0}
-.feed-row.new{background:var(--accent-soft)}
-.feed-row.live .feed-av .uav{box-shadow:0 0 0 2.5px #30d158}
-.feed-av{position:relative;display:grid;flex:none}
-.feed-av i{position:absolute;right:-6px;bottom:-4px;width:22px;height:22px;border-radius:50%;background:var(--solid-2,var(--solid));display:grid;place-items:center;font-size:12px;font-style:normal;box-shadow:0 0 0 2px var(--solid)}
-.feed-tx{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:14px;line-height:1.35}
-.feed-tx b{font-weight:700}
-.feed-tx small{font-size:12px;color:var(--muted)}
-.feed-tx small em{font-style:normal;color:var(--accent);font-weight:700}
-.rv-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 6px 10px}
-.rv-card{display:flex;align-items:center;gap:10px;padding:12px;border-radius:16px;border:1px solid var(--line);background:var(--solid);color:var(--fg);text-align:left;min-width:0}
 .rv-card.w{background:linear-gradient(135deg,rgba(10,132,255,.18),transparent 70%),var(--solid)}
 .rv-card.m{background:linear-gradient(135deg,rgba(255,214,10,.2),transparent 70%),var(--solid)}
-.rv-card .ic{font-size:24px;flex:none}
-.rv-card .tx{display:flex;flex-direction:column;min-width:0}
-.rv-card b{font-size:14px;white-space:nowrap}
-.rv-card small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rv-card{position:relative}
-.rv-card .nw-tag{position:absolute;top:-7px;right:10px;margin:0;font-size:10px}
-.rv-card b{font-size:13.5px}
 #review{position:fixed;inset:0;z-index:62;color:#f4efe6;overflow-y:auto;overscroll-behavior:contain;color-scheme:dark;-webkit-font-smoothing:antialiased;
   background:radial-gradient(90% 40% at 50% -6%,rgba(255,196,0,.28),transparent 64%),radial-gradient(70% 40% at 105% 100%,rgba(120,60,255,.22),transparent 70%),#05050a;
   padding:calc(10px + env(safe-area-inset-top,0px)) 18px calc(30px + env(safe-area-inset-bottom,0px));animation:fadein .25s}
@@ -1275,7 +1302,7 @@ body.nav #ckLive,body.replay #ckLive{display:none!important}
   <section class="view" id="listView">
     <div class="ph">
       <div class="row between" id="headRow">
-        <div class="tabs" role="tablist"><button class="on" data-tab="spots" role="tab">Spots</button><button data-tab="tracks" role="tab">Strecken</button></div>
+        <div class="tabs" role="tablist"><button class="on" data-tab="spots" role="tab">Spots</button><button data-tab="tracks" role="tab">Fahrten</button><button data-tab="crew" role="tab">Crew</button></div>
         <div class="row hdr-actions">
           <button class="icon-btn" id="searchBtn" aria-label="Orte und Spots suchen" title="Suchen"></button>
           <span class="row hdr-actions" id="spotActions"><button class="icon-btn" id="hereBtn" aria-label="Spot an meinem Standort speichern" title="Spot hier speichern"></button><button class="icon-btn accent" id="addBtn" aria-label="Spot auf der Karte setzen" title="Spot auf der Karte setzen"></button></span>
@@ -1741,7 +1768,7 @@ function visibleSheet(){ return mobile() ? Math.max(0, panel.offsetHeight - shee
 function camPad(){
   return mobile()
     ? {top:80, bottom:Math.min(visibleSheet(), innerHeight * .55) + 30, left:40, right:70}
-    : {top:70, bottom:60, left:panelCollapsed ? 80 : 400, right:90};
+    : {top:70, bottom:60, left:panelCollapsed ? 80 : 460, right:90};
 }
 
 /* Ziehen mit Schwung */
@@ -1839,12 +1866,14 @@ function itemHTML(s){
   if(me) sub = `<span class="me-d">${fmtDist(dist(me, s))}</span> · ` + sub;
   return `<button class="item" data-id="${s.id}"><span class="ic" style="--c:${cat.color}">${ic(cat.icon, 16)}</span><span class="tx"><span class="t">${esc(s.name)}</span><span class="s">${sub}</span></span></button>`;
 }
+const inWsView = () => tab === 'crew' || (tab === 'spots' && spotView === 'ws' && !searching);
 function renderList(){
-  if(!(tab === 'spots' && spotView === 'ws' && !searching)) wsShow = null;
+  if(!inWsView()) wsShow = null;
   if(tab === 'tracks') return renderTrackList();
+  if(tab === 'crew') return renderWorkshop();
   const q = $('#q').value.trim().toLowerCase();
   const body = $('#listBody');
-  if(!q && !searching && spotView === 'ws') return renderWorkshop();
+  if(!q && !searching && spotView === 'ws') return renderWsSpots();
   if(!q){
     const list = visibleSpots().slice().sort(me ? (a,b) => dist(me, a) - dist(me, b) : (a,b) => (b.created||0) - (a.created||0));
     if(!data.spots.length) body.innerHTML = `<div class="empty"><b>Noch keine Spots</b>Tippe auf <strong>+</strong> und dann auf die Karte, um deinen ersten Spot zu setzen.</div>`;
@@ -2547,8 +2576,8 @@ $('#modal').addEventListener('click', e => {
   if(a === 'name' && next.arg && next.arg.then) return next.arg.then();
   if(a === 'create') toast('Gruppe erstellt – lad jetzt deine Freunde ein');
   if(a === 'join' || a === 'code') toast(`Willkommen in „${prefs.group.name}“`);
-  if(tab !== 'spots') setTab('spots');
-  spotView = 'ws'; WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.loaded = 0; delete prefs.wsSeen; delete prefs.rxSeen;
+  wsSub = 'feed'; if(tab !== 'crew') setTab('crew');
+  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.loaded = 0; delete prefs.wsSeen; delete prefs.rxSeen;
   syncSpotsHead(); refreshAll(); wsSync(true);
   if(next.arg && next.arg.then) next.arg.then();
 });
@@ -2578,7 +2607,7 @@ async function wsSync(force){
 }
 function wsRefreshUI(){
   wsBadges();
-  if(tab === 'spots' && spotView === 'ws' && view === 'list') renderList();
+  if(inWsView() && view === 'list') renderList();
   if(view === 'ws') renderWsDetail();
   renderWsMarkers();
 }
@@ -2674,7 +2703,7 @@ function syncSpotsHead(){
   const h = $('#spotsHead'), on = tab === 'spots' && !searching;
   h.hidden = !on;
   $('#chips').hidden = !on || spotView === 'ws';
-  if(on) h.innerHTML = `<div class="seg2" role="tablist"><button data-sv="mine" class="${spotView === 'mine' ? 'on' : ''}">Meine Spots</button><button data-sv="ws" class="${spotView === 'ws' ? 'on' : ''}">Workshop${spotView !== 'ws' && wsNewTotal() ? `<i class="nw">${wsNewTotal()}</i>` : WS.spots.length ? ` <span class="n">${WS.spots.length}</span>` : ''}</button></div>`;
+  if(on) h.innerHTML = `<div class="seg2" role="tablist"><button data-sv="mine" class="${spotView === 'mine' ? 'on' : ''}">Meine</button><button data-sv="ws" class="${spotView === 'ws' ? 'on' : ''}">Gruppe${spotView !== 'ws' && wsNewCount('sp') ? '<i class="nw nwd"></i>' : WS.spots.length ? ` <span class="n">${WS.spots.length}</span>` : ''}</button></div>`;
   wsBadges(true);
 }
 document.addEventListener('click', e => {
@@ -2685,37 +2714,38 @@ document.addEventListener('click', e => {
 
 /* Workshop-Liste */
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 2 ? 'gerade eben' : m < 60 ? `vor ${m} Min` : m < 1440 ? `vor ${Math.round(m / 60)} Std` : m < 2880 ? 'gestern' : `vor ${Math.round(m / 1440)} Tagen`; };
+function wsNoGroupHTML(){
+  if(!FB) return `<div class="ws-card"><b>Gruppe ist vorbereitet</b><span>Es fehlt nur noch die Verbindung zur Datenbank. Bis dahin kannst du jeden Spot als Link teilen.</span></div>`;
+  return `<div class="ws-card"><b>Noch in keiner Gruppe</b><span>Erstell eine Gruppe und schick deinen Freunden den Einladungslink, oder tritt mit einem Link bei.</span>
+    <div class="btns"><button class="btn" data-wsa="code">Mit Link beitreten</button><button class="btn primary" data-wsa="create">Gruppe erstellen</button></div></div>`;
+}
+let wsHeadOpen = false;
 function renderWorkshop(){
   const body = $('#listBody');
-  if(!FB){
-    body.innerHTML = `<div class="ws-card"><b>Workshop ist vorbereitet</b><span>Hier landen bald die Spots eurer Gruppe: hochladen, anschauen, mit einem Tipp bei dir speichern. Es fehlt nur noch die Verbindung zur Datenbank.</span>
-      <span>Bis dahin kannst du jeden Spot als Link teilen: Spot öffnen und auf „Teilen“ tippen.</span></div>`;
-    return;
-  }
-  if(!grp()){
-    body.innerHTML = `<div class="ws-card"><b>Noch in keiner Gruppe</b><span>Erstell eine Gruppe und schick deinen Freunden den Einladungslink. Oder tritt mit einem Link bei, den du bekommen hast.</span>
-      <span>Tipp: Öffnest du die App vom Home-Bildschirm, kopier den Einladungslink und füg ihn hier über „Mit Link beitreten“ ein. Sonst landet er im Browser statt in der App.</span>
-      <div class="btns"><button class="btn" data-wsa="code">Mit Link beitreten</button><button class="btn primary" data-wsa="create">Gruppe erstellen</button></div></div>`;
-    return;
-  }
+  if(!FB || !grp()){ body.innerHTML = wsNoGroupHTML(); return; }
+  if(wsSub === 'spots') wsSub = 'feed';
   wsMarkSeen();
-  const people = new Set([...WS.spots, ...WS.runs, ...WS.efforts].map(x => x.by).filter(Boolean)); if(myName()) people.add(myName());
-  WS.members.forEach(m => m.name && people.add(m.name));
-  const faces = [{dev:myId(), name:myName()}, ...WS.members.filter(m => m._id !== myId()).map(m => ({dev:m._id, name:m.name}))].slice(0, 6);
-  const head = `<div class="ws-head"><div class="tx" data-wss="crew" role="button" title="Crew ansehen"><b>${esc(grp().name)}</b><span class="ws-faces">${faces.map(f => avHTML(f.dev, f.name, 22)).join('')}<em>${people.size} ${people.size === 1 ? 'Mitglied' : 'Mitglieder'}${WS.busy ? ' · lädt …' : ''}</em></span></div>
-      <button class="icon-btn" data-wsa="sync" aria-label="Aktualisieren" title="Aktualisieren">${svg('<path d="M20 11a8 8 0 0 0-14.6-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.6 4.5L20 16m0 4v-4h-4"/>', 17)}</button>
-      <button class="btn primary ws-inv" data-wsa="invite">Einladen</button></div>
+  const faces = [{dev:myId(), name:myName()}, ...WS.members.filter(m => m._id !== myId()).map(m => ({dev:m._id, name:m.name}))];
+  const head = `<div class="ws-head2${wsHeadOpen ? ' open' : ''}">
+      <button class="wh-top" data-wsa="head" aria-expanded="${wsHeadOpen}"><span class="ws-faces">${faces.slice(0, 4).map(f => avHTML(f.dev, f.name, 22)).join('')}</span><b>${esc(grp().name)}</b><small>${faces.length}${WS.busy ? ' · lädt …' : ''}</small><span class="wh-chev">${svg('<path d="m6 9 6 6 6-6"/>', 14)}</span></button>
+      ${wsHeadOpen ? `<div class="wh-acts"><button class="btn primary" data-wsa="invite">${svg(UI.share, 15)} Einladen</button><button class="btn" data-wsa="sync">Aktualisieren</button><button class="btn" data-wsa="avatar">Profilbild</button><button class="btn" data-wsa="code">Link einfügen</button></div>` : ''}
+    </div>
     ${WS.err ? `<div class="ws-err">${esc(WS.err)}</div>` : ''}
     ${WS.rulesOld ? `<div class="ws-err">Für Profilbilder und Fahrten müssen die Firebase-Regeln noch aktualisiert werden.</div>` : ''}
-    ${!prefs.avatar ? `<button class="ws-avtip" data-wsa="avatar">${avHTML(myId(), myName(), 28)}<span>Profilbild hinzufügen</span></button>` : ''}
-    <div class="seg2 ws-seg"><button data-wss="feed" class="${wsSub === 'feed' ? 'on' : ''}">News${wsSub === 'feed' ? '' : nwBadge('sp') || nwBadge('dr') || nwBadge('lb')}</button><button data-wss="spots" class="${wsSub === 'spots' ? 'on' : ''}">Spots${nwBadge('sp')}</button><button data-wss="drives" class="${wsSub === 'drives' ? 'on' : ''}">Fahrten${nwBadge('dr')}</button><button data-wss="lb" class="${wsSub === 'lb' ? 'on' : ''}">Zeiten${nwBadge('lb')}</button><button data-wss="crew" class="${wsSub === 'crew' ? 'on' : ''}">Crew</button></div>`;
-  body.innerHTML = head + (wsSub === 'feed' ? wsFeedHTML() : wsSub === 'lb' ? wsBoardsHTML() : wsSub === 'drives' ? wsDrivesHTML() : wsSub === 'crew' ? wsCrewHTML() : wsSpotsHTML());
+    <div class="seg2 ws-seg"><button data-wss="feed" class="${wsSub === 'feed' ? 'on' : ''}">News${wsSub === 'feed' ? '' : nwBadge('dr') || nwBadge('lb') || nwBadge('sp')}</button><button data-wss="drives" class="${wsSub === 'drives' ? 'on' : ''}">Fahrten${nwBadge('dr')}</button><button data-wss="lb" class="${wsSub === 'lb' ? 'on' : ''}">Zeiten${nwBadge('lb')}</button><button data-wss="crew" class="${wsSub === 'crew' ? 'on' : ''}">Leute</button></div>`;
+  body.innerHTML = head + (wsSub === 'feed' ? wsFeedHTML() : wsSub === 'lb' ? wsBoardsHTML() : wsSub === 'drives' ? wsDrivesHTML() : wsCrewHTML());
 }
+function renderWsSpots(){
+  const body = $('#listBody');
+  if(!FB || !grp()){ body.innerHTML = wsNoGroupHTML(); return; }
+  wsMarkSeen('gspots');
+  body.innerHTML = wsSpotsHTML() + `<button class="link ws-paste" data-wsa="code">Geteilten Spot-Link einfügen</button>`;
+}
+
 function wsSpotsHTML(){
   const list = WS.spots.slice().sort((a, b) => (b.at || 0) - (a.at || 0));
-  const paste = `<button class="link ws-paste" data-wsa="code">Geteilten Link einfügen</button>`;
-  if(!list.length) return `<div class="empty"><b>Noch keine Spots geteilt</b>Öffne einen deiner Spots und tippe auf „In den Workshop“.</div>${paste}`;
-  return paste.replace('ws-paste', 'ws-paste top') + list.map(w => {
+  if(!list.length) return `<div class="empty"><b>Noch keine Spots in der Gruppe</b>Öffne einen deiner Spots und tippe auf „In den Workshop“.</div>`;
+  return list.map(w => {
     const saved = wsSavedAs(w), mine = w.dev === myId(), col = (w.cat && w.cat.color) || '#868e96';
     return `<button class="item" data-ws="${esc(w._id)}"><span class="ic" style="--c:${esc(col)}">${ic((w.cat && w.cat.icon) || 'pin', 16)}</span>
       <span class="tx"><span class="t">${esc(w.name)}${isNewIn('sp', w) ? '<i class="nw-tag">Neu</i>' : ''}</span><span class="s ws-by">${avHTML(w.dev, w.by, 16)}${mine ? 'von dir' : `von ${esc(w.by || '?')}`}${me ? ` · <span class="me-d">${fmtDist(dist(me, w))}</span>` : ''} · ${ago(w.at || 0)}</span>${rxHTML('sp:' + w._id, w.dev, 'row')}</span>
@@ -2879,7 +2909,7 @@ $('#modal').addEventListener('click', e => {
   const sp = e.target.closest('[data-crewspot]'); if(sp){ crewOpen = null; $('#modal').hidden = true; openWsSpot(sp.dataset.crewspot); }
 });
 $('#listBody').addEventListener('click', e => {
-  if(!(tab === 'spots' && spotView === 'ws')) return;
+  if(!inWsView()) return;
   const a = e.target.closest('[data-wsa]');
   if(a){
     const k = a.dataset.wsa;
@@ -2887,6 +2917,7 @@ $('#listBody').addEventListener('click', e => {
     if(k === 'code') openGroupDlg('code', {});
     if(k === 'sync') wsSync(true);
     if(k === 'avatar') $('#avFile').click();
+    if(k === 'head'){ wsHeadOpen = !wsHeadOpen; renderList(); }
     if(k === 'invite') shareURL(inviteURL(), `Gruppe ${grp().name}`, `Komm in unsere Gruppe „${grp().name}“ bei Jamsis Spots:`);
     return;
   }
@@ -2914,7 +2945,7 @@ $('#listBody').addEventListener('click', e => {
 });
 
 /* „Neu“ seit dem letzten Besuch: zählt Spots, Fahrten, Zeiten und Reaktionen auf deine Sachen */
-const NEWK = {spots:['sp'], drives:['dr'], lb:['lb'], feed:['sp', 'dr', 'lb']};
+const NEWK = {spots:['sp'], drives:['dr'], lb:['lb'], feed:['sp', 'dr', 'lb'], gspots:['sp']};
 let wsShow = null;   // Stand beim Betreten des Workshops – so lange bleibt „Neu“ sichtbar
 function wsSeen(){ if(!prefs.wsSeen){ const n = Date.now(); prefs.wsSeen = {sp:n, dr:n, lb:n}; savePrefs(); } return prefs.wsSeen; }
 const rxCat = k => k.startsWith('sp:') ? 'sp' : k.startsWith('dr:') ? 'dr' : 'lb';
@@ -2927,18 +2958,19 @@ const wsNewCount = cat => grp() ? wsNewList(cat, wsSeen()[cat]).length : 0;
 const wsNewTotal = () => wsNewCount('sp') + wsNewCount('dr') + wsNewCount('lb');
 const isNewIn = (cat, x) => !!(wsShow && x && x.dev !== myId() && (x._t || 0) > wsShow[cat]);
 const nwBadge = cat => { const n = wsNewCount(cat); return n ? `<i class="nw">${n}</i>` : ''; };
-function wsMarkSeen(){
+function wsMarkSeen(key){
   if(!grp()) return;
   if(!wsShow) wsShow = {...wsSeen()};
-  const cats = NEWK[wsSub]; if(!cats) return;
+  const cats = NEWK[key || wsSub]; if(!cats) return;
   let ch = false;
   cats.forEach(cat => { const t = Math.max(Date.now(), ...wsNewList(cat, 0).map(x => x._t || 0)); if(prefs.wsSeen[cat] !== t){ prefs.wsSeen[cat] = t; ch = true; } });
   if(ch) savePrefs();
   syncSpotsHead();
 }
 function wsBadges(skipHead){
-  const n = wsNewTotal(), here = tab === 'spots' && spotView === 'ws';
-  const tb = document.querySelector('.tabs [data-tab="spots"]'); if(tb) tb.classList.toggle('dot', n > 0 && !here);
+  const ns = wsNewCount('sp'), nc = wsNewCount('dr') + wsNewCount('lb');
+  const tb = document.querySelector('.tabs [data-tab="spots"]'); if(tb) tb.classList.toggle('dot', ns > 0 && !(tab === 'spots' && spotView === 'ws'));
+  const tc = document.querySelector('.tabs [data-tab="crew"]'); if(tc) tc.classList.toggle('dot', nc + ns > 0 && tab !== 'crew');
   if(!skipHead) syncSpotsHead();
 }
 
@@ -3003,29 +3035,51 @@ function rxGo(k){
 }
 function feedItems(){
   const out = [], mine = myId(), cut = Date.now() - 30 * 864e5;
-  const add = (t, dev, by, ic, html, go) => { if(t && t > cut && dev) out.push({t, dev, by, ic, html, go, cat:feedCat(go)}); };
-  liveFresh().forEach(p => out.push({t:Date.now() + 1, dev:p.id, by:p.by, ic:'🟢', html:`ist gerade <b>live</b> unterwegs${p.v >= 6 ? ` · ${Math.round(p.v)} km/h` : ''}`, go:'lv:' + p.id, cat:'lv', live:true}));
-  WS.runs.forEach(r => add(r._t || r.date, r.dev, r.by, '⏱️', `hat eine neue Bestzeit gesetzt: <b>${r.from}–${r.to} km/h in ${fmtS(r.time)}</b>`, `ru:${r.from}-${r.to}`));
+  const add = (t, dev, by, ic, html, s, go) => { if(t && t > cut && dev) out.push({t, dev, by, ic, html, s, go, cat:feedCat(go)}); };
+  liveFresh().forEach(p => out.push({t:Date.now() + 1, dev:p.id, by:p.by, ic:'🟢', html:`ist gerade <b>live</b> unterwegs${p.v >= 6 ? ` · ${Math.round(p.v)} km/h` : ''}`, s:`ist live${p.v >= 6 ? ` · ${Math.round(p.v)} km/h` : ''}`, go:'lv:' + p.id, cat:'lv', live:true}));
+  WS.runs.forEach(r => add(r._t || r.date, r.dev, r.by, '⏱️', `hat eine neue Bestzeit gesetzt: <b>${r.from}–${r.to} km/h in ${fmtS(r.time)}</b>`, `Bestzeit ${r.from}–${r.to} · <b>${fmtS(r.time)}</b>`, `ru:${r.from}-${r.to}`));
   WS.efforts.forEach(f => { const c = WS.courses.find(x => x._id === f.course); if(!c) return;
     const first = WS.efforts.filter(x => x.course === f.course).sort((a, b) => a.time - b.time)[0] === f;
-    add(f._t || f.date, f.dev, f.by, first ? '🥇' : '🏁', `hat eine neue Bestzeit auf <b>„${esc(c.name)}“</b> gesetzt: <b>${fmtLap(f.time)}</b>${first ? ' – jetzt Platz 1' : ''}`, 'co:' + f.course); });
-  WS.drives.forEach(d => add(d._t || d.at, d.dev, d.by, '🛣️', `hat eine Fahrt geteilt: <b>„${esc(d.name)}“</b> · ${fmtKmS(d.dist || 0)}`, 'dr:' + d._id));
-  WS.spots.forEach(x => add(x._t || x.at, x.dev, x.by, '📍', `hat einen Spot geteilt: <b>„${esc(x.name)}“</b>`, 'sp:' + x._id));
-  WS.courses.forEach(c => add(c._t || c.at, c.dev, c.by, '🚩', `hat eine Rennstrecke geteilt: <b>„${esc(c.name)}“</b>`, 'co:' + c._id));
-  WS.reacts.filter(r => r.o === mine && r.dev !== mine).forEach(r => add(r._t || r.at, r.dev, r.by, RX[r.e], `hat auf ${esc(rxWhat(r.k))} mit ${RX[r.e]} reagiert`, rxGo(r.k)));
-  return out.sort((a, b) => b.t - a.t).slice(0, 80);
+    add(f._t || f.date, f.dev, f.by, first ? '🥇' : '🏁', `hat eine neue Bestzeit auf <b>„${esc(c.name)}“</b> gesetzt: <b>${fmtLap(f.time)}</b>${first ? ' – jetzt Platz 1' : ''}`, `${first ? 'Platz 1' : 'Bestzeit'} ${esc(c.name)} · <b>${fmtLap(f.time)}</b>`, 'co:' + f.course); });
+  WS.drives.forEach(d => add(d._t || d.at, d.dev, d.by, '🛣️', `hat eine Fahrt geteilt: <b>„${esc(d.name)}“</b> · ${fmtKmS(d.dist || 0)}`, `Fahrt ${esc(d.name)} · ${fmtKmS(d.dist || 0)}`, 'dr:' + d._id));
+  WS.spots.forEach(x => add(x._t || x.at, x.dev, x.by, '📍', `hat einen Spot geteilt: <b>„${esc(x.name)}“</b>`, `Spot ${esc(x.name)}`, 'sp:' + x._id));
+  WS.courses.forEach(c => add(c._t || c.at, c.dev, c.by, '🚩', `hat eine Rennstrecke geteilt: <b>„${esc(c.name)}“</b>`, `Rennstrecke ${esc(c.name)}`, 'co:' + c._id));
+  WS.reacts.filter(r => r.o === mine && r.dev !== mine).forEach(r => add(r._t || r.at, r.dev, r.by, RX[r.e], `hat auf ${esc(rxWhat(r.k))} mit ${RX[r.e]} reagiert`, `${RX[r.e]} ${esc(rxWhat(r.k))}`, rxGo(r.k)));
+  return out.sort((a, b) => (b.live ? 1 : 0) - (a.live ? 1 : 0) || b.t - a.t).slice(0, 80);
 }
 const feedWho = it => it.dev === myId() ? 'Du' : crewName(it.dev, it.by);
 const feedVerb = it => it.dev === myId() ? it.html.replace(/^hat /, 'hast ').replace(/^ist /, 'bist ') : it.html;
 const feedText = it => `${feedWho(it)} ${feedVerb(it).replace(/<[^>]+>/g, '')}`;
 const isNewFeed = it => !it.live && !!wsShow && it.dev !== myId() && it.t > (wsShow[it.cat] || 0);
+function feedDay(it){
+  const d0 = new Date(); d0.setHours(0, 0, 0, 0); const today = d0.getTime(), t = it.t;
+  if(it.live) return 'Jetzt';
+  if(t >= today) return 'Heute';
+  if(t >= today - 864e5) return 'Gestern';
+  if(t >= weekStart(Date.now())) return 'Diese Woche';
+  return 'Früher';
+}
+function feedTime(it, day){
+  if(it.live) return 'live';
+  const d = new Date(it.t);
+  if(day === 'Heute' || day === 'Gestern') return d.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+  if(day === 'Diese Woche') return d.toLocaleDateString('de-DE', {weekday:'short'});
+  return d.toLocaleDateString('de-DE', {day:'numeric', month:'numeric'});
+}
 function wsFeedHTML(){
   const items = feedItems();
   let html = reviewCardsHTML();
   if(!items.length) return html + `<div class="empty"><b>Noch nichts los</b>Hier landen neue Bestzeiten, geteilte Fahrten und Spots und wer gerade live ist.</div>`;
-  return html + `<div class="feed">${items.map(it => `<button class="feed-row${isNewFeed(it) ? ' new' : ''}${it.live ? ' live' : ''}" data-feed="${esc(it.go)}">
-      <span class="feed-av">${avHTML(it.dev, it.by, 38)}<i>${it.ic}</i></span>
-      <span class="feed-tx"><span><b>${esc(feedWho(it))}</b> ${feedVerb(it)}</span><small>${it.live ? 'jetzt' : ago(it.t)}${isNewFeed(it) ? ' · <em>neu</em>' : ''}</small></span></button>`).join('')}</div>`;
+  let day = null;
+  html += '<div class="feed">';
+  items.forEach(it => {
+    const d = feedDay(it);
+    if(d !== day){ day = d; html += `<div class="feed-day">${d}</div>`; }
+    html += `<button class="feed-row${isNewFeed(it) ? ' new' : ''}${it.live ? ' live' : ''}" data-feed="${esc(it.go)}" title="${esc(feedText(it))}">
+      <span class="feed-av">${avHTML(it.dev, it.by, 28)}<i>${it.ic}</i></span>
+      <span class="feed-tx"><b>${esc(feedWho(it))}</b> ${it.s}</span><span class="feed-t">${feedTime(it, d)}</span></button>`;
+  });
+  return html + '</div>';
 }
 function feedGo(go){
   const [k, ...rest] = go.split(':'), v = rest.join(':');
@@ -3086,7 +3140,7 @@ function openReview(kind, back){
   rvKind = kind || 'w'; rvBack = back == null ? 1 : back;
   const P = revPeriod(rvKind, 1); prefs[rvKind === 'w' ? 'rvSeenW' : 'rvSeenM'] = P.s; savePrefs();
   $('#review').hidden = false; $('#review').scrollTop = 0; renderReview();
-  if(tab === 'spots' && spotView === 'ws' && view === 'list') renderList();
+  if(inWsView() && view === 'list') renderList();
 }
 function renderReview(){
   const P = revPeriod(rvKind, rvBack), R = reviewData(P), nm = d => esc(crewName(d, (R.mem.find(m => m.dev === d) || {}).name));
@@ -3125,8 +3179,8 @@ function reviewCardsHTML(){
   if(!grp()) return '';
   const W = revPeriod('w', 1), M = revPeriod('m', 1), rw = reviewData(W), rm = reviewData(M);
   const nw = prefs.rvSeenW !== W.s && (rw.tot.km || rw.bests.length), nm = prefs.rvSeenM !== M.s && rm.awards.length;
-  return `<div class="rv-cards"><button class="rv-card w" data-rvopen="w"><span class="ic">📊</span><span class="tx"><b>Wochenrückblick${nw ? '<i class="nw-tag">Neu</i>' : ''}</b><small>${W.title} · ${Math.round(rw.tot.km)} km${rw.awards[0] ? ` · ${rw.awards[0].ic} ${esc(crewName(rw.awards[0].dev, ''))}` : ''}</small></span></button>
-    <button class="rv-card m" data-rvopen="m"><span class="ic">🏆</span><span class="tx"><b>Monats-Awards${nm ? '<i class="nw-tag">Neu</i>' : ''}</b><small>${esc(M.title)} · ${rm.awards.length} Award${rm.awards.length === 1 ? '' : 's'}</small></span></button></div>`;
+  return `<div class="rv-cards"><button class="rv-card w" data-rvopen="w"><span class="ic">📊</span><span class="tx"><b>${W.title}</b><small>Rückblick · ${Math.round(rw.tot.km)} km</small></span>${nw ? '<i class="nwd"></i>' : ''}</button>
+    <button class="rv-card m" data-rvopen="m"><span class="ic">🏆</span><span class="tx"><b>${esc(M.title)}</b><small>Awards & Wall</small></span>${nm ? '<i class="nwd"></i>' : ''}</button></div>`;
 }
 function reviewNotice(){
   if(!grp()) return null;
@@ -3234,7 +3288,7 @@ function renderWsDetail(){
   if(!w){ el.innerHTML = `<div class="top"><button class="txtbtn" data-wsd="back">${svg(UI.back, 14)} Workshop</button></div><div class="pad"><div class="muted">Dieser Spot ist nicht mehr im Workshop.</div></div>`; return; }
   const saved = wsSavedAs(w), mine = w.dev === myId(), col = (w.cat && w.cat.color) || '#868e96';
   const park = w.walk && w.parking ? `<div class="card"><div class="h"><span class="pmark">P</span>Parkplatz</div><div class="stats"><div><b>${fmtDist(dist(w.parking, w))}</b><span>Luftlinie</span></div><div><b>ca. ${fmtMin(walkMin(dist(w.parking, w)))}</b><span>zu Fuß</span></div></div>${w.parking.note ? `<div>${esc(w.parking.note)}</div>` : ''}</div>` : '';
-  el.innerHTML = `<div class="top"><button class="txtbtn" data-wsd="back">${svg(UI.back, 14)} Workshop</button><button class="icon-btn press" data-wsd="back" aria-label="Schließen">${svg(UI.close, 14)}</button></div>
+  el.innerHTML = `<div class="top"><button class="txtbtn" data-wsd="back">${svg(UI.back, 14)} ${tab === 'crew' ? 'Crew' : 'Gruppe'}</button><button class="icon-btn press" data-wsd="back" aria-label="Schließen">${svg(UI.close, 14)}</button></div>
     <div class="pad">
       <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${esc(col)}"><span class="ic">${ic((w.cat && w.cat.icon) || 'pin', 13)}</span>${esc((w.cat && w.cat.name) || 'Spot')}</span><h2>${esc(w.name)}</h2>
         <span class="muted ws-by">${avHTML(w.dev, w.by, 20)}Geteilt ${mine ? 'von dir' : `von ${esc(w.by || '?')}`} · ${ago(w.at || 0)}${me ? ` · ${fmtDist(dist(me, w))} entfernt` : ''}</span></div>
@@ -3272,7 +3326,7 @@ $('#wsView').addEventListener('click', e => {
 /* Workshop-Marker auf der Karte */
 const wsMk = new Map();
 function renderWsMarkers(){
-  const on = mapReady && tab === 'spots' && spotView === 'ws' && (view === 'list' || view === 'ws') && !ckOn;
+  const on = mapReady && !ckOn && ((tab === 'spots' && spotView === 'ws' && view === 'list') || view === 'ws');
   const want = new Set();
   if(on) for(const w of WS.spots){
     if(typeof w.lat !== 'number') continue;
@@ -3388,7 +3442,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.12';
+const VERSION = '2026.10.04.13';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -3696,6 +3750,8 @@ function setTab(t){
   syncSpotsHead();
   $('#tracksHead').hidden = t !== 'tracks';
   $('#spotActions').hidden = t !== 'spots';
+  $('#searchBtn').hidden = t === 'crew';
+  if(t === 'crew') wsSync(false);
   if(t === 'tracks') renderTracksHead();
   renderList(); updateTrackLayers(); renderMarkers(); renderWsMarkers();
   if(mobile()) setSnap(snap);
@@ -3822,17 +3878,17 @@ function updateRecUI(){
 }
 function renderTracksHead(){
   const h = $('#tracksHead');
-  const segHTML = `<div class="seg2" role="tablist"><button data-sub="rec" class="${sub === 'rec' ? 'on' : ''}">Fahrten</button><button data-sub="race" class="${sub === 'race' ? 'on' : ''}">Rennstrecken</button><button data-sub="stats" class="${sub === 'stats' ? 'on' : ''}">Statistik</button></div>`;
+  const segHTML = `<div class="seg2" role="tablist"><button data-sub="rec" class="${sub === 'rec' ? 'on' : ''}">Meine</button><button data-sub="race" class="${sub === 'race' ? 'on' : ''}">Rennstrecken</button><button data-sub="stats" class="${sub === 'stats' ? 'on' : ''}">Statistik</button></div>`;
   if(sub === 'stats' && !(rec && !rec.stopped)){ h.innerHTML = segHTML; renderCkTop(); updateRecUI(); return; }
   if(sub === 'race' && !(rec && !rec.stopped)){
     h.innerHTML = segHTML + `<button class="btn primary" data-race="draw">${svg(ICONS.flag, 16)} Rennstrecke einzeichnen</button>
-      <div class="hint">Oder eine Aufzeichnung öffnen und „Als Rennstrecke speichern“ wählen. Die Zeit läuft automatisch, wenn du im Cockpit oder beim Aufzeichnen über die Startlinie fährst.</div>`;
+      ${courses.length ? '' : '<div class="hint">Oder eine Fahrt öffnen und „Als Rennstrecke speichern“ wählen. Die Zeit läuft automatisch ab der Startlinie.</div>'}`;
     renderCkTop(); updateRecUI(); return;
   }
   if(!rec){
     h.innerHTML = segHTML + `<button class="btn rec-start" data-rec="start"><span class="rdot"></span>Aufzeichnung starten</button>
       <div class="btns"><button class="btn" data-ck-open>${svg(UI.gauge, 17)} Cockpit</button><button class="btn" data-pf-open>${svg(UI.timer, 17)} 0–100</button></div>
-      <div class="hint">Startet direkt das Cockpit. Bildschirm anlassen – im Hintergrund pausiert das Handy die Ortung.</div>`;
+      ${tracks.length ? '' : '<div class="hint">Bildschirm anlassen – im Hintergrund pausiert das Handy die Ortung.</div>'}`;
   } else if(rec.stopped){
     h.innerHTML = segHTML + `<button class="btn primary" data-rec="opensave">Beendete Aufzeichnung speichern</button>`;
   } else {
@@ -3997,7 +4053,7 @@ function renderTrackView(){
   const t = curTrack(); if(!t) return;
   const avg = t.dur > 0 ? t.dist / (t.dur / 1000) : 0;
   $('#trackView').innerHTML = `
-    <div class="top"><button class="txtbtn" data-tv="back">${svg(UI.back,14)} ${t._ws ? 'Workshop' : 'Strecken'}</button><button class="icon-btn press" data-tv="back" aria-label="Schließen">${svg(UI.close,14)}</button></div>
+    <div class="top"><button class="txtbtn" data-tv="back">${svg(UI.back,14)} ${t._ws ? 'Crew' : 'Fahrten'}</button><button class="icon-btn press" data-tv="back" aria-label="Schließen">${svg(UI.close,14)}</button></div>
     <div class="pad">
       ${t._ws ? `<div style="display:flex;flex-direction:column;gap:6px"><span class="badge ws-by">${avHTML(t._ws.dev, t._ws.by, 22)}Fahrt von ${t._ws.dev === myId() ? 'dir' : esc(t._ws.by)}</span><h2>${esc(t.name)}</h2><span class="muted">${fmtDate(t.created)}${placeTxt(t) ? ' · ' + esc(placeTxt(t)) : ''}</span></div>` : trackRenaming
         ? `<div class="row"><input class="inp" id="tv-name" value="${esc(t.name)}" maxlength="80"><button class="txtbtn bold" data-tv="renamesave">Fertig</button></div>`
@@ -4717,7 +4773,7 @@ function liveRender(){
   }
   liveArrows(); liveUI(); liveAnim(); if(liveCardId) renderLiveCard();
   const sig = liveFresh().map(p => p.id).sort().join();
-  if(sig !== live.sig){ live.sig = sig; if(tab === 'spots' && spotView === 'ws' && wsSub === 'crew' && view === 'list') renderList(); }
+  if(sig !== live.sig){ live.sig = sig; if(tab === 'crew' && view === 'list') renderList(); }
 }
 function liveArrows(){
   if(!live.mk.size) return;
@@ -6236,7 +6292,7 @@ $('#courseView').addEventListener('click', e => {
   if(a === 'back') closeCourse();
   if(a === 'drive'){ ckTarget = c.id; enterCockpit(); updateCourseLayers(); renderRaceCard(); }
   if(a === 'ws'){
-    if(WS.courses.some(x => x._id === c.id)){ closeCourse(); setTab('spots'); spotView = 'ws'; wsSub = 'lb'; wsOpenCourse = c.id; syncSpotsHead(); renderList(); renderMarkers(); wsSync(false); }
+    if(WS.courses.some(x => x._id === c.id)){ closeCourse(); wsSub = 'lb'; wsOpenCourse = c.id; setTab('crew'); }
     else wsUploadCourse(c);
     return;
   }
