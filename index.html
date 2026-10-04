@@ -848,6 +848,45 @@ body.car3d .rp-car{visibility:hidden}
 .mk-ws .by{overflow:hidden;padding:0;background:none;border:2px solid #fff}
 .mk-ws .by .uav{width:15px!important;height:15px!important;font-size:8.5px!important;box-shadow:none}
 
+/* ---------- Live-Standort ---------- */
+.live-mk{width:44px;height:44px;display:grid;place-items:center;cursor:pointer;z-index:4}
+.live-mk .uav{position:relative;box-shadow:0 0 0 3px #30d158,0 6px 16px rgba(0,0,0,.5)}
+.live-mk::before{content:'';position:absolute;inset:4px;border-radius:50%;border:2px solid #30d158;animation:lmpulse 2s ease-out infinite;pointer-events:none}
+@keyframes lmpulse{from{transform:scale(1);opacity:.85}to{transform:scale(1.9);opacity:0}}
+.live-mk .lm-arr{position:absolute;inset:-8px;pointer-events:none;transition:opacity .3s}
+.live-mk .lm-arr::before{content:'';position:absolute;left:50%;top:0;transform:translateX(-50%);border:7px solid transparent;border-top:0;border-bottom:9px solid #30d158;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.live-mk.still .lm-arr{opacity:0}
+.live-mk .lm-tag{position:absolute;top:calc(100% + 3px);left:50%;transform:translateX(-50%);white-space:nowrap;font:700 11.5px/1 var(--font);padding:4px 7px;border-radius:9px;background:rgba(10,12,16,.84);color:#fff;font-variant-numeric:tabular-nums;pointer-events:none}
+.live-mk.old::before{display:none}
+.live-mk.old .uav{filter:grayscale(1);opacity:.75;box-shadow:0 0 0 3px #8e8e93,0 6px 16px rgba(0,0,0,.4)}
+.live-mk.old .lm-arr{opacity:0}
+.live-mk.old .lm-tag{background:rgba(60,62,68,.8)}
+.lv-dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none}
+.lv-dot.on,#ckLive.on .lv-dot,#liveBadge .lv-dot{background:#30d158;animation:lvpulse 1.6s infinite}
+@keyframes lvpulse{0%{box-shadow:0 0 0 0 rgba(48,209,88,.6)}70%{box-shadow:0 0 0 7px rgba(48,209,88,0)}100%{box-shadow:0 0 0 0 rgba(48,209,88,0)}}
+.lv-avs{display:inline-flex;align-items:center}
+.lv-avs .uav{margin-left:-6px}
+.lv-avs .uav:first-child{margin-left:0}
+#ckLive{position:absolute;z-index:20;right:14px;bottom:calc(240px + env(safe-area-inset-bottom,0px));height:40px;padding:0 13px 0 12px;border-radius:20px;display:none;align-items:center;gap:7px;font-weight:700;font-size:13.5px;color:var(--fg);border:1px solid var(--line);animation:viewin .4s var(--ease);transition:background-color .25s,color .25s}
+body.cockpit #ckLive:not([hidden]){display:inline-flex}
+body.cockpit:not(.gon) #ckLive{bottom:calc(102px + env(safe-area-inset-bottom,0px))}
+body.nav #ckLive,body.replay #ckLive{display:none!important}
+#ckLive.on{background:#30d158;color:#04260f;border-color:transparent}
+#ckLive.on .lv-dot{background:#fff}
+#ckLive.on .lv-avs .uav{box-shadow:0 0 0 1.5px #30d158}
+#ckLive.warn .lv-dot{background:#ff9f0a;animation:none}
+#ckLive:active,#liveBadge:active{transform:scale(.95)}
+@media (max-width:560px){#ckLive{bottom:calc(278px + env(safe-area-inset-bottom,0px))}body.cockpit:not(.gon) #ckLive{bottom:calc(150px + env(safe-area-inset-bottom,0px))}}
+#liveBadge{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 12px 0 11px;border-radius:18px;font-weight:700;font-size:13px;color:var(--fg);animation:viewin .35s var(--ease);transition:transform .18s var(--ease)}
+#liveBadge[hidden]{display:none}
+.live-pts{margin:2px 0 0;padding:0 0 0 18px;color:var(--muted);font-size:14px;line-height:1.5}
+.crew-card{position:relative}
+.crew-card.live .crew-cav .uav{box-shadow:0 0 0 3px #30d158}
+.crew-livechip{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border-radius:9px;background:rgba(48,209,88,.16);color:#30d158!important;font-size:11px!important;font-weight:800;letter-spacing:.04em}
+.crew-livechip .lv-dot{width:7px;height:7px}
+.crew-hero .btn.live{background:#30d158;color:#04260f;font-weight:700;gap:8px}
+.crew-hero .btn.live .lv-dot{background:#fff}
+
 /* ---------- Sonnenuntergang ---------- */
 .sun-card{position:relative;display:flex;flex-direction:column;gap:5px;width:calc(100% - 12px);margin:2px 6px 10px;padding:13px 14px 12px;border:0;border-radius:16px;text-align:left;color:#2a1405;overflow:hidden;
   background:linear-gradient(115deg,#ffd27a 0%,#ff9d5c 45%,#ff6f7d 100%);box-shadow:0 10px 24px -14px rgba(255,111,125,.9)}
@@ -951,6 +990,7 @@ body.car3d .rp-car{visibility:hidden}
   <div class="mx"><b data-ck="max">0</b><span>Max km/h</span></div>
 </div>
 <button id="ckRecenter" class="glass" hidden></button>
+<button id="ckLive" class="glass" hidden aria-pressed="false" aria-label="Live-Standort teilen"><span class="lv-dot"></span><b>Live</b><span class="lv-avs"></span></button>
 <div id="gMeter" class="glass" aria-hidden="true">
   <svg viewBox="0 0 100 100"><circle class="gr" cx="50" cy="50" r="44"/><circle class="gr" cx="50" cy="50" r="22"/><path class="gx" d="M50 6v88M6 50h88"/><text class="gt" x="50" y="4">Bremsen</text><circle id="gDot" class="gd" cx="50" cy="50" r="7"/></svg>
   <b><span id="gVal">–</span><small>G</small></b>
@@ -1008,6 +1048,7 @@ body.car3d .rp-car{visibility:hidden}
     <button id="b-locate" title="Mein Standort" aria-label="Mein Standort"></button>
   </div>
   <button id="b-compass" class="glass" hidden title="Nach Norden ausrichten" aria-label="Nach Norden ausrichten"></button>
+  <button id="liveBadge" class="glass" hidden aria-label="Live-Freunde auf der Karte zeigen"><span class="lv-dot"></span><span class="lv-avs"></span><b></b></button>
   <div id="layersPop" class="glass pop" hidden>
     <div class="pop-bases">
       <button data-base="sat"><i class="sw-sat"></i>Satellit</button>
@@ -2320,6 +2361,7 @@ function needGroup(then){
 
 /* Abgleich */
 async function wsSync(force){
+  liveWatch();
   if(!FB || !grp() || WS.busy) return;
   if(!force && Date.now() - WS.loaded < 90000) return;
   WS.busy = true; WS.err = null; wsRefreshUI();
@@ -2559,8 +2601,8 @@ function wsCrewHTML(){
     : '<div class="muted" style="padding:10px 4px">Noch keine Kilometer geteilt.</div>'}</div>`;
   const noData = list.filter(m => m.v == null);
   if(noData.length) html += `<div class="muted crew-nd">Ohne Kilometer: ${noData.map(m => esc(m.name)).join(', ')} (ältere App-Version oder Teilen ausgeschaltet)</div>`;
-  html += `<div class="sec">Mitglieder</div><div class="crew-grid">${list.sort((a, b) => (b.v || 0) - (a.v || 0)).map(m => `<button class="crew-card${m.dev === myId() ? ' is-me' : ''}" data-crew="${esc(m.dev)}">
-      <span class="crew-cav" data-crewav="${esc(m.dev)}">${avHTML(m.dev, m.name, 64)}</span>
+  html += `<div class="sec">Mitglieder</div><div class="crew-grid">${list.sort((a, b) => (b.v || 0) - (a.v || 0)).map(m => `<button class="crew-card${m.dev === myId() ? ' is-me' : ''}${liveOf(m.dev) || (m.dev === myId() && live.on) ? ' live' : ''}" data-crew="${esc(m.dev)}">
+      ${liveOf(m.dev) || (m.dev === myId() && live.on) ? '<span class="crew-livechip"><span class="lv-dot on"></span>LIVE</span>' : ''}<span class="crew-cav" data-crewav="${esc(m.dev)}">${avHTML(m.dev, m.name, 64)}</span>
       <b>${esc(crewName(m.dev, m.name))}</b>
       <span>${m.st ? `${(weekKm(m.st, 0) || 0).toFixed(0)} km diese Woche` : 'keine Fahrdaten'}</span>
       ${sparkSVG(m.st)}
@@ -2588,7 +2630,7 @@ function openCrew(dev){
   $('#modal').innerHTML = `<div class="dlg crew-dlg" role="dialog" aria-modal="true" aria-label="Profil">
     <div class="top" style="padding:12px 14px"><span></span><button class="txtbtn bold" data-crewx>Fertig</button></div>
     <div class="pad" style="padding-top:0;gap:14px">
-      <div class="crew-hero"><button class="crew-big" data-crewav="${esc(dev)}" aria-label="Profilbild vergrößern">${avHTML(dev, m.name, 112)}</button><h2>${esc(crewName(dev, m.name))}</h2>${dev === myId() ? '<button class="txtbtn" data-crewme>Profilbild ändern</button>' : ''}</div>
+      <div class="crew-hero"><button class="crew-big" data-crewav="${esc(dev)}" aria-label="Profilbild vergrößern">${avHTML(dev, m.name, 112)}</button><h2>${esc(crewName(dev, m.name))}</h2>${dev === myId() ? '<button class="txtbtn" data-crewme>Profilbild ändern</button>' : ''}${liveOf(dev) ? `<button class="btn live" data-crewlive="${esc(dev)}"><span class="lv-dot"></span>Live${liveOf(dev).v >= 6 ? ` · ${Math.round(liveOf(dev).v)} km/h` : ''} · auf der Karte zeigen</button>` : ''}</div>
       ${st ? `<div class="tstats">
         <div><b>${(weekKm(st, 0) || 0).toFixed(1).replace('.', ',')} km</b><span>Diese Woche</span></div>
         <div><b>${Math.round(st.km).toLocaleString('de-DE')} km</b><span>Gesamt</span></div>
@@ -2614,6 +2656,7 @@ $('#modal').addEventListener('click', e => {
   if(e.target.id === 'modal' || e.target.closest('[data-crewx]')){ crewOpen = null; $('#modal').hidden = true; return; }
   const av = e.target.closest('[data-crewav]'); if(av){ zoomAvatar(av.dataset.crewav); return; }
   if(e.target.closest('[data-crewme]')){ $('#avFile').click(); return; }
+  const lv = e.target.closest('[data-crewlive]'); if(lv){ crewOpen = null; $('#modal').hidden = true; liveFocus(lv.dataset.crewlive); return; }
   const dv = e.target.closest('[data-crewdrv]'); if(dv){ crewOpen = null; $('#modal').hidden = true; openWsDrive(dv.dataset.crewdrv); return; }
   const sp = e.target.closest('[data-crewspot]'); if(sp){ crewOpen = null; $('#modal').hidden = true; openWsSpot(sp.dataset.crewspot); }
 });
@@ -2886,7 +2929,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.8';
+const VERSION = '2026.10.04.9';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -2971,7 +3014,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'gjoin') openGroupDlg('code', {});
   if(a === 'gleave'){
     if(!b.classList.contains('armed')){ b.classList.add('armed'); b.querySelector('span').textContent = 'Wirklich verlassen? Nochmal tippen'; return; }
-    delete prefs.group; savePrefs(); WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.loaded = 0; wsCache();
+    liveStop(true); delete prefs.group; savePrefs(); liveWatch(); WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.loaded = 0; wsCache();
     renderSettings(); syncSpotsHead(); refreshAll(); renderWsMarkers(); toast('Gruppe verlassen');
   }
   if(a === 'export') $('#exportBtn').click();
@@ -3813,7 +3856,7 @@ function enterCockpit(){
   }, {enableHighAccuracy:true, maximumAge:0, timeout:30000});
   requestWake();
   clearInterval(ckTick); ckTick = setInterval(updateCockpitUI, 1000);
-  renderCkTop(); updateRecUI(); updateCockpitUI();
+  renderCkTop(); updateRecUI(); updateCockpitUI(); liveUI();
   cam.fix = me ? {lat:me.lat, lng:me.lng, t:performance.now(), v:0, h:null} : null;
   cam.disp = null; cam.bearing = null; cam.zoom = null; ckUserPitch = null; userGesture = false;
   map.easeTo({center:me ? LL(me) : map.getCenter(), zoom:ckZoom(0), pitch:55, padding:ckPad(), duration:1100});
@@ -3825,6 +3868,7 @@ function exitCockpit(){
   if(nav && nav.active) endNav(true);
   camStop(); hideGhost(); $('#ckLimit').classList.remove('show'); $('#ckSpeed').classList.remove('over');
   ckOn = false; document.body.classList.remove('cockpit', 'ckrec', 'gon');
+  liveStop();
   if(!(rec && !rec.stopped)) gStop();
   car3d.on = false; document.body.classList.remove('car3d'); if(mapReady) map.triggerRepaint();
   ckTarget = null; updateCourseLayers();
@@ -3858,6 +3902,7 @@ function onDrivePos(p){
   cam.fix = {lat:pt.lat, lng:pt.lng, t:performance.now(), v:ck.v || 0, h:ck.h};
   if(onOff('limit')) limitFix(pt); else if(limitNow){ showLimit(null); }
   if(nav && nav.active) onNavFix(pt, c.accuracy);
+  liveFeed(pt, ck.v, (ck.v || 0) > 1.4 ? ck.h : null, c.accuracy);
 }
 map.on('dragstart', () => { if(ckOn){ ckFollow = false; $('#ckRecenter').hidden = false; } });
 map.on('rotatestart', e => { if(ckOn && e.originalEvent){ ckFollow = false; $('#ckRecenter').hidden = false; } });
@@ -3911,6 +3956,240 @@ function updateCockpitUI(){
   }
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && ckOn) exitCockpit(); });
+
+/* ================= Live-Standort =================
+   Freiwillig und nur im Cockpit: geht beim Verlassen automatisch wieder aus.
+   Gespeichert wird nur die letzte Position (groups/<code>/live/<gerät>), keine Route.
+   Echtzeit über das Firestore-SDK (ca. 1 s), ohne SDK alle paar Sekunden per Abfrage. */
+const FBV = '10.14.1';
+const LIVE_MIN = 3000, LIVE_BEAT = 20000, LIVE_OLD = 45000, LIVE_GONE = 15 * 60000, LIVE_MAX = 4 * 3600e3, LIVE_TRASH = 6 * 3600e3;
+const live = {on:false, until:0, lastSent:null, sending:false, fails:0, code:null, mode:null, unsub:null, poll:0, peers:new Map(), mk:new Map(), raf:0, first:true, cleaned:new Set(), sig:''};
+let fbx = null, fbTry = 0;
+async function fbLoad(){
+  if(fbx) return fbx;
+  if(fbTry && Date.now() - fbTry < 60000) return null;
+  fbTry = Date.now();
+  try{
+    const [app, fs] = await Promise.all([import(`https://www.gstatic.com/firebasejs/${FBV}/firebase-app.js`), import(`https://www.gstatic.com/firebasejs/${FBV}/firebase-firestore.js`)]);
+    const a = app.initializeApp({apiKey:FB.apiKey, projectId:FB.projectId, authDomain:`${FB.projectId}.firebaseapp.com`}, 'live');
+    fbx = {db:fs.getFirestore(a), fs};
+  }catch(e){ fbx = null; }
+  return fbx;
+}
+function liveParse(id, o){
+  try{
+    const v = typeof o.d === 'string' ? JSON.parse(o.d) : o;
+    if(!isFinite(v.lat) || !isFinite(v.lng) || Math.abs(v.lat) > 90 || Math.abs(v.lng) > 180) return null;
+    return {id, lat:+v.lat, lng:+v.lng, v:Math.max(0, +v.v || 0), h:v.h == null || !isFinite(v.h) ? null : +v.h, by:String(v.by || '?').slice(0, 24), at:+v.at || 0};
+  }catch(e){ return null; }
+}
+// Zuhören, solange die App offen ist und man in einer Gruppe ist (kostet nichts, solange niemand live ist)
+async function liveWatch(){
+  const g = grp(), code = FB && g && document.visibilityState !== 'hidden' ? g.code : null;
+  if(live.code === code) return;
+  liveUnwatch();
+  if(!code){ live.peers.clear(); liveRender(); return; }
+  live.code = code; live.first = true;
+  const x = await fbLoad();
+  if(live.code !== code) return;
+  if(x){
+    try{
+      live.mode = 'rt';
+      live.unsub = x.fs.onSnapshot(x.fs.collection(x.db, 'groups', code, 'live'),
+        qs => { if(live.code === code) liveIngest(qs.docs.map(d => liveParse(d.id, d.data()))); },
+        () => { if(live.code !== code) return; live.unsub = null; livePoll(code); });
+      return;
+    }catch(e){ live.unsub = null; }
+  }
+  livePoll(code);
+}
+function livePoll(code){
+  live.mode = 'poll';
+  const tick = async () => {
+    if(live.code !== code) return;
+    try{ const arr = await fsList('live'); if(live.code === code) liveIngest(arr.map(v => liveParse(v._id, v))); }catch(e){}
+    if(live.code !== code) return;
+    const busy = live.on || liveFresh().length > 0;
+    clearTimeout(live.poll); live.poll = setTimeout(tick, busy ? 4000 : 45000);
+  };
+  tick();
+}
+function liveUnwatch(){
+  if(live.unsub){ try{ live.unsub(); }catch(e){} live.unsub = null; }
+  clearTimeout(live.poll); live.poll = 0; live.code = null; live.mode = null;
+}
+function liveIngest(list){
+  const now = Date.now(), seen = new Set(), mine = myId();
+  list.forEach(p => {
+    if(!p || p.id === mine) return;
+    if(now - p.at > LIVE_TRASH){   // Reste von Apps, die nicht sauber beendet wurden
+      if(!live.cleaned.has(p.id)){ live.cleaned.add(p.id); fsDel('live', p.id).catch(() => {}); }
+      return;
+    }
+    seen.add(p.id);
+    const old = live.peers.get(p.id);
+    if(old && old.at === p.at) return;
+    if(!live.first && (!old || now - old.rx > LIVE_OLD) && now - p.at < LIVE_OLD) toast(`${p.by} ist jetzt live`);
+    live.peers.set(p.id, {...p, rx:old ? now : Math.min(now, p.at), disp:old ? old.disp : null});
+  });
+  [...live.peers.keys()].forEach(id => { if(!seen.has(id)) live.peers.delete(id); });
+  live.first = false;
+  liveRender();
+}
+const liveAge = p => Date.now() - p.rx;
+const liveFresh = () => [...live.peers.values()].filter(p => liveAge(p) < LIVE_OLD);
+const liveOf = dev => { const p = live.peers.get(dev); return p && liveAge(p) < LIVE_OLD ? p : null; };
+function liveRender(){
+  for(const [id, m] of live.mk){ const p = live.peers.get(id); if(!p || liveAge(p) > LIVE_GONE){ m.remove(); live.mk.delete(id); } }
+  for(const [id, p] of live.peers){
+    const age = liveAge(p); if(age > LIVE_GONE) continue;
+    let m = live.mk.get(id);
+    if(!m){
+      const el = document.createElement('div'); el.className = 'live-mk';
+      el.innerHTML = `<i class="lm-arr"></i>${avHTML(id, p.by, 36)}<span class="lm-tag"></span>`;
+      el.addEventListener('click', e => { e.stopPropagation(); liveFocus(id); });
+      m = new maplibregl.Marker({element:el, anchor:'center'}).setLngLat(LL(p)).addTo(map);
+      m._el = el; m._arr = el.querySelector('.lm-arr'); m._tag = el.querySelector('.lm-tag');
+      live.mk.set(id, m);
+    }
+    const old = age >= LIVE_OLD, still = old || p.v < 6 || p.h == null;
+    m._el.classList.toggle('old', old); m._el.classList.toggle('still', still);
+    const nm = (WS.members.find(x => x._id === id) || {}).name || p.by;
+    m._tag.textContent = old ? `${nm} · vor ${Math.max(1, Math.round(age / 60000))} Min` : p.v >= 6 ? `${nm} · ${Math.round(p.v)} km/h` : nm;
+  }
+  liveArrows(); liveUI(); liveAnim();
+  const sig = liveFresh().map(p => p.id).sort().join();
+  if(sig !== live.sig){ live.sig = sig; if(tab === 'spots' && spotView === 'ws' && wsSub === 'crew' && view === 'list') renderList(); }
+}
+function liveArrows(){
+  if(!live.mk.size) return;
+  const b = map.getBearing();
+  for(const [id, m] of live.mk){ const p = live.peers.get(id); if(p && p.h != null) m._arr.style.transform = `rotate(${(p.h - b).toFixed(1)}deg)`; }
+}
+map.on('rotate', liveArrows);
+// weich gleiten und zwischen den Updates in Fahrtrichtung weiterrollen
+function liveAnim(){
+  if(live.raf || !live.mk.size) return;
+  let last = 0;
+  const loop = t => {
+    live.raf = 0;
+    if(!live.mk.size || document.hidden) return;
+    live.raf = requestAnimationFrame(loop);
+    if(last && t - last < 45) return;
+    const dt = last ? Math.min(.25, (t - last) / 1000) : .05; last = t;
+    let busy = false;
+    for(const [id, m] of live.mk){
+      const p = live.peers.get(id); if(!p) continue;
+      const age = liveAge(p) / 1000, ms = p.v / 3.6;
+      let pred = {lat:p.lat, lng:p.lng};
+      if(ms > 1.6 && p.h != null && age < 8) pred = offsetPt(pred, p.h, ms * Math.min(age + .8, 4));
+      if(!p.disp || dist(p.disp, pred) > 400) p.disp = pred;
+      else { const k = 1 - Math.exp(-dt / .35); p.disp = {lat:p.disp.lat + (pred.lat - p.disp.lat) * k, lng:p.disp.lng + (pred.lng - p.disp.lng) * k}; }
+      m.setLngLat(LL(p.disp));
+      if(dist(p.disp, pred) > .3 || (ms > 1.6 && age < 5)) busy = true;
+    }
+    if(!busy){ cancelAnimationFrame(live.raf); live.raf = 0; }
+  };
+  live.raf = requestAnimationFrame(loop);
+}
+setInterval(() => { if(live.peers.size) liveRender(); }, 15000);
+function liveUI(){
+  const fresh = liveFresh(), avs = fresh.slice(0, 3).map(p => avHTML(p.id, p.by, 20)).join('');
+  const b = $('#ckLive');
+  b.hidden = !(FB && grp());
+  b.classList.toggle('on', live.on); b.setAttribute('aria-pressed', String(live.on));
+  b.classList.toggle('warn', live.on && live.fails >= 3);
+  b.querySelector('.lv-avs').innerHTML = avs;
+  const g = $('#liveBadge');
+  g.hidden = !fresh.length;
+  if(fresh.length){ g.querySelector('.lv-avs').innerHTML = avs; g.querySelector('b').textContent = fresh.length === 1 ? `${fresh[0].by} ist live` : `${fresh.length} live`; }
+}
+function liveFocus(id){
+  const p = live.peers.get(id); if(!p) return;
+  const c = p.disp || p;
+  if(ckOn){ ckFollow = false; $('#ckRecenter').hidden = false; cam.hold = performance.now() + 900; map.easeTo({center:LL(c), zoom:Math.max(map.getZoom(), 15), duration:800}); return; }
+  if(mobile() && snap === 'full') setSnap('peek');
+  map.flyTo({center:LL(c), zoom:Math.max(map.getZoom(), 14.5), padding:camPad(), duration:1100});
+}
+function liveFocusAll(){
+  const pts = liveFresh().map(p => p.disp || p); if(!pts.length) return;
+  if(pts.length === 1) return liveFocus(liveFresh()[0].id);
+  if(me) pts.push(me);
+  const b = new maplibregl.LngLatBounds(LL(pts[0]), LL(pts[0])); pts.forEach(p => b.extend(LL(p)));
+  if(mobile() && snap === 'full') setSnap('peek');
+  map.fitBounds(b, {padding:camPad(), maxZoom:15, duration:1100});
+}
+$('#liveBadge').addEventListener('click', liveFocusAll);
+
+/* eigenen Standort senden (nur im Cockpit, nach Zustimmung) */
+function liveStart(){
+  if(!ckOn || live.on) return;
+  if(!needGroup(liveStart)) return;
+  if(!prefs.liveOk){ openLiveConsent(); return; }
+  live.on = true; live.until = Date.now() + LIVE_MAX; live.lastSent = null; live.fails = 0;
+  liveWatch();
+  toast(`Live an – „${grp().name}“ sieht dich auf der Karte`);
+  liveUI();
+  if(ck.last && ck.ts && Date.now() - ck.ts < 10000) liveFeed(ck.last, ck.v, (ck.v || 0) > 1.4 ? ck.h : null, 0);
+}
+function liveStop(quiet){
+  if(!live.on) return;
+  live.on = false; live.lastSent = null;
+  liveDelete(); liveUI();
+  if(!quiet) toast('Live aus – dein Standort wird nicht mehr geteilt');
+}
+async function liveDelete(){
+  const g = grp(); if(!g) return;
+  const x = fbx;
+  try{ if(x) await x.fs.deleteDoc(x.fs.doc(x.db, 'groups', g.code, 'live', myId())); else await fsDel('live', myId()); }
+  catch(e){ try{ await fsDel('live', myId()); }catch(_){} }
+}
+function liveFeed(pt, v, h, acc){
+  if(!live.on || !grp()) return;
+  const now = Date.now();
+  if(now > live.until){ liveStop(true); toast('Live nach 4 Stunden automatisch beendet'); return; }
+  if(acc > 80) return;
+  const L = live.lastSent, kmh = (v || 0) * 3.6;
+  if(L){
+    const dt = now - L.at; if(dt < LIVE_MIN) return;
+    const dh = h != null && L.h != null ? Math.abs(((h - L.h + 540) % 360) - 180) : 0;
+    if(dt < LIVE_BEAT && dist(L, pt) < 12 && Math.abs(kmh - L.v) < 8 && dh < 25 && (h == null) === (L.h == null)) return;
+  }
+  liveWrite({lat:+pt.lat.toFixed(6), lng:+pt.lng.toFixed(6), v:Math.round(kmh), h:h == null ? null : Math.round(h), by:myName() || 'Ich', at:now});
+}
+async function liveWrite(o){
+  if(live.sending) return;
+  live.sending = true; live.lastSent = o;
+  try{
+    const x = fbx, g = grp();
+    const p = x ? x.fs.setDoc(x.fs.doc(x.db, 'groups', g.code, 'live', myId()), {d:JSON.stringify(o), t:o.at}) : fsPut('live', myId(), o);
+    await Promise.race([p, new Promise(r => setTimeout(r, 8000))]);   // offline: das SDK schickt es nach, nicht blockieren
+    live.fails = 0;
+  }catch(e){ live.fails++; if(live.lastSent === o) live.lastSent = {...o, at:0}; }
+  live.sending = false;
+  if(!live.on) liveDelete();   // während des Sendens ausgeschaltet
+  liveUI();
+}
+function openLiveConsent(){
+  $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Live-Standort"><div class="pad" style="padding:18px 16px 16px">
+    <h2>Live-Standort teilen?</h2>
+    <div class="muted">Alle in „${esc(grp().name)}“ sehen dich auf der Karte, mit Richtung und Tempo, solange das Cockpit offen ist.</div>
+    <ul class="live-pts"><li>Geht beim Verlassen des Cockpits automatisch aus</li><li>Gespeichert wird nur die letzte Position, keine Route</li><li>Die App muss dafür offen bleiben</li></ul>
+    <div class="btns"><button class="btn" data-lv="cancel">Abbrechen</button><button class="btn primary" data-lv="ok">Live teilen</button></div></div></div>`;
+  $('#modal').hidden = false;
+}
+$('#modal').addEventListener('click', e => {
+  const b = e.target.closest('[data-lv]'); if(!b) return;
+  $('#modal').hidden = true;
+  if(b.dataset.lv === 'ok'){ prefs.liveOk = true; savePrefs(); liveStart(); }
+});
+$('#ckLive').addEventListener('click', () => { if(live.on) liveStop(); else liveStart(); });
+document.addEventListener('visibilitychange', () => { liveWatch(); if(!document.hidden) liveRender(); });
+window.addEventListener('pagehide', () => {   // App wird geschlossen: Position sofort entfernen
+  if(!live.on || !grp()) return;
+  live.lastSent = null;
+  try{ fetch(`${fsURL('live', myId())}?key=${FB.apiKey}`, {method:'DELETE', keepalive:true}).catch(() => {}); }catch(e){}
+});
 
 /* ================= Risk-Indikator ================= */
 const RISK_LV = [[85, 'Kritisch', '#ff2d55'], [70, 'Gefährlich', '#ff3b30'], [50, 'Riskant', '#ff9f0a'], [30, 'Sportlich', '#ffd60a'], [0, 'Entspannt', '#30d158']];
