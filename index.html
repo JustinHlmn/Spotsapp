@@ -763,9 +763,20 @@ body.car3d .rp-car{visibility:hidden}
 .ws-course.open{background:var(--solid);margin:2px 0 6px}
 .ws-cbody{display:flex;flex-direction:column;gap:10px;padding:0 12px 12px}
 .mk-ws .pin{box-shadow:0 0 0 2.5px #fff,0 0 0 5px var(--accent),0 4px 12px rgba(0,0,0,.45)}
-.mk-ws .by{position:absolute;right:-7px;top:-7px;width:19px;height:19px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font:800 10px/15px var(--font);text-align:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.mk-ws .by{position:absolute;right:-7px;top:-7px;width:19px;height:19px;border-radius:50%;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .mk-ws.sel .pin{transform:rotate(-45deg) scale(1.22)}
 .btn.on-ws{color:#30d158}
+.av{display:inline-grid;place-items:center;border-radius:50%;object-fit:cover;flex:none;color:#fff;font-weight:800;line-height:1;vertical-align:middle;box-shadow:0 0 0 1.5px var(--glass-strong)}
+.ws-by{display:inline-flex;align-items:center;gap:6px}
+.ws-faces{display:flex;align-items:center;margin-top:3px}
+.ws-faces .av{margin-right:-6px}
+.ws-faces em{font-style:normal;margin-left:12px;font-size:12.5px;color:var(--muted)}
+.ws-avtip{display:flex;align-items:center;gap:10px;margin:0 6px 10px;padding:8px 12px 8px 8px;border:1px dashed var(--fill-2);border-radius:14px;background:none;color:var(--accent);font-weight:600;width:calc(100% - 12px);text-align:left}
+.ws-drive .av{box-shadow:none}
+.ws-drive .tx .s+.s{margin-top:1px}
+.lb-row .av{margin-left:-2px}
+.mk-ws .by{overflow:hidden;padding:0;background:none;border:2px solid #fff}
+.mk-ws .by .av{width:15px!important;height:15px!important;font-size:8.5px!important;box-shadow:none}
 
 /* ---------- Sonnenuntergang ---------- */
 .sun-card{position:relative;display:flex;flex-direction:column;gap:5px;width:calc(100% - 12px);margin:2px 6px 10px;padding:13px 14px 12px;border:0;border-radius:16px;text-align:left;color:#2a1405;overflow:hidden;
@@ -999,6 +1010,7 @@ body.car3d .rp-car{visibility:hidden}
 <div id="modal" hidden></div>
 <div id="lightbox" hidden></div>
 <input type="file" id="photoFile" accept="image/*" multiple hidden>
+<input type="file" id="avFile" accept="image/*" hidden>
 <div id="toast" class="glass" hidden></div>
 
 <script src="lib/maplibre-gl.js"></script>
@@ -2107,27 +2119,36 @@ window.addEventListener('hashchange', handleHash);
    Geschützt über einen langen Gruppen-Code im Pfad (groups/<code>/…) – ohne Code sieht niemand etwas. */
 const FB = {apiKey:'AIzaSyDPD8Bpe1WkswwwSThBUKjlKwDiCAKE4Tw', projectId:'jamsis-spots'};   // Firebase-Projekt der Gruppe (öffentlich, kein Geheimnis)
 const WSKEY = 'meine-spots-ws';
-const WS = {spots:[], runs:[], courses:[], efforts:[], loaded:0, busy:false, err:null};
+const WS = {spots:[], runs:[], courses:[], efforts:[], members:[], drives:[], loaded:0, busy:false, err:null, rulesOld:false};
+const wsFull = new Map(), wsTrackObjs = new Map();
+const okImg = u => typeof u === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u) ? u : '';
 try{ Object.assign(WS, JSON.parse(localStorage.getItem(WSKEY) || '{}'), {busy:false, err:null}); }catch(e){}
 let spotView = 'mine', wsSub = 'spots', wsSel = null, wsRunKey = null, wsOpenCourse = null, wsDelArmed = false;
 const grp = () => prefs.group && prefs.group.code && prefs.group.code.length >= 20 ? prefs.group : null;
 function myId(){ if(!prefs.dev){ prefs.dev = uid() + uid(); savePrefs(); } return prefs.dev; }
 const myName = () => (prefs.myName || '').trim();
 const fsURL = (col, id) => `https://firestore.googleapis.com/v1/projects/${FB.projectId}/databases/(default)/documents/groups/${grp().code}/${col}${id ? '/' + encodeURIComponent(id) : ''}`;
-async function fsList(col){
+// große Dokumente (Spots mit Fotos, Fahrten) haben ein kleines Feld „m“ für die Liste und „d“ mit allem
+async function fsList(col, meta){
   const out = []; let tok = '';
   for(let i = 0; i < 20; i++){
-    const r = await fetch(`${fsURL(col)}?pageSize=300${tok ? '&pageToken=' + encodeURIComponent(tok) : ''}&key=${FB.apiKey}`);
+    const r = await fetch(`${fsURL(col)}?pageSize=300${meta ? '&mask.fieldPaths=m' : ''}${tok ? '&pageToken=' + encodeURIComponent(tok) : ''}&key=${FB.apiKey}`);
     if(!r.ok) throw new Error('Firestore ' + r.status);
     const j = await r.json();
-    (j.documents || []).forEach(d => { try{ const v = JSON.parse(d.fields.d.stringValue); v._id = d.name.split('/').pop(); out.push(v); }catch(e){} });
+    (j.documents || []).forEach(d => { try{ const f = d.fields || {}, v = JSON.parse((meta && f.m ? f.m : f.d).stringValue); v._id = d.name.split('/').pop(); out.push(v); }catch(e){} });
     if(!j.nextPageToken) break; tok = j.nextPageToken;
   }
   return out;
 }
-async function fsPut(col, id, obj){
-  const r = await fetch(`${fsURL(col, id)}?key=${FB.apiKey}`, {method:'PATCH', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({fields:{d:{stringValue:JSON.stringify(obj)}, t:{integerValue:String(Date.now())}}})});
+async function fsGet(col, id){
+  const r = await fetch(`${fsURL(col, id)}?key=${FB.apiKey}`);
+  if(!r.ok) throw new Error('Firestore ' + r.status);
+  const d = await r.json(), v = JSON.parse(d.fields.d.stringValue); v._id = id; return v;
+}
+async function fsPut(col, id, obj, meta){
+  const fields = {d:{stringValue:JSON.stringify(obj)}, t:{integerValue:String(Date.now())}};
+  if(meta) fields.m = {stringValue:JSON.stringify(meta)};
+  const r = await fetch(`${fsURL(col, id)}?key=${FB.apiKey}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({fields})});
   if(!r.ok) throw new Error('Firestore ' + r.status);
 }
 async function fsDel(col, id){
@@ -2135,11 +2156,37 @@ async function fsDel(col, id){
   if(!r.ok && r.status !== 404) throw new Error('Firestore ' + r.status);
 }
 function wsCache(){
-  try{ localStorage.setItem(WSKEY, JSON.stringify({spots:WS.spots.map(s => ({...s, ph:[]})), runs:WS.runs, courses:WS.courses, efforts:WS.efforts, loaded:WS.loaded})); }catch(e){}
+  try{ localStorage.setItem(WSKEY, JSON.stringify({spots:WS.spots.map(s => ({...s, ph:[]})), runs:WS.runs, courses:WS.courses, efforts:WS.efforts, members:WS.members, drives:WS.drives, loaded:WS.loaded})); }catch(e){}
 }
 const wsUpsert = (arr, obj) => { const i = arr.findIndex(x => x._id === obj._id); if(i >= 0) arr[i] = obj; else arr.push(obj); };
 function newCode(){ const a = new Uint8Array(18); crypto.getRandomValues(a); return Array.from(a, x => 'abcdefghijkmnpqrstuvwxyz23456789'[x % 32]).join('') + uid().slice(0, 6); }
 const inviteURL = () => `${appURL()}#join=${grp().code}&g=${encodeURIComponent(grp().name || 'Gruppe')}`;
+
+/* Profilbilder */
+const AV_COLS = ['#ff9f0a', '#30d158', '#0a84ff', '#bf5af2', '#ff375f', '#64d2ff', '#ffd60a', '#ac8e68'];
+function avHTML(dev, name, size = 22){
+  const m = dev === myId() ? {av:prefs.avatar, name:myName()} : WS.members.find(x => x._id === dev);
+  const nm = (m && m.name) || name || '?', av = okImg(m && m.av);
+  if(av) return `<img class="av" src="${av}" style="width:${size}px;height:${size}px" alt="">`;
+  const col = AV_COLS[[...nm].reduce((a, c) => a + c.charCodeAt(0), 0) % AV_COLS.length];
+  return `<span class="av" style="width:${size}px;height:${size}px;background:${col};font-size:${Math.round(size * .46)}px">${esc(nm.slice(0, 1).toUpperCase())}</span>`;
+}
+async function avatarFrom(file){
+  const url = URL.createObjectURL(file);
+  try{
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const w = img.naturalWidth, h = img.naturalHeight, sz = Math.min(w, h), c = document.createElement('canvas'); c.width = c.height = 192;
+    c.getContext('2d').drawImage(img, (w - sz) / 2, (h - sz) / 2, sz, sz, 0, 0, 192, 192);
+    return c.toDataURL('image/jpeg', .82);
+  }finally{ URL.revokeObjectURL(url); }
+}
+$('#avFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+  try{ prefs.avatar = await avatarFrom(f); savePrefs(); }catch(_){ toast('Das Bild konnte nicht gelesen werden.'); return; }
+  toast('Profilbild gespeichert');
+  if(!$('#modal').hidden && $('#modal [aria-label="Einstellungen"]')) renderSettings();
+  wsRefreshUI(); if(grp()) pushMember().then(() => { wsCache(); wsRefreshUI(); });
+});
 
 /* Gruppe erstellen / beitreten / Name */
 let gpPending = null;
@@ -2189,7 +2236,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'create') toast('Gruppe erstellt – lad jetzt deine Freunde ein');
   if(a === 'join' || a === 'code') toast(`Willkommen in „${prefs.group.name}“`);
   if(tab !== 'spots') setTab('spots');
-  spotView = 'ws'; WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.loaded = 0;
+  spotView = 'ws'; WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.loaded = 0;
   syncSpotsHead(); refreshAll(); wsSync(true);
   if(next.arg && next.arg.then) next.arg.then();
 });
@@ -2206,9 +2253,11 @@ async function wsSync(force){
   if(!force && Date.now() - WS.loaded < 90000) return;
   WS.busy = true; WS.err = null; wsRefreshUI();
   try{
-    const [sp, ru, co, ef] = await Promise.all(['spots', 'runs', 'courses', 'efforts'].map(fsList));
+    const soft = c => e => { if(/403/.test(e.message)){ WS.rulesOld = true; return null; } throw e; };
+    const [sp, ru, co, ef, mb, dr] = await Promise.all([fsList('spots', true), fsList('runs'), fsList('courses'), fsList('efforts'), fsList('members').catch(soft('members')), fsList('drives', true).catch(soft('drives'))]);
     Object.assign(WS, {spots:sp, runs:ru, courses:co, efforts:ef, loaded:Date.now()});
-    await pushBests();
+    if(mb){ WS.members = mb; WS.drives = dr || []; WS.rulesOld = false; }
+    await pushBests(); await pushMember();
     wsCache();
   }catch(e){ WS.err = 'Workshop gerade nicht erreichbar. Prüfe dein Internet.'; }
   WS.busy = false; wsRefreshUI();
@@ -2217,6 +2266,14 @@ function wsRefreshUI(){
   if(tab === 'spots' && spotView === 'ws' && view === 'list') renderList();
   if(view === 'ws') renderWsDetail();
   renderWsMarkers();
+}
+async function pushMember(){
+  if(!myName() || WS.rulesOld) return;
+  const sig = myName() + '|' + (prefs.avatar || '').length + '|' + (prefs.avatar || '').slice(-24);
+  if(prefs.memberSig === sig && WS.members.some(m => m._id === myId())) return;
+  const obj = {name:myName(), av:okImg(prefs.avatar) || '', at:Date.now()};
+  try{ await fsPut('members', myId(), obj); prefs.memberSig = sig; savePrefs(); wsUpsert(WS.members, {...obj, _id:myId()}); }
+  catch(e){ if(/403/.test(e.message)) WS.rulesOld = true; }
 }
 async function pushBests(){
   if(!myName()) return;
@@ -2258,9 +2315,9 @@ async function wsUploadSpot(s){
     const obj = {id:s.id, name:s.name, lat:s.lat, lng:s.lng, notes:s.notes || '', walk:!!s.walk, parking:s.walk && s.parking ? s.parking : null,
                  cat:{name:cat.name, color:cat.color, icon:cat.icon}, ph, by:myName(), dev:myId(), at:Date.now()};
     while(JSON.stringify(obj).length > 900000 && obj.ph.length) obj.ph.pop();
-    const docId = `${myId()}_${s.id}`;
-    await fsPut('spots', docId, obj);
-    s.ws = docId; save(); wsUpsert(WS.spots, {...obj, _id:docId}); wsCache();
+    const docId = `${myId()}_${s.id}`, meta = {...obj, ph:undefined, nph:obj.ph.length};
+    await fsPut('spots', docId, obj, meta);
+    s.ws = docId; save(); wsUpsert(WS.spots, {...meta, _id:docId}); wsFull.set(docId, {...obj, _id:docId}); wsCache();
     toast(`„${s.name}“ ist jetzt im Workshop`);
     if(view === 'detail' && selected === s.id) renderDetail(s);
     wsRefreshUI();
@@ -2278,11 +2335,17 @@ async function wsRemoveSpot(docId){
   }catch(e){ toast('Löschen hat nicht geklappt. Prüfe dein Internet.'); }
 }
 const wsSavedAs = w => data.spots.find(s => s.from === w._id || s.ws === w._id);
+async function wsFullSpot(w){
+  if(!w.nph) return w;
+  if(wsFull.has(w._id)) return wsFull.get(w._id);
+  try{ const f = await fsGet('spots', w._id); wsFull.set(w._id, f); return f; }catch(e){ return w; }
+}
 async function wsSaveSpot(w){
   const have = wsSavedAs(w); if(have){ openDetail(have.id, true); return; }
+  w = await wsFullSpot(w);
   const c = catFor(w.cat && w.cat.name, w.cat && w.cat.color, w.cat && w.cat.icon);
   const s = {id:uid(), name:w.name, cat:c.id, notes:w.notes || '', lat:w.lat, lng:w.lng, walk:!!w.walk, parking:w.parking || null, created:Date.now(), photos:[], from:w._id, fromBy:w.by};
-  for(const du of (w.ph || [])){ try{ const b = await (await fetch(du)).blob(); const id = uid(); await PDB.put(id, b); s.photos.push(id); }catch(e){} }
+  for(const du of (w.ph || []).map(okImg).filter(Boolean)){ try{ const b = await (await fetch(du)).blob(); const id = uid(); await PDB.put(id, b); s.photos.push(id); }catch(e){} }
   data.spots.push(s); save(); refreshAll();
   toast(`„${s.name}“ bei deinen Spots gespeichert`);
   if(view === 'ws') renderWsDetail();
@@ -2317,12 +2380,16 @@ function renderWorkshop(){
     return;
   }
   const people = new Set([...WS.spots, ...WS.runs, ...WS.efforts].map(x => x.by).filter(Boolean)); if(myName()) people.add(myName());
-  const head = `<div class="ws-head"><div class="tx"><b>${esc(grp().name)}</b><span>${people.size} ${people.size === 1 ? 'Mitglied' : 'Mitglieder'}${WS.busy ? ' · lädt …' : WS.loaded ? ` · aktualisiert ${ago(WS.loaded)}` : ''}</span></div>
+  WS.members.forEach(m => m.name && people.add(m.name));
+  const faces = [{dev:myId(), name:myName()}, ...WS.members.filter(m => m._id !== myId()).map(m => ({dev:m._id, name:m.name}))].slice(0, 6);
+  const head = `<div class="ws-head"><div class="tx"><b>${esc(grp().name)}</b><span class="ws-faces">${faces.map(f => avHTML(f.dev, f.name, 22)).join('')}<em>${people.size} ${people.size === 1 ? 'Mitglied' : 'Mitglieder'}${WS.busy ? ' · lädt …' : WS.loaded ? ` · ${ago(WS.loaded)}` : ''}</em></span></div>
       <button class="icon-btn" data-wsa="sync" aria-label="Aktualisieren" title="Aktualisieren">${svg('<path d="M20 11a8 8 0 0 0-14.6-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.6 4.5L20 16m0 4v-4h-4"/>', 17)}</button>
       <button class="btn primary ws-inv" data-wsa="invite">Einladen</button></div>
     ${WS.err ? `<div class="ws-err">${esc(WS.err)}</div>` : ''}
-    <div class="seg2 ws-seg"><button data-wss="spots" class="${wsSub === 'spots' ? 'on' : ''}">Spots</button><button data-wss="lb" class="${wsSub === 'lb' ? 'on' : ''}">Bestenlisten</button></div>`;
-  body.innerHTML = head + (wsSub === 'lb' ? wsBoardsHTML() : wsSpotsHTML());
+    ${WS.rulesOld ? `<div class="ws-err">Für Profilbilder und Fahrten müssen die Firebase-Regeln noch aktualisiert werden.</div>` : ''}
+    ${!prefs.avatar ? `<button class="ws-avtip" data-wsa="avatar">${avHTML(myId(), myName(), 28)}<span>Profilbild hinzufügen</span></button>` : ''}
+    <div class="seg2 ws-seg"><button data-wss="spots" class="${wsSub === 'spots' ? 'on' : ''}">Spots</button><button data-wss="drives" class="${wsSub === 'drives' ? 'on' : ''}">Fahrten</button><button data-wss="lb" class="${wsSub === 'lb' ? 'on' : ''}">Bestenlisten</button></div>`;
+  body.innerHTML = head + (wsSub === 'lb' ? wsBoardsHTML() : wsSub === 'drives' ? wsDrivesHTML() : wsSpotsHTML());
 }
 function wsSpotsHTML(){
   const list = WS.spots.slice().sort((a, b) => (b.at || 0) - (a.at || 0));
@@ -2331,7 +2398,7 @@ function wsSpotsHTML(){
   return paste.replace('ws-paste', 'ws-paste top') + list.map(w => {
     const saved = wsSavedAs(w), mine = w.dev === myId(), col = (w.cat && w.cat.color) || '#868e96';
     return `<button class="item" data-ws="${esc(w._id)}"><span class="ic" style="--c:${esc(col)}">${ic((w.cat && w.cat.icon) || 'pin', 16)}</span>
-      <span class="tx"><span class="t">${esc(w.name)}</span><span class="s">${mine ? 'von dir' : `von ${esc(w.by || '?')}`}${me ? ` · <span class="me-d">${fmtDist(dist(me, w))}</span>` : ''} · ${ago(w.at || 0)}</span></span>
+      <span class="tx"><span class="t">${esc(w.name)}</span><span class="s ws-by">${avHTML(w.dev, w.by, 16)}${mine ? 'von dir' : `von ${esc(w.by || '?')}`}${me ? ` · <span class="me-d">${fmtDist(dist(me, w))}</span>` : ''} · ${ago(w.at || 0)}</span></span>
       ${saved || mine ? `<span class="ws-ok">${svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>', 15, 2.6)}</span>` : `<span class="ws-add" data-wsave="${esc(w._id)}" role="button" aria-label="Speichern">${svg(UI.plus, 15, 2.6)}</span>`}</button>`;
   }).join('');
 }
@@ -2343,7 +2410,7 @@ function wsBoardsHTML(){
   else {
     html += `<div class="chips ws-chips">${keys.map(k => `<button class="chip ${k === wsRunKey ? 'on' : ''}" data-wsk="${k}">${k.replace('-', '–')}</button>`).join('')}</div>`;
     const rows = WS.runs.filter(r => `${r.from}-${r.to}` === wsRunKey).sort((a, b) => a.time - b.time);
-    html += `<div class="lb ws-lb">${rows.map((r, i) => `<div class="lb-row${r.dev === myId() ? ' me' : ''}"><span class="lb-rank ${i < 3 ? 'r' + (i + 1) : ''}">${i + 1}</span>
+    html += `<div class="lb ws-lb">${rows.map((r, i) => `<div class="lb-row${r.dev === myId() ? ' me' : ''}"><span class="lb-rank ${i < 3 ? 'r' + (i + 1) : ''}">${i + 1}</span>${avHTML(r.dev, r.by, 32)}
       <div style="display:flex;flex-direction:column;min-width:0"><span class="lb-time">${fmtS(r.time)}</span><span class="lb-sub">${esc(r.by || '?')} · Ø ${fmtGn(r.ga)} G · ${fmtDate(r.date)}</span></div>
       <span class="lb-delta">${i ? fmtDelta(r.time - rows[0].time) : ''}</span></div>`).join('')}</div>`;
   }
@@ -2354,7 +2421,7 @@ function wsBoardsHTML(){
     return `<div class="ws-course${open ? ' open' : ''}">
       <button class="item" data-wsc="${esc(c._id)}"><span class="ic" style="--c:#bf5af2">${svg(ICONS.flag, 16)}</span>
         <span class="tx"><span class="t">${esc(c.name)}</span><span class="s">${fmtKm(c.len || 0)} · von ${c.dev === myId() ? 'dir' : esc(c.by || '?')}${rows[0] ? ` · Bestzeit ${fmtLap(rows[0].time)} (${esc(rows[0].by || '?')})` : ''}</span></span></button>
-      ${open ? `<div class="ws-cbody">${rows.length ? `<div class="lb">${rows.map((f, i) => `<div class="lb-row${f.dev === myId() ? ' me' : ''}"><span class="lb-rank ${i < 3 ? 'r' + (i + 1) : ''}">${i + 1}</span>
+      ${open ? `<div class="ws-cbody">${rows.length ? `<div class="lb">${rows.map((f, i) => `<div class="lb-row${f.dev === myId() ? ' me' : ''}"><span class="lb-rank ${i < 3 ? 'r' + (i + 1) : ''}">${i + 1}</span>${avHTML(f.dev, f.by, 32)}
           <div style="display:flex;flex-direction:column"><span class="lb-time">${fmtLap(f.time)}</span><span class="lb-sub">${esc(f.by || '?')} · ${c.len ? Math.round(c.len / f.time * 3.6) + ' km/h Ø · ' : ''}${fmtDate(f.date)}</span></div>
           <span class="lb-delta">${i ? fmtDelta(f.time - rows[0].time) : ''}</span></div>`).join('')}</div>` : '<div class="muted">Noch keine Zeiten auf dieser Strecke.</div>'}
         ${have ? '<div class="muted">Ist bei deinen Rennstrecken. Deine Bestzeit wird automatisch geteilt.</div>' : `<button class="btn primary" data-wscsave="${esc(c._id)}">${svg(UI.plus, 15)} Strecke übernehmen und mitfahren</button>`}</div>` : ''}
@@ -2370,6 +2437,7 @@ $('#listBody').addEventListener('click', e => {
     if(k === 'create') openGroupDlg('create', {});
     if(k === 'code') openGroupDlg('code', {});
     if(k === 'sync') wsSync(true);
+    if(k === 'avatar') $('#avFile').click();
     if(k === 'invite') shareURL(inviteURL(), `Gruppe ${grp().name}`, `Komm in unsere Gruppe „${grp().name}“ bei Jamsis Spots:`);
     return;
   }
@@ -2386,8 +2454,69 @@ $('#listBody').addEventListener('click', e => {
     toast(`„${c.name}“ übernommen${n ? ` · ${n} Zeit${n > 1 ? 'en' : ''} aus deinen Fahrten gefunden` : ''}`);
     pushBests().then(() => { wsCache(); renderList(); }).catch(() => {}); renderList(); return;
   }
+  const dv = e.target.closest('[data-wsdrv]'); if(dv){ openWsDrive(dv.dataset.wsdrv); return; }
   const it = e.target.closest('[data-ws]'); if(it) openWsSpot(it.dataset.ws);
 });
+
+/* Fahrten teilen und ansehen */
+function trimSegs(segs, m){   // Start und Ziel kürzen, damit z. B. die Haustür nicht sichtbar ist
+  const pts = []; let D = 0, prev = null;
+  segs.forEach((sg, si) => sg.forEach(q => { if(prev) D += dist({lat:prev[1], lng:prev[0]}, {lat:q[1], lng:q[0]}); pts.push({q, si, d:D}); prev = q; }));
+  if(D < 3 * m) return null;
+  const out = [];
+  pts.forEach(p => { if(p.d < m || p.d > D - m) return; (out[p.si] || (out[p.si] = [])).push(p.q); });
+  return out.filter(sg => sg && sg.length > 1);
+}
+async function wsUploadDrive(t){
+  if(!needGroup(() => wsUploadDrive(t))) return;
+  if(WS.rulesOld){ toast('Erst die Firebase-Regeln aktualisieren, dann klappt das Teilen von Fahrten.'); return; }
+  const segs = trimSegs(t.segs, 250);
+  if(!segs || !segs.length){ toast('Die Fahrt ist zu kurz zum Teilen.'); return; }
+  toast('Fahrt wird geteilt …');
+  try{
+    if(!t.place) await fetchPlace(t).catch(() => {});
+    const r = trackRisk(t);
+    const obj = {name:t.name, created:t.created, dist:t.dist, dur:t.dur, maxSpd:t.maxSpd, segs, g:t.g || null, place:t.place || null, by:myName(), dev:myId(), at:Date.now()};
+    while(JSON.stringify(obj).length > 850000) obj.segs = obj.segs.map(sg => sg.filter((_, i) => i % 2 === 0 || i === sg.length - 1));
+    const meta = {name:t.name, created:t.created, dist:t.dist, dur:t.dur, maxSpd:t.maxSpd, place:t.place || null, risk:r ? r.score : null, by:myName(), dev:myId(), at:obj.at};
+    const docId = `${myId()}_${t.id}`;
+    await fsPut('drives', docId, obj, meta);
+    t.ws = docId; saveTracks(); wsUpsert(WS.drives, {...meta, _id:docId}); wsTrackObjs.delete(docId); wsCache();
+    toast(`„${t.name}“ ist im Workshop – Start und Ziel sind um 250 m gekürzt`);
+    if(view === 'track') renderTrackView();
+  }catch(e){ toast(/403/.test(e.message) ? 'Erst die Firebase-Regeln aktualisieren.' : 'Teilen hat nicht geklappt. Prüfe dein Internet.'); }
+}
+async function wsRemoveDrive(t){
+  try{
+    await fsDel('drives', t.ws);
+    WS.drives = WS.drives.filter(x => x._id !== t.ws); wsTrackObjs.delete(t.ws); delete t.ws; saveTracks(); wsCache();
+    toast('Fahrt aus dem Workshop genommen');
+    if(view === 'track') renderTrackView();
+  }catch(e){ toast('Entfernen hat nicht geklappt. Prüfe dein Internet.'); }
+}
+function wsDrivesHTML(){
+  const list = WS.drives.slice().sort((a, b) => (b.created || b.at || 0) - (a.created || a.at || 0));
+  if(!list.length) return `<div class="empty"><b>Noch keine Fahrten geteilt</b>Öffne unter „Strecken“ eine deiner Fahrten und tippe auf „Fahrt in den Workshop teilen“. Start und Ziel werden dabei um 250 m gekürzt.</div>`;
+  return list.map(d => `<button class="item ws-drive" data-wsdrv="${esc(d._id)}">${avHTML(d.dev, d.by, 40)}
+      <span class="tx"><span class="t">${esc(d.name)}</span>
+        <span class="s">${d.dev === myId() ? 'Du' : esc(d.by || '?')}${placeTxt(d) ? ' · ' + esc(placeTxt(d)) : ''}</span>
+        <span class="s">${fmtKmS(d.dist || 0)} · ${Math.round((d.maxSpd || 0) * 3.6)} km/h top · ${fmtDate(d.created || d.at)}</span></span>
+      ${d.risk != null ? `<span class="rk-pill" style="--lv:${riskLevel(d.risk).col}">${d.risk}</span>` : ''}</button>`).join('');
+}
+async function openWsDrive(id){
+  const d = WS.drives.find(x => x._id === id); if(!d) return;
+  if(!wsTrackObjs.has(id)){
+    toast('Fahrt wird geladen …');
+    try{
+      const f = await fsGet('drives', id);
+      wsTrackObjs.set(id, {id:'ws:' + id, name:f.name, created:f.created, dist:f.dist, dur:f.dur, maxSpd:f.maxSpd, segs:f.segs || [], g:f.g || null, place:f.place || null, _ws:{dev:f.dev, by:f.by, docId:id}});
+    }catch(e){ toast('Fahrt konnte nicht geladen werden. Prüfe dein Internet.'); return; }
+  }
+  const t = wsTrackObjs.get(id);
+  selTrack = t.id; trackRenaming = false; trackDelArmed = false; tvSel = -1;
+  renderTrackView(); show('track', mobile() && snap === 'full' ? 'full' : 'half');
+  fitTrack(t.segs);
+}
 
 /* Workshop-Spot ansehen */
 function openWsSpot(id){
@@ -2404,8 +2533,11 @@ function renderWsDetail(){
   el.innerHTML = `<div class="top"><button class="txtbtn" data-wsd="back">${svg(UI.back, 14)} Workshop</button><button class="icon-btn press" data-wsd="back" aria-label="Schließen">${svg(UI.close, 14)}</button></div>
     <div class="pad">
       <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${esc(col)}"><span class="ic">${ic((w.cat && w.cat.icon) || 'pin', 13)}</span>${esc((w.cat && w.cat.name) || 'Spot')}</span><h2>${esc(w.name)}</h2>
-        <span class="muted">Geteilt ${mine ? 'von dir' : `von ${esc(w.by || '?')}`} · ${ago(w.at || 0)}${me ? ` · ${fmtDist(dist(me, w))} entfernt` : ''}</span></div>
-      ${(w.ph || []).length ? `<div class="ph-strip">${w.ph.map((u, i) => `<img src="${u}" data-wsph="${i}" alt="Foto ${i + 1}">`).join('')}</div>` : ''}
+        <span class="muted ws-by">${avHTML(w.dev, w.by, 20)}Geteilt ${mine ? 'von dir' : `von ${esc(w.by || '?')}`} · ${ago(w.at || 0)}${me ? ` · ${fmtDist(dist(me, w))} entfernt` : ''}</span></div>
+      ${(() => { const f = wsFull.get(w._id), ph = ((f || w).ph || []).map(okImg).filter(Boolean);
+        if(ph.length) return `<div class="ph-strip">${ph.map((u, i) => `<img src="${u}" data-wsph="${i}" alt="Foto ${i + 1}">`).join('')}</div>`;
+        if(w.nph && !f){ wsFullSpot(w).then(() => { if(view === 'ws' && wsSel === w._id) renderWsDetail(); }); return `<div class="muted">${w.nph} Foto${w.nph > 1 ? 's' : ''} wird geladen …</div>`; }
+        return ''; })()}
       ${saved ? `<button class="btn wide" data-wsd="mine">${svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>', 16, 2.6)} ${mine ? 'Dein Spot – öffnen' : 'Gespeichert – öffnen'}</button>` : `<button class="btn primary wide" data-wsd="save">${svg(UI.plus, 16, 2.4)} Bei meinen Spots speichern</button>`}
       <div class="btns"><button class="btn" data-wsd="nav">${svg(UI.nav, 15)} Navigation</button><button class="btn" data-wsd="share">${svg(UI.share, 15)} Link teilen</button></div>
       ${w.notes ? `<p class="notes">${esc(w.notes)}</p>` : ''}
@@ -2416,7 +2548,7 @@ function renderWsDetail(){
 }
 $('#wsView').addEventListener('click', e => {
   const im = e.target.closest('img[data-wsph]');
-  if(im){ const w = WS.spots.find(x => x._id === wsSel); if(w){ $('#lightbox').innerHTML = `<img src="${w.ph[+im.dataset.wsph]}" alt=""><button class="lb-x" aria-label="Schließen">${svg(UI.close, 18, 2.4)}</button>`; $('#lightbox').hidden = false; } return; }
+  if(im){ const w = wsFull.get(wsSel); if(w){ $('#lightbox').innerHTML = `<img src="${okImg(w.ph[+im.dataset.wsph])}" alt=""><button class="lb-x" aria-label="Schließen">${svg(UI.close, 18, 2.4)}</button>`; $('#lightbox').hidden = false; } return; }
   const b = e.target.closest('button'); if(!b) return;
   if(b.dataset.copy) return copy(b.dataset.copy);
   const a = b.dataset.wsd, w = WS.spots.find(x => x._id === wsSel);
@@ -2447,7 +2579,7 @@ function renderWsMarkers(){
       m = new maplibregl.Marker({element:el, anchor:'bottom'}).setLngLat([w.lng, w.lat]).addTo(map); wsMk.set(w._id, m);
     }
     const el = m.getElement(), col = (w.cat && w.cat.color) || '#868e96', sel = view === 'ws' && wsSel === w._id;
-    el.innerHTML = `<div class="pin" style="--c:${esc(col)}">${ic((w.cat && w.cat.icon) || 'pin', 16)}</div><span class="by">${esc((w.dev === myId() ? (myName() || 'Ich') : (w.by || '?')).slice(0, 1).toUpperCase())}</span>`;
+    el.innerHTML = `<div class="pin" style="--c:${esc(col)}">${ic((w.cat && w.cat.icon) || 'pin', 16)}</div><span class="by">${avHTML(w.dev, w.by, 19)}</span>`;
     el.classList.toggle('sel', sel); el.style.zIndex = sel ? 4 : 2;
   }
   for(const [k, m] of wsMk) if(!want.has(k)){ m.remove(); wsMk.delete(k); }
@@ -2551,7 +2683,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.5';
+const VERSION = '2026.10.04.6';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -2596,6 +2728,7 @@ function renderSettings(){
       ${FB ? `<div class="set-sec">Gruppe</div>
       <div class="set-card">${grp() ? `
         <div class="set-row"><span>${esc(grp().name)}<small>Workshop und Bestenlisten werden mit dieser Gruppe geteilt</small></span></div>
+        <button class="set-row" data-st="avatar"><span>Profilbild<small>Sehen die anderen in der Gruppe</small></span><span class="ri">${avHTML(myId(), myName(), 34)}</span></button>
         <button class="set-row" data-st="gname"><span>Dein Name</span><span class="ri">${esc(myName() || '–')}${svg('<path d="M15 5 8 12l7 7"/>', 14).replace('<svg', '<svg style="transform:scaleX(-1)"')}</span></button>
         <button class="set-row" data-st="ginvite"><span>Freunde einladen</span><span class="ri">${svg(UI.share, 16)}</span></button>
         <button class="set-row" data-st="gleave"><span style="color:var(--danger)">Gruppe verlassen</span></button>` : `
@@ -2627,7 +2760,8 @@ $('#modal').addEventListener('click', e => {
   if(a === 'accent'){ prefs.accent = b.dataset.v; savePrefs(); applyTheme(); renderSettings(); if(view === 'track') updateTrackLayers(); }
   if(a === 'cam'){ prefs.cam = b.dataset.v; savePrefs(); renderSettings(); }
   if(a === 'tg'){ const k = b.dataset.k; prefs[k] = !onOff(k); savePrefs(); b.classList.toggle('on', prefs[k]); b.setAttribute('aria-checked', prefs[k]); if(k === 'gforce' && prefs[k]) gStart(); }
-  if(a === 'gname') openGroupDlg('name', {then:() => { pushBests().catch(() => {}); }});
+  if(a === 'avatar'){ $('#avFile').click(); return; }
+  if(a === 'gname') openGroupDlg('name', {then:() => { prefs.memberSig = ''; pushMember().catch(() => {}); pushBests().catch(() => {}); }});
   if(a === 'ginvite') shareURL(inviteURL(), `Gruppe ${grp().name}`, `Komm in unsere Gruppe „${grp().name}“ bei Jamsis Spots:`);
   if(a === 'gcreate') openGroupDlg('create', {});
   if(a === 'gjoin') openGroupDlg('code', {});
@@ -2866,7 +3000,7 @@ function updateTrackLayers(){
   if(!mapReady) return;
   const showAll = tab === 'tracks' && sub === 'rec' && view === 'list';
   setSrc('track-all', FC(showAll ? tracks.filter(t => t.id !== selTrack).flatMap(t => segFeatures(t.segs, {id:t.id})) : []));
-  const t = view === 'track' && tracks.find(x => x.id === selTrack);
+  const t = view === 'track' && curTrack();
   if(t){
     const segs = t.segs.filter(sg => sg.length);
     const first = segs[0][0], lastSeg = segs[segs.length - 1], last = lastSeg[lastSeg.length - 1];
@@ -3147,14 +3281,15 @@ function openTrack(id, fly = true){
   renderTrackView(); show('track', mobile() && snap === 'full' ? 'full' : 'half');
   fitTrack(t.segs);
 }
-function closeTrack(){ selTrack = null; tvSel = -1; renderList(); show('list', 'half'); }
+function curTrack(){ return selTrack && String(selTrack).startsWith('ws:') ? (wsTrackObjs.get(selTrack.slice(3)) || null) : tracks.find(x => x.id === selTrack); }
+function closeTrack(){ const foreign = selTrack && String(selTrack).startsWith('ws:'); selTrack = null; tvSel = -1; renderList(); show('list', 'half'); if(foreign) renderWsMarkers(); }
 function renderTrackView(){
-  const t = tracks.find(x => x.id === selTrack); if(!t) return;
+  const t = curTrack(); if(!t) return;
   const avg = t.dur > 0 ? t.dist / (t.dur / 1000) : 0;
   $('#trackView').innerHTML = `
-    <div class="top"><button class="txtbtn" data-tv="back">${svg(UI.back,14)} Strecken</button><button class="icon-btn press" data-tv="back" aria-label="Schließen">${svg(UI.close,14)}</button></div>
+    <div class="top"><button class="txtbtn" data-tv="back">${svg(UI.back,14)} ${t._ws ? 'Workshop' : 'Strecken'}</button><button class="icon-btn press" data-tv="back" aria-label="Schließen">${svg(UI.close,14)}</button></div>
     <div class="pad">
-      ${trackRenaming
+      ${t._ws ? `<div style="display:flex;flex-direction:column;gap:6px"><span class="badge ws-by">${avHTML(t._ws.dev, t._ws.by, 22)}Fahrt von ${t._ws.dev === myId() ? 'dir' : esc(t._ws.by)}</span><h2>${esc(t.name)}</h2><span class="muted">${fmtDate(t.created)}${placeTxt(t) ? ' · ' + esc(placeTxt(t)) : ''}</span></div>` : trackRenaming
         ? `<div class="row"><input class="inp" id="tv-name" value="${esc(t.name)}" maxlength="80"><button class="txtbtn bold" data-tv="renamesave">Fertig</button></div>`
         : `<div style="display:flex;flex-direction:column;gap:4px"><span class="badge" style="--c:#ff9f0a"><span class="ic">${svg(UI.route,13)}</span>Strecke</span><h2>${esc(t.name)}</h2><span class="muted">${fmtDate(t.created)}</span></div>`}
       <div class="tstats">
@@ -3168,20 +3303,26 @@ function renderTrackView(){
       ${tvDetailsHTML(t)}
       <button class="btn" data-tv="course">${svg(ICONS.flag,15)} Als Rennstrecke speichern</button>
       <button class="btn" data-tv="gpx">${svg(UI.share,15)} Als GPX exportieren</button>
-      <div class="btns"><button class="btn" data-tv="rename">Umbenennen</button><button class="btn danger" data-tv="del">Löschen</button></div>
+      ${FB && !t._ws ? `<button class="btn${t.ws ? ' on-ws' : ''}" data-tv="ws">${t.ws ? 'Im Workshop geteilt · entfernen' : 'Fahrt in den Workshop teilen'}</button>` : ''}
+      ${t._ws ? '' : `<div class="btns"><button class="btn" data-tv="rename">Umbenennen</button><button class="btn danger" data-tv="del">Löschen</button></div>`}
     </div>`;
   if(trackRenaming) setTimeout(() => { const i = $('#tv-name'); if(i){ i.focus(); i.select(); } }, 50);
   if(tvSel >= 0) tvApplySel(false);
 }
 $('#trackView').addEventListener('click', e => {
   const b = e.target.closest('[data-tv]'); if(!b) return;
-  const t = tracks.find(x => x.id === selTrack); if(!t) return;
+  const t = curTrack(); if(!t) return;
   const a = b.dataset.tv;
   if(a === 'back') closeTrack();
   if(a === 'rename'){ trackRenaming = true; renderTrackView(); }
   if(a === 'renamesave'){ t.name = $('#tv-name').value.trim() || t.name; saveTracks(); trackRenaming = false; renderTrackView(); }
   if(a === 'course') return courseFromTrack(t);
   if(a === 'replay') return startReplay(t);
+  if(a === 'ws'){
+    if(!t.ws) return wsUploadDrive(t);
+    if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = 'Wirklich aus dem Workshop nehmen?'; setTimeout(() => { if(b.isConnected){ b.classList.remove('armed'); b.textContent = 'Im Workshop geteilt · entfernen'; } }, 3500); return; }
+    return wsRemoveDrive(t);
+  }
   if(a === 'gpx') downloadText(`${t.name.replace(/[^\wäöüÄÖÜß -]+/g, '').trim() || 'strecke'}.gpx`, toGPX(t), 'application/gpx+xml');
   if(a === 'del'){
     if(!trackDelArmed){ trackDelArmed = true; b.classList.add('armed'); b.textContent = 'Wirklich löschen?'; setTimeout(() => { if(b.isConnected){ trackDelArmed = false; b.classList.remove('armed'); b.textContent = 'Löschen'; } }, 3500); return; }
@@ -3338,7 +3479,7 @@ function tvPaint(){
   }catch(e){}
 }
 function tvApplySel(fit = true){
-  const t = tracks.find(x => x.id === selTrack), an = t && analyzeTrack(t); if(!an) return;
+  const t = curTrack(), an = t && analyzeTrack(t); if(!an) return;
   document.querySelectorAll('#trackView [data-sec]').forEach(el => el.classList.toggle('on', +el.dataset.sec === tvSel));
   const band = $('#tvBand'), g = tvGeom(an);
   if(band){ if(tvSel < 0) band.setAttribute('width', 0); else { const s = an.secs[tvSel]; band.setAttribute('x', g.X(s.a).toFixed(1)); band.setAttribute('width', (g.X(s.b) - g.X(s.a)).toFixed(1)); } }
@@ -3350,7 +3491,7 @@ function tvApplySel(fit = true){
   map.fitBounds(b, {padding:camPad(), maxZoom:17, duration:900});
 }
 function tvScrub(e){
-  const t = tracks.find(x => x.id === selTrack), an = t && analyzeTrack(t), el = $('#tvChart svg'); if(!an || !el) return;
+  const t = curTrack(), an = t && analyzeTrack(t), el = $('#tvChart svg'); if(!an || !el) return;
   const g = tvGeom(an), r = el.getBoundingClientRect(); if(!r.width) return;
   const fx = (e.clientX - r.left) / r.width * g.W, d = Math.max(0, Math.min(an.D, (fx - g.l) / g.iw * an.D));
   const v = an.lerp(d, 'v'), x = g.X(d).toFixed(1), y = g.Y(v).toFixed(1), s = an.secOf(d);
@@ -3377,7 +3518,7 @@ $('#trackView').addEventListener('pointercancel', () => { tvDown = false; });
 $('#trackView').addEventListener('pointerout', e => { if(e.pointerType === 'mouse' && !tvDown && e.target.closest('#tvChart') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('#tvChart'))) tvScrubEnd(); });
 $('#trackView').addEventListener('click', e => {
   const gb = e.target.closest('[data-gat]');
-  if(gb){ const t = tracks.find(x => x.id === selTrack), an = t && analyzeTrack(t); if(an) map.flyTo({center:an.g[gb.dataset.gat].at, zoom:Math.max(map.getZoom(), 16.5), padding:camPad(), duration:900}); return; }
+  if(gb){ const t = curTrack(), an = t && analyzeTrack(t); if(an) map.flyTo({center:an.g[gb.dataset.gat].at, zoom:Math.max(map.getZoom(), 16.5), padding:camPad(), duration:900}); return; }
   const r = e.target.closest('[data-sec]'); if(!r) return;
   const i = +r.dataset.sec; tvSel = tvSel === i ? -1 : i; tvApplySel();
 });
@@ -3593,7 +3734,8 @@ function trackRisk(t){
   const fHigh = tHigh / b.dur, evPer10 = ev / Math.max(1, an.D / 10000);
   const brake = an.g.brake.v, acc = an.g.acc.v, lat = Math.abs(an.g.lat.v);
   // Vergleich mit früheren Fahrten: gleiche Strecke (Start + Ziel), sonst deine üblichen Fahrten
-  const prev = tracks.filter(x => x !== t && x.created < t.created).map(trackBase).filter(Boolean);
+  const pool = t._ws ? [...wsTrackObjs.values()].filter(x => x._ws.dev === t._ws.dev) : tracks;
+  const prev = pool.filter(x => x !== t && x.created < t.created).map(trackBase).filter(Boolean);
   const same = prev.filter(x => dist(x.s, b.s) < 400 && dist(x.e, b.e) < 400);
   const pct = r => r >= 1 ? `${Math.round((r - 1) * 100)} % schneller` : `${Math.round((1 - r) * 100)} % langsamer`;
   let ratio = 1, cmpTxt = 'Erste Fahrt zum Vergleich';
@@ -3633,11 +3775,11 @@ function riskStory(r){
 }
 function riskCardHTML(t){
   const r = trackRisk(t); if(!r) return '';
-  const rank = riskRank(t);
+  const rank = t._ws ? 0 : riskRank(t);
   return `<div class="rk" style="--lv:${r.lv.col}">
     <div class="rk-top"><div class="rk-s"><b>${r.score}</b><span>Risk</span></div>
-      <div class="rk-t"><b>${r.lv.name}</b><span>${rank ? `Platz ${rank} auf der Death List` : 'Nicht in den Top 10'}</span></div>
-      <button class="rk-go" data-dl-open-list>Death List</button></div>
+      <div class="rk-t"><b>${r.lv.name}</b><span>${t._ws ? `Fahrt von ${t._ws.dev === myId() ? 'dir' : esc(t._ws.by)}` : rank ? `Platz ${rank} auf der Death List` : 'Nicht in den Top 10'}</span></div>
+      ${t._ws ? '' : '<button class="rk-go" data-dl-open-list>Death List</button>'}</div>
     <div class="rk-bar"><i style="width:${Math.max(3, r.score)}%;background-size:${(10000 / Math.max(3, r.score)).toFixed(1)}% 100%"></i></div>
     ${r.why.length ? `<div class="rk-why">${r.why.slice(0, 4).map(x => `<span>${esc(x.t)}</span>`).join('')}</div>` : ''}
   </div>`;
@@ -3838,7 +3980,7 @@ function exitReplay(){
   try{ map.dragPan.enable(); map.dragRotate.enable(); }catch(_){}
   map.easeTo({pitch:prefs.terrain ? map.getPitch() : 0, bearing:0, padding:camPad(), duration:600});
   if(!prefs.terrain) map.once('moveend', () => { if(!ckOn && !rp && !prefs.terrain) map.setMaxPitch(0); });
-  const t = tracks.find(x => x.id === id); if(t) setTimeout(() => fitTrack(t.segs), 650);
+  const t = tracks.find(x => x.id === id) || wsTrackObjs.get(String(id).slice(3)); if(t) setTimeout(() => fitTrack(t.segs), 650);
   gRender(null); updateTrackLayers();
 }
 function rpFrame(now){
