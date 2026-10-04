@@ -1694,7 +1694,7 @@ function onMapStyle(){
   for(const id in pendingSrc) map.getSource(id)?.setData(pendingSrc[id]);
   applyLabels(); apply3D(false);
   updateTrackLayers(); drawLive();
-  if(prefs.radar) radToggle(true);
+  if(rad.on) radStart(); else if(prefs.radar) radToggle(true);   // auch wenn vor dem Kartenstart eingeschaltet
   renderMarkers();
   hideSplash();
 }
@@ -4027,7 +4027,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.19';
+const VERSION = '2026.10.05.20';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
