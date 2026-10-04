@@ -848,6 +848,83 @@ body.car3d .rp-car{visibility:hidden}
 .mk-ws .by{overflow:hidden;padding:0;background:none;border:2px solid #fff}
 .mk-ws .by .uav{width:15px!important;height:15px!important;font-size:8.5px!important;box-shadow:none}
 
+/* ---------- Neu & Reaktionen ---------- */
+.nw-tag{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:7px;background:var(--accent);color:var(--accent-fg);font-size:10.5px;font-weight:800;letter-spacing:.03em;vertical-align:2px;line-height:1.25;font-style:normal}
+.ws-seg button{position:relative}
+.seg2.ws-seg button .nw{position:absolute;top:5px;right:6px;min-width:9px;width:9px;height:9px;padding:0;margin:0;font-size:0}
+.seg2 button .nw{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:0 5px;margin-left:5px;border-radius:9px;background:#ff3b30;color:#fff;font-size:11px;font-weight:800;font-style:normal;vertical-align:1px;line-height:1}
+.tabs button.dot{position:relative}
+.tabs button.dot::after{content:'';position:absolute;top:5px;right:7px;width:8px;height:8px;border-radius:50%;background:#ff3b30}
+.chip .nwdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3b30;margin-left:6px;vertical-align:1px}
+.pd{position:relative}
+.pd .nw-tag{position:absolute;top:-6px;left:50%;transform:translateX(-50%);margin:0;z-index:2}
+.rx{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rx-b{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 9px;border-radius:14px;background:var(--fill);font-size:14px;line-height:1;cursor:pointer;user-select:none;-webkit-user-select:none;transition:transform .15s var(--ease),background-color .2s,opacity .2s}
+.rx-b b{font-size:12.5px;font-weight:700;color:var(--fg);font-variant-numeric:tabular-nums}
+.rx-b.on{background:rgba(255,159,10,.22);box-shadow:inset 0 0 0 1.5px #ff9f0a}
+.rx-b.on[data-rx=s]{background:rgba(191,90,242,.2);box-shadow:inset 0 0 0 1.5px #bf5af2}
+.rx-b:active{transform:scale(.88)}
+.rx-b.rx-hit{animation:rxpop .4s var(--ease)}
+@keyframes rxpop{35%{transform:scale(1.3)}}
+.rx.full .rx-b{height:38px;padding:0 14px;font-size:18px;border-radius:19px}
+.rx.full .rx-b b{font-size:14.5px}
+.rx-who{display:inline-flex;align-items:center;margin-left:2px;font-size:12.5px;color:var(--muted);min-width:0}
+.rx-who .uav{margin-right:-6px}
+.rx-who em{font-style:normal;margin-left:12px;line-height:1.3}
+.rx.row{margin-top:5px;gap:4px}
+.rx.row .rx-b{height:22px;padding:0 7px;font-size:12px}
+.rx.row .rx-b b{font-size:11.5px}
+.rx.mini{gap:4px;justify-content:center;margin-top:3px}
+.rx.mini .rx-b{height:24px;padding:0 7px;font-size:12.5px}
+.rx.mini .rx-b.z:not(.on){opacity:.5}
+.rx.fresh .rx-b b{color:#ff9f0a}
+.pd-rn .rx.mini{justify-content:flex-start}
+
+/* ---------- Geister-Rennen gegen Freunde ---------- */
+.ghost.rival{filter:drop-shadow(0 0 7px rgba(255,159,10,.9))}
+.ghost.rival .ghost-tag{background:rgba(255,159,10,.95);color:#1d1200}
+.ghost-chips .chip{gap:6px;padding-left:5px}
+.ghost-chips .chip.on{background:#ff9f0a;border-color:#ff9f0a;color:#1d1200;font-weight:700}
+.ghost-chips .chip .uav{box-shadow:none}
+.btn.rival{background:linear-gradient(135deg,rgba(255,159,10,.24),rgba(191,90,242,.22));color:var(--fg);font-weight:700}
+
+/* ---------- Fahrten vergleichen ---------- */
+.cmp-chips{margin-top:-2px}
+.cmp-chips .chip.on{background:#64d2ff;border-color:#64d2ff;color:#04202b;font-weight:700}
+.cmp{display:flex;flex-direction:column;gap:10px}
+.cmp-head{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cmp-head span{display:flex;flex-direction:column;padding:9px 12px;border-radius:14px;background:var(--solid);border:1px solid var(--line);font-weight:700;font-size:14px}
+.cmp-head small{font-weight:500;color:var(--muted);font-size:12px}
+.cmp-head i{display:inline-block;width:18px;height:4px;border-radius:2px;margin-bottom:6px}
+.cmp-a i{background:#ff9f0a}.cmp-b i{background:#64d2ff}
+.cmp-verdict{padding:12px 14px;border-radius:16px;background:var(--solid);border:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.cmp-verdict b{font-size:24px;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.cmp-verdict b.up{color:#30d158}.cmp-verdict b.dn{color:#ff453a}
+.cmp-verdict span{font-size:13px;color:var(--muted)}
+.cmp-tab{display:grid;grid-template-columns:1.1fr 1fr 1fr;border-radius:14px;background:var(--solid);border:1px solid var(--line);overflow:hidden}
+.cmp-tab>*{padding:8px 12px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.cmp-tab>:nth-child(-n+3){border-top:0}
+.cmp-tab .k{color:var(--muted);font-size:13px}
+.cmp-tab .h{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.cmp-tab .a,.cmp-tab .b{font-weight:700;text-align:right}
+.cmp-tab .win{color:#30d158}
+.tv-chart .cmp-la{fill:none;stroke:#ff9f0a;stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.tv-chart .cmp-lb{fill:none;stroke:#64d2ff;stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:5 3}
+.tv-chart .cmp-up{fill:#30d158;opacity:.4}
+.tv-chart .cmp-dn{fill:#ff453a;opacity:.4}
+.tv-chart .cmp-z{stroke:var(--muted);stroke-width:1;opacity:.6}
+.tv-chart .cmp-pl{fill:var(--muted);font-size:9.5px;font-weight:700;font-family:var(--font);text-transform:uppercase;letter-spacing:.05em}
+
+/* ---------- Parkplatz ---------- */
+.mk-car{cursor:pointer;z-index:3;display:flex;flex-direction:column;align-items:center}
+.mk-car .cpk{width:36px;height:36px;border-radius:50%;background:var(--park);color:#fff;display:grid;place-items:center;box-shadow:0 0 0 3px #fff,0 6px 16px rgba(0,0,0,.45);position:relative}
+.mk-car .cpk::after{content:'P';position:absolute;right:-6px;top:-6px;width:17px;height:17px;border-radius:5px;background:#fff;color:var(--park);font:800 11px/17px var(--font);text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.mk-car .ct{margin-top:6px;padding:3px 7px;border-radius:8px;background:rgba(10,12,16,.84);color:#fff;font:700 11px/1 var(--font);white-space:nowrap}
+.park-hero{display:flex;align-items:center;gap:14px}
+.park-hero .cpk{width:54px;height:54px;border-radius:50%;background:var(--park);color:#fff;display:grid;place-items:center;flex:none}
+.park-hero h2{margin:0}
+.park-dlg .tstats{margin:4px 0 2px}
+
 /* ---------- Live-Standort ---------- */
 .live-mk{width:44px;height:44px;display:grid;place-items:center;cursor:pointer;z-index:4}
 .live-mk .uav{position:relative;box-shadow:0 0 0 3px #30d158,0 6px 16px rgba(0,0,0,.5)}
@@ -1061,6 +1138,7 @@ body.nav #ckLive,body.replay #ckLive{display:none!important}
     <div class="pop-sep"></div>
     <button class="pop-row" id="b-offline"><span>Offline-Karten</span><span class="ri" id="popOff"></span></button>
     <button class="pop-row" data-pf-open><span>0–100 messen</span><span class="ri" id="popTimer"></span></button>
+    <button class="pop-row" id="b-park"><span>Hier geparkt</span><span class="ri"><span class="pmark">P</span></span></button>
     <button class="pop-row" id="b-settings"><span>Einstellungen</span><span class="ri" id="popSet"></span></button>
   </div>
 </div>
@@ -1292,6 +1370,9 @@ function onMapStyle(){
   map.addLayer({id:'track-all-line', type:'line', source:'track-all', layout:rl, paint:{'line-color':'#ff9f0a', 'line-width':3, 'line-opacity':.6}});
   map.addLayer({id:'track-all-hit', type:'line', source:'track-all', layout:rl, paint:{'line-color':'#000', 'line-width':20, 'line-opacity':0}});
   // Rand als durchgehende Linie und deckende Farbstücke – sonst entstehen an den Stößen dunkle Perlen
+  map.addSource('track-cmp', {type:'geojson', data:FC([])});
+  map.addLayer({id:'track-cmp-case', type:'line', source:'track-cmp', layout:rl, paint:{'line-color':'#0b1d26', 'line-width':8, 'line-opacity':.9}});
+  map.addLayer({id:'track-cmp-line', type:'line', source:'track-cmp', layout:rl, paint:{'line-color':'#64d2ff', 'line-width':4.5}});
   map.addLayer({id:'track-view-case', type:'line', source:'track-case', layout:rl, paint:{'line-color':'#111419', 'line-width':11}});
   map.addLayer({id:'track-view-line', type:'line', source:'track-view', layout:rl, paint:{'line-color':rampExpr(), 'line-width':6.5}});
   map.addLayer({id:'track-live-case', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ffffff', 'line-width':8, 'line-opacity':.9}});
@@ -1310,7 +1391,7 @@ function onMapStyle(){
   map.addLayer({id:'course-ends', type:'circle', source:'course-ends', paint:{'circle-radius':7.5, 'circle-color':['match', ['get','k'], 'start', '#30d158', '#ff3b30'], 'circle-stroke-color':'#ffffff', 'circle-stroke-width':3}});
   map.addSource('track-secs', {type:'geojson', data:FC([])}); map.addSource('track-cur', {type:'geojson', data:FC([])});
   map.addLayer({id:'track-secs', type:'circle', source:'track-secs', paint:{'circle-radius':3.5, 'circle-color':'#ffffff', 'circle-stroke-color':'#0b0d10', 'circle-stroke-width':1.5}});
-  map.addLayer({id:'track-cur', type:'circle', source:'track-cur', paint:{'circle-radius':7, 'circle-color':'#ff9f0a', 'circle-stroke-color':'#ffffff', 'circle-stroke-width':3}});
+  map.addLayer({id:'track-cur', type:'circle', source:'track-cur', paint:{'circle-radius':7, 'circle-color':['case', ['==', ['get', 'k'], 'b'], '#64d2ff', '#ff9f0a'], 'circle-stroke-color':'#ffffff', 'circle-stroke-width':3}});
   map.addLayer({id:'track-ends', type:'circle', source:'track-ends', paint:{'circle-radius':6.5, 'circle-color':['match', ['get','k'], 'start', '#30d158', '#ff3b30'], 'circle-stroke-color':'#ffffff', 'circle-stroke-width':2.5}});
   const lineLayout = {'line-cap':'round', 'line-join':'round'};
   map.addLayer({id:'links', type:'line', source:'links', layout:lineLayout, paint:{
@@ -1642,6 +1723,7 @@ function itemHTML(s){
   return `<button class="item" data-id="${s.id}"><span class="ic" style="--c:${cat.color}">${ic(cat.icon, 16)}</span><span class="tx"><span class="t">${esc(s.name)}</span><span class="s">${sub}</span></span></button>`;
 }
 function renderList(){
+  if(!(tab === 'spots' && spotView === 'ws' && !searching)) wsShow = null;
   if(tab === 'tracks') return renderTrackList();
   const q = $('#q').value.trim().toLowerCase();
   const body = $('#listBody');
@@ -1751,6 +1833,7 @@ function renderDetail(s){
     <div class="top"><button class="txtbtn" data-act="back">${svg(UI.back,14)} Spots</button><button class="icon-btn press" data-act="back" aria-label="Schließen">${svg(UI.close,14)}</button></div>
     <div class="pad">
       <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${cat.color}"><span class="ic">${ic(cat.icon,13)}</span>${esc(cat.name)}${me ? `<span class="muted" style="font-weight:500">· ${fmtDist(dist(me, s))} entfernt</span>` : ''}</span><h2>${esc(s.name)}</h2>${s.fromBy ? `<span class="muted">Aus dem Workshop von ${esc(s.fromBy)}</span>` : ''}</div>
+      ${FB && grp() && (s.ws || s.from) ? (() => { const k = s.ws || s.from, w = WS.spots.find(x => x._id === k); return w || s.ws ? `<div class="rx-row">${rxHTML('sp:' + k, w ? w.dev : myId(), 'full')}</div>` : ''; })() : ''}
       ${(s.photos || []).length ? `<div class="ph-strip">${s.photos.map((id, i) => `<img data-ph="${id}" data-i="${i}" alt="Foto ${i + 1} von ${esc(s.name)}">`).join('')}</div>` : ''}
       <button class="btn primary wide" data-act="nav">${svg(UI.nav,16)} ${s.walk && s.parking ? 'Zum Parkplatz navigieren' : 'Navigation starten'}</button>
       <div class="btns"><button class="btn" data-act="share">${svg(UI.share, 15)} Link teilen</button><button class="btn${s.ws ? ' on-ws' : ''}" data-act="ws">${svg(s.ws ? '<path d="m5 12.5 4.5 4.5L19 7.5"/>' : '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 6M17.5 14.2A5.5 5.5 0 0 1 20.5 19"/>', 15, 2.2)} ${s.ws ? 'Im Workshop' : 'In den Workshop'}</button></div>
@@ -2231,7 +2314,7 @@ window.addEventListener('hashchange', handleHash);
    Geschützt über einen langen Gruppen-Code im Pfad (groups/<code>/…) – ohne Code sieht niemand etwas. */
 const FB = {apiKey:'AIzaSyDPD8Bpe1WkswwwSThBUKjlKwDiCAKE4Tw', projectId:'jamsis-spots'};   // Firebase-Projekt der Gruppe (öffentlich, kein Geheimnis)
 const WSKEY = 'meine-spots-ws';
-const WS = {spots:[], runs:[], courses:[], efforts:[], members:[], drives:[], loaded:0, busy:false, err:null, rulesOld:false};
+const WS = {spots:[], runs:[], courses:[], efforts:[], members:[], drives:[], reacts:[], loaded:0, busy:false, err:null, rulesOld:false};
 const wsFull = new Map(), wsTrackObjs = new Map();
 const okImg = u => typeof u === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u) ? u : '';
 try{ Object.assign(WS, JSON.parse(localStorage.getItem(WSKEY) || '{}'), {busy:false, err:null}); }catch(e){}
@@ -2244,10 +2327,10 @@ const fsURL = (col, id) => `https://firestore.googleapis.com/v1/projects/${FB.pr
 async function fsList(col, meta){
   const out = []; let tok = '';
   for(let i = 0; i < 20; i++){
-    const r = await fetch(`${fsURL(col)}?pageSize=300${meta ? '&mask.fieldPaths=m' : ''}${tok ? '&pageToken=' + encodeURIComponent(tok) : ''}&key=${FB.apiKey}`);
+    const r = await fetch(`${fsURL(col)}?pageSize=300${meta ? '&mask.fieldPaths=m&mask.fieldPaths=t' : ''}${tok ? '&pageToken=' + encodeURIComponent(tok) : ''}&key=${FB.apiKey}`);
     if(!r.ok) throw new Error('Firestore ' + r.status);
     const j = await r.json();
-    (j.documents || []).forEach(d => { try{ const f = d.fields || {}, v = JSON.parse((meta && f.m ? f.m : f.d).stringValue); v._id = d.name.split('/').pop(); out.push(v); }catch(e){} });
+    (j.documents || []).forEach(d => { try{ const f = d.fields || {}, v = JSON.parse((meta && f.m ? f.m : f.d).stringValue); v._id = d.name.split('/').pop(); v._t = +((f.t && (f.t.integerValue || f.t.doubleValue)) || 0); out.push(v); }catch(e){} });
     if(!j.nextPageToken) break; tok = j.nextPageToken;
   }
   return out;
@@ -2268,7 +2351,7 @@ async function fsDel(col, id){
   if(!r.ok && r.status !== 404) throw new Error('Firestore ' + r.status);
 }
 function wsCache(){
-  try{ localStorage.setItem(WSKEY, JSON.stringify({spots:WS.spots.map(s => ({...s, ph:[]})), runs:WS.runs, courses:WS.courses, efforts:WS.efforts, members:WS.members, drives:WS.drives, loaded:WS.loaded})); }catch(e){}
+  try{ localStorage.setItem(WSKEY, JSON.stringify({spots:WS.spots.map(s => ({...s, ph:[]})), runs:WS.runs, courses:WS.courses, efforts:WS.efforts, members:WS.members, drives:WS.drives, reacts:WS.reacts, loaded:WS.loaded})); }catch(e){}
 }
 const wsUpsert = (arr, obj) => { const i = arr.findIndex(x => x._id === obj._id); if(i >= 0) arr[i] = obj; else arr.push(obj); };
 function newCode(){ const a = new Uint8Array(18); crypto.getRandomValues(a); return Array.from(a, x => 'abcdefghijkmnpqrstuvwxyz23456789'[x % 32]).join('') + uid().slice(0, 6); }
@@ -2348,7 +2431,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'create') toast('Gruppe erstellt – lad jetzt deine Freunde ein');
   if(a === 'join' || a === 'code') toast(`Willkommen in „${prefs.group.name}“`);
   if(tab !== 'spots') setTab('spots');
-  spotView = 'ws'; WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.loaded = 0;
+  spotView = 'ws'; WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.loaded = 0; delete prefs.wsSeen; delete prefs.rxSeen;
   syncSpotsHead(); refreshAll(); wsSync(true);
   if(next.arg && next.arg.then) next.arg.then();
 });
@@ -2367,15 +2450,17 @@ async function wsSync(force){
   WS.busy = true; WS.err = null; wsRefreshUI();
   try{
     const soft = c => e => { if(/403/.test(e.message)){ WS.rulesOld = true; return null; } throw e; };
-    const [sp, ru, co, ef, mb, dr] = await Promise.all([fsList('spots', true), fsList('runs'), fsList('courses'), fsList('efforts'), fsList('members').catch(soft('members')), fsList('drives', true).catch(soft('drives'))]);
+    const [sp, ru, co, ef, mb, dr, rx] = await Promise.all([fsList('spots', true), fsList('runs'), fsList('courses'), fsList('efforts'), fsList('members').catch(soft('members')), fsList('drives', true).catch(soft('drives')), fsList('reactions').catch(() => null)]);
     Object.assign(WS, {spots:sp, runs:ru, courses:co, efforts:ef, loaded:Date.now()});
     if(mb){ WS.members = mb; WS.drives = dr || []; WS.rulesOld = false; }
+    if(rx) WS.reacts = rx;
     await pushBests(); await pushMember();
-    wsCache();
+    wsCache(); rxNotify();
   }catch(e){ WS.err = 'Workshop gerade nicht erreichbar. Prüfe dein Internet.'; }
   WS.busy = false; wsRefreshUI();
 }
 function wsRefreshUI(){
+  wsBadges();
   if(tab === 'spots' && spotView === 'ws' && view === 'list') renderList();
   if(view === 'ws') renderWsDetail();
   renderWsMarkers();
@@ -2403,8 +2488,10 @@ async function pushBests(){
     if(!WS.courses.some(x => x._id === c.id)) continue;
     const b = courseEfforts(c.id)[0]; if(!b) continue;
     const id = `${c.id}_${dev}`, cur = WS.efforts.find(x => x._id === id);
-    if(cur && cur.time <= b.time && cur.by === myName()) continue;
-    const obj = {by:myName(), dev, course:c.id, time:b.time, date:b.start};
+    if(cur && cur.time <= b.time && cur.by === myName() && (cur.splits || !b.splits)) continue;
+    let sp = b.splits && b.splits.length > 1 ? b.splits : null;
+    while(sp && sp.length > 700) sp = sp.filter((_, i) => i % 2 === 0 || i === sp.length - 1);
+    const obj = {by:myName(), dev, course:c.id, time:b.time, date:b.start, splits:sp};
     await fsPut('efforts', id, obj); wsUpsert(WS.efforts, {...obj, _id:id});
   }
 }
@@ -2470,7 +2557,8 @@ function syncSpotsHead(){
   const h = $('#spotsHead'), on = tab === 'spots' && !searching;
   h.hidden = !on;
   $('#chips').hidden = !on || spotView === 'ws';
-  if(on) h.innerHTML = `<div class="seg2" role="tablist"><button data-sv="mine" class="${spotView === 'mine' ? 'on' : ''}">Meine Spots</button><button data-sv="ws" class="${spotView === 'ws' ? 'on' : ''}">Workshop${WS.spots.length ? ` <span class="n">${WS.spots.length}</span>` : ''}</button></div>`;
+  if(on) h.innerHTML = `<div class="seg2" role="tablist"><button data-sv="mine" class="${spotView === 'mine' ? 'on' : ''}">Meine Spots</button><button data-sv="ws" class="${spotView === 'ws' ? 'on' : ''}">Workshop${spotView !== 'ws' && wsNewTotal() ? `<i class="nw">${wsNewTotal()}</i>` : WS.spots.length ? ` <span class="n">${WS.spots.length}</span>` : ''}</button></div>`;
+  wsBadges(true);
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-sv]'); if(!b || b.dataset.sv === spotView) return;
@@ -2493,6 +2581,7 @@ function renderWorkshop(){
       <div class="btns"><button class="btn" data-wsa="code">Mit Link beitreten</button><button class="btn primary" data-wsa="create">Gruppe erstellen</button></div></div>`;
     return;
   }
+  wsMarkSeen();
   const people = new Set([...WS.spots, ...WS.runs, ...WS.efforts].map(x => x.by).filter(Boolean)); if(myName()) people.add(myName());
   WS.members.forEach(m => m.name && people.add(m.name));
   const faces = [{dev:myId(), name:myName()}, ...WS.members.filter(m => m._id !== myId()).map(m => ({dev:m._id, name:m.name}))].slice(0, 6);
@@ -2502,7 +2591,7 @@ function renderWorkshop(){
     ${WS.err ? `<div class="ws-err">${esc(WS.err)}</div>` : ''}
     ${WS.rulesOld ? `<div class="ws-err">Für Profilbilder und Fahrten müssen die Firebase-Regeln noch aktualisiert werden.</div>` : ''}
     ${!prefs.avatar ? `<button class="ws-avtip" data-wsa="avatar">${avHTML(myId(), myName(), 28)}<span>Profilbild hinzufügen</span></button>` : ''}
-    <div class="seg2 ws-seg"><button data-wss="spots" class="${wsSub === 'spots' ? 'on' : ''}">Spots</button><button data-wss="drives" class="${wsSub === 'drives' ? 'on' : ''}">Fahrten</button><button data-wss="lb" class="${wsSub === 'lb' ? 'on' : ''}">Bestzeiten</button><button data-wss="crew" class="${wsSub === 'crew' ? 'on' : ''}">Crew</button></div>`;
+    <div class="seg2 ws-seg"><button data-wss="spots" class="${wsSub === 'spots' ? 'on' : ''}">Spots${nwBadge('sp')}</button><button data-wss="drives" class="${wsSub === 'drives' ? 'on' : ''}">Fahrten${nwBadge('dr')}</button><button data-wss="lb" class="${wsSub === 'lb' ? 'on' : ''}">Bestzeiten${nwBadge('lb')}</button><button data-wss="crew" class="${wsSub === 'crew' ? 'on' : ''}">Crew</button></div>`;
   body.innerHTML = head + (wsSub === 'lb' ? wsBoardsHTML() : wsSub === 'drives' ? wsDrivesHTML() : wsSub === 'crew' ? wsCrewHTML() : wsSpotsHTML());
 }
 function wsSpotsHTML(){
@@ -2512,25 +2601,25 @@ function wsSpotsHTML(){
   return paste.replace('ws-paste', 'ws-paste top') + list.map(w => {
     const saved = wsSavedAs(w), mine = w.dev === myId(), col = (w.cat && w.cat.color) || '#868e96';
     return `<button class="item" data-ws="${esc(w._id)}"><span class="ic" style="--c:${esc(col)}">${ic((w.cat && w.cat.icon) || 'pin', 16)}</span>
-      <span class="tx"><span class="t">${esc(w.name)}</span><span class="s ws-by">${avHTML(w.dev, w.by, 16)}${mine ? 'von dir' : `von ${esc(w.by || '?')}`}${me ? ` · <span class="me-d">${fmtDist(dist(me, w))}</span>` : ''} · ${ago(w.at || 0)}</span></span>
+      <span class="tx"><span class="t">${esc(w.name)}${isNewIn('sp', w) ? '<i class="nw-tag">Neu</i>' : ''}</span><span class="s ws-by">${avHTML(w.dev, w.by, 16)}${mine ? 'von dir' : `von ${esc(w.by || '?')}`}${me ? ` · <span class="me-d">${fmtDist(dist(me, w))}</span>` : ''} · ${ago(w.at || 0)}</span>${rxHTML('sp:' + w._id, w.dev, 'row')}</span>
       ${saved || mine ? `<span class="ws-ok">${svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>', 15, 2.6)}</span>` : `<span class="ws-add" data-wsave="${esc(w._id)}" role="button" aria-label="Speichern">${svg(UI.plus, 15, 2.6)}</span>`}</button>`;
   }).join('');
 }
 const crewName = (dev, by) => dev === myId() ? 'Du' : ((WS.members.find(m => m._id === dev) || {}).name || by || '?');
-function podiumHTML(rows, fmt, sub){
+function podiumHTML(rows, fmt, sub, key){
   if(!rows.length) return '';
   const top = rows.slice(0, 3), order = [top[1], top[0], top[2]];
   const pod = `<div class="podium">${order.map(r => {
     if(!r) return '<div class="pd empty"></div>';
     const place = r === top[0] ? 1 : r === top[1] ? 2 : 3;
     return `<button class="pd p${place}${r.dev === myId() ? ' is-me' : ''}" data-crew="${esc(r.dev)}">
-      <span class="pd-av">${avHTML(r.dev, r.by, place === 1 ? 66 : 52)}</span>
+      ${isNewIn('lb', r) ? '<i class="nw-tag">Neu</i>' : ''}<span class="pd-av">${avHTML(r.dev, r.by, place === 1 ? 66 : 52)}</span>
       <b class="pd-n">${esc(crewName(r.dev, r.by))}</b><span class="pd-t">${fmt(r.time)}</span>
       <span class="pd-d">${place === 1 ? 'Bestzeit' : fmtDelta(r.time - top[0].time)}</span>
-      <i class="pd-b">${place}</i></button>`;
+      ${key ? rxHTML(key(r), r.dev, 'mini') : ''}<i class="pd-b">${place}</i></button>`;
   }).join('')}</div>`;
   const rest = rows.slice(3).map((r, i) => `<button class="pd-row${r.dev === myId() ? ' is-me' : ''}" data-crew="${esc(r.dev)}"><span class="pd-rk">${i + 4}</span>${avHTML(r.dev, r.by, 32)}
-      <span class="pd-rn">${esc(crewName(r.dev, r.by))}<small>${sub(r)}</small></span><span class="pd-rt">${fmt(r.time)}<small>${fmtDelta(r.time - rows[0].time)}</small></span></button>`).join('');
+      <span class="pd-rn">${esc(crewName(r.dev, r.by))}${isNewIn('lb', r) ? '<i class="nw-tag">Neu</i>' : ''}<small>${sub(r)}</small>${key ? rxHTML(key(r), r.dev, 'mini') : ''}</span><span class="pd-rt">${fmt(r.time)}<small>${fmtDelta(r.time - rows[0].time)}</small></span></button>`).join('');
   return pod + (rest ? `<div class="pd-rows">${rest}</div>` : '');
 }
 function wsBoardsHTML(){
@@ -2539,9 +2628,9 @@ function wsBoardsHTML(){
   let html = `<div class="sec">Beschleunigung</div>`;
   if(!keys.length) html += `<div class="empty" style="padding:10px">Noch keine Zeiten. Miss eine 0–100, deine Bestzeit wird automatisch geteilt.</div>`;
   else {
-    html += `<div class="chips ws-chips">${keys.map(k => `<button class="chip ${k === wsRunKey ? 'on' : ''}" data-wsk="${k}">${k.replace('-', '–')} km/h</button>`).join('')}</div>`;
+    html += `<div class="chips ws-chips">${keys.map(k => `<button class="chip ${k === wsRunKey ? 'on' : ''}" data-wsk="${k}">${k.replace('-', '–')} km/h${WS.runs.some(r => `${r.from}-${r.to}` === k && isNewIn('lb', r)) ? '<i class="nwdot"></i>' : ''}</button>`).join('')}</div>`;
     const rows = WS.runs.filter(r => `${r.from}-${r.to}` === wsRunKey).sort((a, b) => a.time - b.time);
-    html += podiumHTML(rows, fmtS, r => `Ø ${fmtGn(r.ga)} G · ${new Date(r.date).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}`);
+    html += podiumHTML(rows, fmtS, r => `Ø ${fmtGn(r.ga)} G · ${new Date(r.date).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}`, r => `ru:${r._id}:${r.time}`);
   }
   html += `<div class="sec">Rennstrecken</div>`;
   if(!WS.courses.length) html += `<div class="empty" style="padding:10px">Noch keine Rennstrecke geteilt. Öffne eine Rennstrecke und tippe auf „In den Workshop“.</div>`;
@@ -2549,10 +2638,10 @@ function wsBoardsHTML(){
     const rows = WS.efforts.filter(f => f.course === c._id).sort((a, b) => a.time - b.time), have = courses.some(x => x.id === c._id), open = wsOpenCourse === c._id;
     return `<div class="ws-course${open ? ' open' : ''}">
       <button class="ws-chead" data-wsc="${esc(c._id)}"><span class="ic" style="--c:#bf5af2">${svg(ICONS.flag, 16)}</span>
-        <span class="tx"><b>${esc(c.name)}</b><span>${fmtKm(c.len || 0)} · von ${esc(crewName(c.dev, c.by))}</span></span>
+        <span class="tx"><b>${esc(c.name)}${isNewIn('lb', c) || rows.some(f => isNewIn('lb', f)) ? '<i class="nw-tag">Neu</i>' : ''}</b><span>${fmtKm(c.len || 0)} · von ${esc(crewName(c.dev, c.by))}</span></span>
         ${rows[0] ? `<span class="ws-cbest">${avHTML(rows[0].dev, rows[0].by, 26)}<b>${fmtLap(rows[0].time)}</b></span>` : '<span class="ws-cbest muted">keine Zeit</span>'}
         <span class="ws-chev">${svg('<path d="m6 9 6 6 6-6"/>', 16)}</span></button>
-      ${open ? `<div class="ws-cbody">${rows.length ? podiumHTML(rows, fmtLap, f => `${c.len ? Math.round(c.len / f.time * 3.6) + ' km/h Ø · ' : ''}${new Date(f.date).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}`) : '<div class="muted">Noch keine Zeiten auf dieser Strecke.</div>'}
+      ${open ? `<div class="ws-cbody">${rows.length ? podiumHTML(rows, fmtLap, f => `${c.len ? Math.round(c.len / f.time * 3.6) + ' km/h Ø · ' : ''}${new Date(f.date).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}`, f => `ef:${f._id}:${f.time}`) : '<div class="muted">Noch keine Zeiten auf dieser Strecke.</div>'}
         ${have ? '<div class="muted">Ist bei deinen Rennstrecken. Deine Bestzeit wird automatisch geteilt.</div>' : `<button class="btn primary" data-wscsave="${esc(c._id)}">${svg(UI.plus, 15)} Strecke übernehmen und mitfahren</button>`}</div>` : ''}
     </div>`;
   }).join('');
@@ -2683,14 +2772,102 @@ $('#listBody').addEventListener('click', e => {
   const cs = e.target.closest('[data-wscsave]');
   if(cs){
     const c = WS.courses.find(x => x._id === cs.dataset.wscsave); if(!c || courses.some(x => x.id === c._id)) return;
-    courses.push({id:c._id, name:c.name, created:Date.now(), pts:c.pts, len:c.len, loop:!!c.loop, from:c.by}); saveCourses(); syncMatchers();
+    const lead = WS.efforts.filter(f => f.course === c._id && f.dev !== myId() && f.splits && f.splits.length > 1).sort((a, b) => a.time - b.time)[0];
+    courses.push({id:c._id, name:c.name, created:Date.now(), pts:c.pts, len:c.len, loop:!!c.loop, from:c.by, ghost:lead ? lead.dev : null}); saveCourses(); syncMatchers();
     let n = 0; tracks.forEach(t => n += scanTrack(t, c._id).length);
-    toast(`„${c.name}“ übernommen${n ? ` · ${n} Zeit${n > 1 ? 'en' : ''} aus deinen Fahrten gefunden` : ''}`);
+    toast(`„${c.name}“ übernommen${lead ? ` · Geist: ${lead.by} (${fmtLap(lead.time)})` : ''}${n ? ` · ${n} Zeit${n > 1 ? 'en' : ''} aus deinen Fahrten` : ''}`);
     pushBests().then(() => { wsCache(); renderList(); }).catch(() => {}); renderList(); return;
   }
   const dv = e.target.closest('[data-wsdrv]'); if(dv){ openWsDrive(dv.dataset.wsdrv); return; }
   const it = e.target.closest('[data-ws]'); if(it) openWsSpot(it.dataset.ws);
 });
+
+/* „Neu“ seit dem letzten Besuch: zählt Spots, Fahrten, Zeiten und Reaktionen auf deine Sachen */
+const NEWK = {spots:'sp', drives:'dr', lb:'lb'};
+let wsShow = null;   // Stand beim Betreten des Workshops – so lange bleibt „Neu“ sichtbar
+function wsSeen(){ if(!prefs.wsSeen){ const n = Date.now(); prefs.wsSeen = {sp:n, dr:n, lb:n}; savePrefs(); } return prefs.wsSeen; }
+const rxCat = k => k.startsWith('sp:') ? 'sp' : k.startsWith('dr:') ? 'dr' : 'lb';
+function wsNewList(cat, since){
+  const mine = myId(), fresh = x => x && x.dev !== mine && (x._t || 0) > since;
+  const arr = cat === 'sp' ? WS.spots : cat === 'dr' ? WS.drives : [...WS.runs, ...WS.efforts, ...WS.courses];
+  return arr.filter(fresh).concat(WS.reacts.filter(r => r.o === mine && rxCat(r.k) === cat && fresh(r)));
+}
+const wsNewCount = cat => grp() ? wsNewList(cat, wsSeen()[cat]).length : 0;
+const wsNewTotal = () => wsNewCount('sp') + wsNewCount('dr') + wsNewCount('lb');
+const isNewIn = (cat, x) => !!(wsShow && x && x.dev !== myId() && (x._t || 0) > wsShow[cat]);
+const nwBadge = cat => { const n = wsNewCount(cat); return n ? `<i class="nw">${n}</i>` : ''; };
+function wsMarkSeen(){
+  if(!grp()) return;
+  if(!wsShow) wsShow = {...wsSeen()};
+  const cat = NEWK[wsSub]; if(!cat) return;
+  const t = Math.max(Date.now(), ...wsNewList(cat, 0).map(x => x._t || 0));
+  if(prefs.wsSeen[cat] !== t){ prefs.wsSeen[cat] = t; savePrefs(); }
+  syncSpotsHead();
+}
+function wsBadges(skipHead){
+  const n = wsNewTotal(), here = tab === 'spots' && spotView === 'ws';
+  const tb = document.querySelector('.tabs [data-tab="spots"]'); if(tb) tb.classList.toggle('dot', n > 0 && !here);
+  if(!skipHead) syncSpotsHead();
+}
+
+/* Reaktionen 🔥 💀 auf Spots, Fahrten und Bestzeiten */
+const RX = {f:'🔥', s:'💀'};
+const rxOf = key => WS.reacts.filter(r => r.k === key);
+function rxHTML(key, owner, mode){
+  if(!FB || !grp()) return '';
+  const list = rxOf(key), mine = list.find(r => r.dev === myId());
+  if(mode === 'row' && !list.length) return '';
+  const fresh = list.some(r => r.o === myId() && isNewIn(rxCat(key), r));
+  const btn = e => { const n = list.filter(r => r.e === e).length; if(mode === 'row' && !n) return '';
+    return `<span class="rx-b${mine && mine.e === e ? ' on' : ''}${n ? '' : ' z'}" role="button" tabindex="0" data-rx="${e}" aria-label="${e === 'f' ? 'Feuer' : 'Totenkopf'}${n ? ': ' + n : ''}">${RX[e]}${n ? `<b>${n}</b>` : ''}</span>`; };
+  let who = '';
+  if(mode === 'full' && list.length){
+    const names = e => list.filter(r => r.e === e).map(r => esc(crewName(r.dev, r.by)));
+    const part = e => { const n = names(e); return n.length ? `${RX[e]} ${n.slice(0, 3).join(', ')}${n.length > 3 ? ` +${n.length - 3}` : ''}` : ''; };
+    who = `<span class="rx-who">${list.slice(0, 4).map(r => avHTML(r.dev, r.by, 20)).join('')}<em>${[part('f'), part('s')].filter(Boolean).join(' · ')}</em></span>`;
+  }
+  return `<span class="rx ${mode}${fresh ? ' fresh' : ''}" data-rxk="${esc(key)}" data-rxo="${esc(owner || '')}" data-rxm="${mode}">${btn('f')}${btn('s')}${who}</span>`;
+}
+function rxPatch(key){
+  document.querySelectorAll('[data-rxk]').forEach(el => { if(el.dataset.rxk === key) el.outerHTML = rxHTML(key, el.dataset.rxo, el.dataset.rxm); });
+}
+async function react(key, e, owner){
+  if(!needGroup(() => react(key, e, owner))) return;
+  const id = `${myId()}_${key}`, cur = WS.reacts.find(x => x._id === id), before = WS.reacts.slice();
+  if(navigator.vibrate) try{ navigator.vibrate(8); }catch(_){}
+  try{
+    if(cur && cur.e === e){ WS.reacts = WS.reacts.filter(x => x._id !== id); rxPatch(key); await fsDel('reactions', id); }
+    else {
+      const o = {k:key, e, o:owner || '', dev:myId(), by:myName(), at:Date.now()};
+      wsUpsert(WS.reacts, {...o, _id:id, _t:o.at}); rxPatch(key);
+      document.querySelectorAll(`[data-rxk] [data-rx="${e}"]`).forEach(b => { if(b.closest('[data-rxk]').dataset.rxk === key) b.classList.add('rx-hit'); });
+      await fsPut('reactions', id, o);
+    }
+    wsCache();
+  }catch(err){ WS.reacts = before; rxPatch(key); toast('Reaktion hat nicht geklappt. Prüfe dein Internet.'); }
+}
+document.addEventListener('click', e => {   // vor den Zeilen-Klicks abfangen
+  const b = e.target.closest('[data-rx]'), w = b && b.closest('[data-rxk]'); if(!w) return;
+  e.stopPropagation(); e.preventDefault();
+  react(w.dataset.rxk, b.dataset.rx, w.dataset.rxo);
+}, true);
+function rxWhat(k){
+  const id = k.slice(3), pre = k.slice(0, 3);
+  if(pre === 'sp:'){ const w = WS.spots.find(x => x._id === id); return w ? `deinen Spot „${w.name}“` : 'deinen Spot'; }
+  if(pre === 'dr:'){ const d = WS.drives.find(x => x._id === id); return d ? `deine Fahrt „${d.name}“` : 'deine Fahrt'; }
+  const rid = id.slice(0, id.lastIndexOf(':'));
+  if(pre === 'ru:'){ const r = WS.runs.find(x => x._id === rid); return r ? `deine ${r.from}–${r.to}-Zeit` : 'deine Bestzeit'; }
+  const f = WS.efforts.find(x => x._id === rid), c = f && WS.courses.find(x => x._id === f.course);
+  return c ? `deine Zeit auf „${c.name}“` : 'deine Rundenzeit';
+}
+function rxNotify(){
+  const mine = myId(), since = prefs.rxSeen;
+  const fresh = WS.reacts.filter(r => r.o === mine && r.dev !== mine && (r._t || 0) > (since || 0));
+  prefs.rxSeen = Math.max(Date.now(), ...fresh.map(r => r._t || 0)); savePrefs();
+  if(!since || !fresh.length) return;
+  if(fresh.length === 1){ const r = fresh[0]; toast(`${RX[r.e]} ${r.by} hat auf ${rxWhat(r.k)} reagiert`); }
+  else toast(`${fresh.length} neue Reaktionen auf deine Sachen`);
+}
 
 /* Fahrten teilen und ansehen */
 function trimSegs(segs, m){   // Start und Ziel kürzen, damit z. B. die Haustür nicht sichtbar ist
@@ -2742,9 +2919,9 @@ function wsDrivesHTML(){
   const list = WS.drives.slice().sort((a, b) => (b.created || b.at || 0) - (a.created || a.at || 0));
   if(!list.length) return `<div class="empty"><b>Noch keine Fahrten geteilt</b>Öffne unter „Strecken“ eine deiner Fahrten und tippe auf „Fahrt in den Workshop teilen“. Start und Ziel werden dabei um 250 m gekürzt.</div>`;
   return list.map(d => `<button class="item ws-drive" data-wsdrv="${esc(d._id)}">${avHTML(d.dev, d.by, 40)}
-      <span class="tx"><span class="t">${esc(d.name)}</span>
+      <span class="tx"><span class="t">${esc(d.name)}${isNewIn('dr', d) ? '<i class="nw-tag">Neu</i>' : ''}</span>
         <span class="s">${d.dev === myId() ? 'Du' : esc(d.by || '?')}${placeTxt(d) ? ' · ' + esc(placeTxt(d)) : ''}</span>
-        <span class="s">${fmtKmS(d.dist || 0)} · ${Math.round((d.maxSpd || 0) * 3.6)} km/h top · ${fmtDate(d.created || d.at)}</span></span>
+        <span class="s">${fmtKmS(d.dist || 0)} · ${Math.round((d.maxSpd || 0) * 3.6)} km/h top · ${fmtDate(d.created || d.at)}</span>${rxHTML('dr:' + d._id, d.dev, 'row')}</span>
       ${d.risk != null ? `<span class="rk-pill" style="--lv:${riskLevel(d.risk).col}">${d.risk}</span>` : ''}</button>`).join('');
 }
 async function openWsDrive(id){
@@ -2759,7 +2936,7 @@ async function openWsDrive(id){
     hideToast();
   }
   const t = wsTrackObjs.get(id);
-  selTrack = t.id; trackRenaming = false; trackDelArmed = false; tvSel = -1;
+  selTrack = t.id; trackRenaming = false; trackDelArmed = false; tvSel = -1; tvCmp = null;
   renderTrackView(); show('track', mobile() && snap === 'full' ? 'full' : 'half');
   fitTrack(t.segs);
 }
@@ -2780,6 +2957,7 @@ function renderWsDetail(){
     <div class="pad">
       <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${esc(col)}"><span class="ic">${ic((w.cat && w.cat.icon) || 'pin', 13)}</span>${esc((w.cat && w.cat.name) || 'Spot')}</span><h2>${esc(w.name)}</h2>
         <span class="muted ws-by">${avHTML(w.dev, w.by, 20)}Geteilt ${mine ? 'von dir' : `von ${esc(w.by || '?')}`} · ${ago(w.at || 0)}${me ? ` · ${fmtDist(dist(me, w))} entfernt` : ''}</span></div>
+      <div class="rx-row">${rxHTML('sp:' + w._id, w.dev, 'full')}</div>
       ${(() => { const f = wsFull.get(w._id), ph = ((f || w).ph || []).map(okImg).filter(Boolean);
         if(ph.length) return `<div class="ph-strip">${ph.map((u, i) => `<img src="${u}" data-wsph="${i}" alt="Foto ${i + 1}">`).join('')}</div>`;
         if(w.nph && !f){ wsFullSpot(w).then(() => { if(view === 'ws' && wsSel === w._id) renderWsDetail(); }); return `<div class="muted">${w.nph} Foto${w.nph > 1 ? 's' : ''} wird geladen …</div>`; }
@@ -2929,7 +3107,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.9';
+const VERSION = '2026.10.04.10';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -2968,6 +3146,7 @@ function renderSettings(){
         ${tg('car3d', '3D-Auto', 'Aus: flaches Symbol, spart Akku')}
         ${tg('gforce', 'G-Kraft-Anzeige', 'Bewegungssensor, richtet sich beim Fahren selbst aus')}
         ${tg('limit', 'Tempolimit anzeigen')}
+        ${tg('autoPark', 'Parkplatz merken', 'Nach einer Fahrt beim Verlassen des Cockpits')}
         ${tg('ghost', 'Geister-Auto auf Rennstrecken')}
         ${tg('sound', 'Töne bei der 0–100-Messung')}
       </div>
@@ -3014,7 +3193,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'gjoin') openGroupDlg('code', {});
   if(a === 'gleave'){
     if(!b.classList.contains('armed')){ b.classList.add('armed'); b.querySelector('span').textContent = 'Wirklich verlassen? Nochmal tippen'; return; }
-    liveStop(true); delete prefs.group; savePrefs(); liveWatch(); WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.loaded = 0; wsCache();
+    liveStop(true); delete prefs.group; delete prefs.wsSeen; delete prefs.rxSeen; savePrefs(); liveWatch(); WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.loaded = 0; wsCache();
     renderSettings(); syncSpotsHead(); refreshAll(); renderWsMarkers(); toast('Gruppe verlassen');
   }
   if(a === 'export') $('#exportBtn').click();
@@ -3254,10 +3433,11 @@ function updateTrackLayers(){
     const an = analyzeTrack(t);
     setSrc('track-view', FC(an ? an.feats : segFeatures(t.segs)));
     setSrc('track-case', FC(segFeatures(t.segs)));
+    const cb = cmpPartner(t); setSrc('track-cmp', FC(cb ? segFeatures(cb.segs) : []));
     setSrc('track-secs', FC(an ? an.bounds : []));
     setSrc('track-ends', FC([{type:'Feature', properties:{k:'start'}, geometry:{type:'Point', coordinates:[first[0], first[1]]}},
                              {type:'Feature', properties:{k:'end'}, geometry:{type:'Point', coordinates:[last[0], last[1]]}}]));
-  } else { setSrc('track-view', FC([])); setSrc('track-case', FC([])); setSrc('track-ends', FC([])); setSrc('track-secs', FC([])); setSrc('track-cur', FC([])); }
+  } else { setSrc('track-cmp', FC([])); setSrc('track-view', FC([])); setSrc('track-case', FC([])); setSrc('track-ends', FC([])); setSrc('track-secs', FC([])); setSrc('track-cur', FC([])); }
   tvPaint(); tvGMarkers(t || null);
   updateCourseLayers();
 }
@@ -3306,6 +3486,7 @@ function resumeRec(){
 function stopRec(){
   if(!rec || rec.stopped) return;
   if(ckOn) exitCockpit();
+  else parkAuto(rec.dist || 0, me && meTime && Date.now() - meTime < 120000 ? me : null, null);
   gStop();
   if(rec.runFrom){ rec.active += Date.now() - rec.runFrom; rec.runFrom = null; }
   stopWatch(); releaseWake(); clearInterval(recTick);
@@ -3523,14 +3704,14 @@ function fitTrack(segs){
 }
 function openTrack(id, fly = true){
   const t = tracks.find(x => x.id === id); if(!t) return;
-  selTrack = id; trackRenaming = false; trackDelArmed = false; tvSel = -1;
+  selTrack = id; trackRenaming = false; trackDelArmed = false; tvSel = -1; tvCmp = null;
   if(tab !== 'tracks') setTab('tracks');
   if(sub !== 'rec'){ sub = 'rec'; renderTracksHead(); renderList(); }
   renderTrackView(); show('track', mobile() && snap === 'full' ? 'full' : 'half');
   fitTrack(t.segs);
 }
 function curTrack(){ return selTrack && String(selTrack).startsWith('ws:') ? (wsTrackObjs.get(selTrack.slice(3)) || null) : tracks.find(x => x.id === selTrack); }
-function closeTrack(){ const foreign = selTrack && String(selTrack).startsWith('ws:'); selTrack = null; tvSel = -1; renderList(); show('list', 'half'); if(foreign) renderWsMarkers(); }
+function closeTrack(){ const foreign = selTrack && String(selTrack).startsWith('ws:'); selTrack = null; tvSel = -1; tvCmp = null; renderList(); show('list', 'half'); if(foreign) renderWsMarkers(); }
 function renderTrackView(){
   const t = curTrack(); if(!t) return;
   const avg = t.dur > 0 ? t.dist / (t.dur / 1000) : 0;
@@ -3540,6 +3721,7 @@ function renderTrackView(){
       ${t._ws ? `<div style="display:flex;flex-direction:column;gap:6px"><span class="badge ws-by">${avHTML(t._ws.dev, t._ws.by, 22)}Fahrt von ${t._ws.dev === myId() ? 'dir' : esc(t._ws.by)}</span><h2>${esc(t.name)}</h2><span class="muted">${fmtDate(t.created)}${placeTxt(t) ? ' · ' + esc(placeTxt(t)) : ''}</span></div>` : trackRenaming
         ? `<div class="row"><input class="inp" id="tv-name" value="${esc(t.name)}" maxlength="80"><button class="txtbtn bold" data-tv="renamesave">Fertig</button></div>`
         : `<div style="display:flex;flex-direction:column;gap:4px"><span class="badge" style="--c:#ff9f0a"><span class="ic">${svg(UI.route,13)}</span>Strecke</span><h2>${esc(t.name)}</h2><span class="muted">${fmtDate(t.created)}</span></div>`}
+      ${t._ws ? `<div class="rx-row">${rxHTML('dr:' + t._ws.docId, t._ws.dev, 'full')}</div>` : t.ws && FB && grp() ? `<div class="rx-row">${rxHTML('dr:' + t.ws, myId(), 'full')}</div>` : ''}
       <div class="tstats">
         <div><b>${fmtKm(t.dist)}</b><span>Distanz</span></div>
         <div><b>${fmtDur(t.dur)}</b><span>Dauer</span></div>
@@ -3547,9 +3729,11 @@ function renderTrackView(){
         <div><b>${fmtSpd(t.maxSpd || 0)}</b><span>Max. Tempo</span></div>
       </div>
       ${riskCardHTML(t)}
+      ${cmpHTML(t)}
       ${analyzeTrack(t) ? `<button class="btn primary" data-tv="replay">${svg(UI.play, 15)} Fahrt abspielen</button>` : ''}
       ${tvDetailsHTML(t)}
-      <button class="btn" data-tv="course">${svg(ICONS.flag,15)} Als Rennstrecke speichern</button>
+      ${t._ws && t._ws.dev !== myId() ? `<button class="btn rival" data-tv="rival">${svg(ICONS.flag,15)} ${courses.some(c => c.fromDrive === t._ws.docId) ? `Geister-Rennen gegen ${esc(t._ws.by)} öffnen` : `Geister-Rennen gegen ${esc(t._ws.by)}`}</button>` : ''}
+      ${t._ws && t._ws.dev !== myId() ? '' : `<button class="btn" data-tv="course">${svg(ICONS.flag,15)} Als Rennstrecke speichern</button>`}
       <button class="btn" data-tv="gpx">${svg(UI.share,15)} Als GPX exportieren</button>
       ${FB && !t._ws ? `<button class="btn${t.ws ? ' on-ws' : ''}" data-tv="ws">${t.ws ? 'Im Workshop geteilt · entfernen' : 'Fahrt in den Workshop teilen'}</button>` : ''}
       ${t._ws ? '' : `<div class="btns"><button class="btn" data-tv="rename">Umbenennen</button><button class="btn danger" data-tv="del">Löschen</button></div>`}
@@ -3565,6 +3749,7 @@ $('#trackView').addEventListener('click', e => {
   if(a === 'rename'){ trackRenaming = true; renderTrackView(); }
   if(a === 'renamesave'){ t.name = $('#tv-name').value.trim() || t.name; saveTracks(); trackRenaming = false; renderTrackView(); }
   if(a === 'course') return courseFromTrack(t);
+  if(a === 'rival') return rivalFromDrive(t);
   if(a === 'replay') return startReplay(t);
   if(a === 'ws'){
     if(!t.ws) return wsUploadDrive(t);
@@ -3756,20 +3941,154 @@ function tvScrubEnd(){
   setSrc('track-cur', FC([]));
 }
 $('#trackView').addEventListener('pointerdown', e => {
+  if(e.target.closest('#cmpChart')){ cmpDown = true; try{ e.target.closest('#cmpChart').setPointerCapture(e.pointerId); }catch(_){} cmpScrub(e); return; }
   if(!e.target.closest('#tvChart')) return;
   tvDown = true; try{ e.target.closest('#tvChart').setPointerCapture(e.pointerId); }catch(_){}
   tvScrub(e);
 });
-$('#trackView').addEventListener('pointermove', e => { if(tvDown || (e.pointerType === 'mouse' && e.target.closest('#tvChart'))) tvScrub(e); });
-$('#trackView').addEventListener('pointerup', () => { tvDown = false; });
-$('#trackView').addEventListener('pointercancel', () => { tvDown = false; });
+$('#trackView').addEventListener('pointermove', e => { if(cmpDown || (e.pointerType === 'mouse' && e.target.closest('#cmpChart'))) return cmpScrub(e); if(tvDown || (e.pointerType === 'mouse' && e.target.closest('#tvChart'))) tvScrub(e); });
+$('#trackView').addEventListener('pointerup', () => { tvDown = false; cmpDown = false; });
+$('#trackView').addEventListener('pointercancel', () => { tvDown = false; cmpDown = false; });
 $('#trackView').addEventListener('pointerout', e => { if(e.pointerType === 'mouse' && !tvDown && e.target.closest('#tvChart') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('#tvChart'))) tvScrubEnd(); });
 $('#trackView').addEventListener('click', e => {
+  const cc = e.target.closest('[data-cmp]');
+  if(cc){ const t = curTrack(); tvCmp = tvCmp === cc.dataset.cmp ? null : cc.dataset.cmp; renderTrackView(); updateTrackLayers();
+    const b = cmpPartner(t); if(t && b) fitTrack([...t.segs, ...b.segs]); return; }
   const gb = e.target.closest('[data-gat]');
   if(gb){ const t = curTrack(), an = t && analyzeTrack(t); if(an) map.flyTo({center:an.g[gb.dataset.gat].at, zoom:Math.max(map.getZoom(), 16.5), padding:camPad(), duration:900}); return; }
   const r = e.target.closest('[data-sec]'); if(!r) return;
   const i = +r.dataset.sec; tvSel = tvSel === i ? -1 : i; tvApplySel();
 });
+
+/* ================= Eigene Fahrten vergleichen =================
+   Ähnliche Fahrten: mindestens die Hälfte beider Strecken deckt sich, gleiche Richtung.
+   Verglichen wird der gemeinsame Abschnitt, gemessen entlang dieser Fahrt. */
+let tvCmp = null, cmpDown = false;
+const sigCache = new WeakMap(), simCache = new Map(), cmpCache = new Map();
+const GCELL = .001;
+function trackSig(t){
+  if(sigCache.has(t)) return sigCache.get(t);
+  const out = []; let last = null;
+  t.segs.forEach(sg => sg.forEach(q => { const p = {lat:q[1], lng:q[0]}; if(!last || dist(last, p) >= 40){ out.push(p); last = p; } }));
+  sigCache.set(t, out); return out;
+}
+function gridOf(pts){ const g = new Map(); pts.forEach((p, i) => { const k = Math.floor(p.lat / GCELL) + ':' + Math.floor(p.lng / GCELL); let l = g.get(k); if(!l) g.set(k, l = []); l.push(i); }); return g; }
+function gridNear(g, pts, p, r){
+  const a = Math.floor(p.lat / GCELL), b = Math.floor(p.lng / GCELL), out = [];
+  for(let i = -1; i <= 1; i++) for(let j = -1; j <= 1; j++){ const l = g.get((a + i) + ':' + (b + j)); if(l) for(const k of l) if(dist(pts[k], p) <= r) out.push(k); }
+  return out;
+}
+function simOf(a, b){
+  const key = a.id + '|' + b.id; if(simCache.has(key)) return simCache.get(key);
+  const A = trackSig(a), B = trackSig(b); let res = null;
+  if(A.length >= 6 && B.length >= 6){
+    const gA = gridOf(A), gB = gridOf(B);
+    let hitB = 0, prev = -1, fw = 0, bw = 0;
+    B.forEach(p => { const n = gridNear(gA, A, p, 60); if(!n.length) return; hitB++;
+      const k = prev < 0 ? Math.min(...n) : n.reduce((m, x) => Math.abs(x - prev) < Math.abs(m - prev) ? x : m, n[0]);
+      if(prev >= 0){ if(k > prev) fw++; else if(k < prev) bw++; } prev = k; });
+    let hitA = 0; A.forEach(p => { if(gridNear(gB, B, p, 60).length) hitA++; });
+    const oA = hitA / A.length, oB = hitB / B.length;
+    if(oA >= .5 && oB >= .5 && fw > bw * 2) res = {oA, oB};
+  }
+  simCache.set(key, res); return res;
+}
+function similarTracks(t){
+  if(!t || t._ws || !analyzeTrack(t)) return [];
+  return tracks.filter(x => x.id !== t.id && x.segs && x.segs.length && analyzeTrack(x) && simOf(t, x))
+    .sort((p, q) => Math.abs((p.created || 0) - (t.created || 0)) - Math.abs((q.created || 0) - (t.created || 0))).slice(0, 8)
+    .sort((p, q) => (q.created || 0) - (p.created || 0));
+}
+function cmpPartner(t){ if(!t || !tvCmp || t._ws) return null; const b = tracks.find(x => x.id === tvCmp); return b && b.id !== t.id ? b : null; }
+function cmpCalc(a, b){
+  const key = a.id + '>' + b.id; if(cmpCache.has(key)) return cmpCache.get(key);
+  const anA = analyzeTrack(a), anB = analyzeTrack(b); let res = null;
+  if(anA && anB){
+    const PA = anA.P, gA = gridOf(PA), m = []; let last = -1, lastD = -1;
+    anB.P.forEach(p => {
+      const n = gridNear(gA, PA, p, 45); if(!n.length) return;
+      let best = -1, bc = Infinity;
+      for(const k of n){ const back = last >= 0 ? Math.max(0, PA[last].d - PA[k].d) : 0, jump = last >= 0 ? Math.abs(PA[k].d - PA[last].d) : 0; const c = dist(PA[k], p) + back * 3 + jump * .05; if(c < bc){ bc = c; best = k; } }
+      let d = PA[best].d; const nx = PA[best + 1];
+      if(nx && nx.si === PA[best].si && nx.d > d){   // auf das Teilstück projizieren
+        const kx = Math.cos(p.lat * Math.PI / 180), ax = (nx.lng - PA[best].lng) * kx, ay = nx.lat - PA[best].lat, bx = (p.lng - PA[best].lng) * kx, by = p.lat - PA[best].lat;
+        const f = Math.max(0, Math.min(1, (ax * bx + ay * by) / (ax * ax + ay * ay || 1))); d += f * (nx.d - d);
+      }
+      if(d <= lastD) return;
+      m.push({d, t:p.ta, v:p.v}); lastD = d; last = best;
+    });
+    if(m.length >= 8 && m[m.length - 1].d - m[0].d >= 500){
+      const d0 = m[0].d, d1 = m[m.length - 1].d, L = d1 - d0;
+      const at = (d, k) => { let lo = 0, hi = m.length - 1; while(hi - lo > 1){ const md = (lo + hi) >> 1; if(m[md].d < d) lo = md; else hi = md; } const A = m[lo], B = m[hi], f = B.d > A.d ? Math.max(0, Math.min(1, (d - A.d) / (B.d - A.d))) : 0; return A[k] + f * (B[k] - A[k]); };
+      const tA0 = anA.lerp(d0, 'ta'), tB0 = m[0].t, N = 220, rows = [];
+      for(let i = 0; i < N; i++){ const d = d0 + L * i / (N - 1), ta = anA.lerp(d, 'ta') - tA0, tb = at(d, 't') - tB0; rows.push({d, x:d - d0, ta, tb, gap:tb - ta, va:anA.lerp(d, 'v'), vb:at(d, 'v')}); }
+      const tA = rows[N - 1].ta, tB = rows[N - 1].tb;
+      res = {d0, d1, L, rows, tA, tB, avgA:L / Math.max(1, tA) * 3.6, avgB:L / Math.max(1, tB) * 3.6, maxA:Math.max(...rows.map(r => r.va)), maxB:Math.max(...rows.map(r => r.vb)), share:L / anA.D};
+    }
+  }
+  cmpCache.set(key, res); return res;
+}
+const fmtGap = s => { const a = Math.abs(s); return a < 60 ? `${a.toFixed(a < 10 ? 1 : 0).replace('.', ',')} s` : fmtDur(a * 1000); };
+const dayLbl = ts => new Date(ts).toLocaleDateString('de-DE', {weekday:'short', day:'numeric', month:'numeric'});
+function cmpGeom(c){
+  const W = 340, l = 30, r = 10, tp = 16, h1 = 112, gapY = 26, h2 = 74, bt = 18, H = tp + h1 + gapY + h2 + bt, iw = W - l - r;
+  const vmax = Math.max(10, c.maxA, c.maxB), step = [5,10,20,25,50,100].find(s => vmax / s <= 4) || 100, ymax = Math.ceil(vmax / step) * step;
+  const gmax = Math.max(2, ...c.rows.map(x => Math.abs(x.gap))) * 1.1, y2 = tp + h1 + gapY;
+  return {W, H, l, r, tp, h1, h2, y2, iw, step, ymax, gmax, X:x => l + x / c.L * iw, Y:v => tp + h1 - v / ymax * h1, G:g => y2 + h2 / 2 - g / gmax * (h2 / 2)};
+}
+function cmpHTML(t){
+  const list = similarTracks(t); if(!list.length) return '';
+  if(tvCmp && !list.some(x => x.id === tvCmp)) tvCmp = null;
+  let html = `<div class="st-h">Vergleichen <em>${tvCmp ? 'mit früherer Fahrt' : `${list.length} ähnliche Fahrt${list.length > 1 ? 'en' : ''}`}</em></div>
+    <div class="chips cmp-chips">${list.map(x => `<button class="chip${x.id === tvCmp ? ' on' : ''}" data-cmp="${esc(x.id)}">${dayLbl(x.created)}${Math.abs((x.created || 0) - (t.created || 0)) > 6 * 864e5 && Math.abs((x.created || 0) - (t.created || 0)) < 8 * 864e5 ? ' · letzte Woche' : ''}</button>`).join('')}</div>`;
+  const b = cmpPartner(t); if(!b) return html;
+  const c = cmpCalc(t, b);
+  if(!c) return html + `<div class="muted">Die gemeinsame Strecke ist zu kurz für einen Vergleich.</div>`;
+  const diff = c.tB - c.tA, rA = trackRisk(t), rB = trackRisk(b), f1 = x => x.toFixed(1), g = cmpGeom(c), {X, Y, G} = g;
+  const win = (a, bb, hi = true) => a === bb ? ['', ''] : (a > bb) === hi ? [' win', ''] : ['', ' win'];
+  const row = (k, a, bb, wa, wb) => `<span class="k">${k}</span><span class="a${wa || ''}">${a}</span><span class="b${wb || ''}">${bb}</span>`;
+  const [wt1, wt2] = win(c.tA, c.tB, false), [wv1, wv2] = win(Math.round(c.avgA), Math.round(c.avgB)), [wm1, wm2] = win(Math.round(c.maxA), Math.round(c.maxB));
+  let grid = '';
+  for(let v = 0; v <= g.ymax; v += g.step) grid += `<line class="grid" x1="${g.l}" x2="${g.W - g.r}" y1="${f1(Y(v))}" y2="${f1(Y(v))}"/><text class="ax" x="${g.l - 6}" y="${f1(Y(v) + 3)}" text-anchor="end">${v}</text>`;
+  const path = k => c.rows.map((r, i) => `${i ? 'L' : 'M'}${f1(X(r.x))} ${f1(Y(r[k]))}`).join('');
+  const zero = G(0), up = `M${g.l} ${f1(zero)}` + c.rows.map(r => `L${f1(X(r.x))} ${f1(G(Math.max(0, r.gap)))}`).join('') + `L${f1(X(c.L))} ${f1(zero)}Z`;
+  const dn = `M${g.l} ${f1(zero)}` + c.rows.map(r => `L${f1(X(r.x))} ${f1(G(Math.min(0, r.gap)))}`).join('') + `L${f1(X(c.L))} ${f1(zero)}Z`;
+  const gl = Math.round(g.gmax / 1.1);
+  const svgC = `<svg viewBox="0 0 ${g.W} ${g.H}" role="img" aria-label="Tempo und Abstand beider Fahrten">
+    <text class="cmp-pl" x="${g.l}" y="${g.tp - 6}">Tempo km/h</text>${grid}
+    <path class="cmp-lb" d="${path('vb')}"/><path class="cmp-la" d="${path('va')}"/>
+    <text class="cmp-pl" x="${g.l}" y="${g.y2 - 8}">Vorsprung</text>
+    <path class="cmp-up" d="${up}"/><path class="cmp-dn" d="${dn}"/>
+    <line class="cmp-z" x1="${g.l}" x2="${g.W - g.r}" y1="${f1(zero)}" y2="${f1(zero)}"/>
+    <text class="ax" x="${g.l - 6}" y="${f1(G(gl) + 3)}" text-anchor="end">+${gl}s</text><text class="ax" x="${g.l - 6}" y="${f1(G(-gl) + 3)}" text-anchor="end">−${gl}s</text>
+    <text class="ax" x="${g.l}" y="${g.H - 4}">0</text><text class="ax" x="${f1(X(c.L / 2))}" y="${g.H - 4}" text-anchor="middle">${fmtKm1(c.L / 2)}</text><text class="ax" x="${g.W - g.r}" y="${g.H - 4}" text-anchor="end">${fmtKm1(c.L)} km</text>
+    <line id="cmpX" class="cx" x1="0" x2="0" y1="${g.tp}" y2="${g.y2 + g.h2}" visibility="hidden"/></svg>`;
+  return html + `<div class="cmp">
+    <div class="cmp-head"><span class="cmp-a"><i></i>Diese Fahrt<small>${dayLbl(t.created)} · ${new Date(t.created).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})}</small></span><span class="cmp-b"><i></i>${esc(b.name)}<small>${dayLbl(b.created)} · ${new Date(b.created).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})}</small></span></div>
+    <div class="cmp-verdict"><b class="${Math.abs(diff) < .5 ? '' : diff > 0 ? 'up' : 'dn'}">${Math.abs(diff) < .5 ? 'Gleich schnell' : `${fmtGap(diff)} ${diff > 0 ? 'schneller' : 'langsamer'}`}</b><span>auf ${fmtKm(c.L)} gemeinsamer Strecke${c.share < .9 ? ` (${Math.round(c.share * 100)} % dieser Fahrt)` : ''}</span></div>
+    <div class="cmp-tab"><span class="h"></span><span class="h a">Diese</span><span class="h b">Vergleich</span>
+      ${row('Zeit', fmtDur(c.tA * 1000), fmtDur(c.tB * 1000), wt1, wt2)}
+      ${row('Ø Tempo', `${Math.round(c.avgA)} km/h`, `${Math.round(c.avgB)} km/h`, wv1, wv2)}
+      ${row('Max', `${Math.round(c.maxA)} km/h`, `${Math.round(c.maxB)} km/h`, wm1, wm2)}
+      ${rA && rB ? row('Risk', rA.score, rB.score) : ''}</div>
+    <div class="st-h">Verlauf <em id="cmpRead">Tippe auf die Kurve</em></div>
+    <div class="tv-chart no-drag" id="cmpChart">${svgC}</div>
+    <div class="tv-leg"><span style="color:#ff9f0a">━ Diese Fahrt</span><span style="color:#64d2ff">╍ Vergleich</span><span>grün = du warst vorne</span></div>
+  </div>`;
+}
+function cmpScrub(e){
+  const t = curTrack(), b = cmpPartner(t), c = t && b && cmpCalc(t, b), el = $('#cmpChart svg'); if(!c || !el) return;
+  const g = cmpGeom(c), r = el.getBoundingClientRect(); if(!r.width) return;
+  const fx = (e.clientX - r.left) / r.width * g.W, x = Math.max(0, Math.min(c.L, (fx - g.l) / g.iw * c.L));
+  const i = Math.round(x / c.L * (c.rows.length - 1)), row = c.rows[i], cx = $('#cmpX');
+  cx.setAttribute('x1', g.X(row.x).toFixed(1)); cx.setAttribute('x2', g.X(row.x).toFixed(1)); cx.setAttribute('visibility', 'visible');
+  $('#cmpRead').textContent = `${fmtKm1(row.x)} km · ${Math.round(row.va)} / ${Math.round(row.vb)} km/h · ${Math.abs(row.gap) < .5 ? 'gleichauf' : `${row.gap > 0 ? '+' : '−'}${fmtGap(row.gap)}`}`;
+  // wo war die frühere Fahrt nach derselben Zeit?
+  let j = 0; while(j < c.rows.length - 1 && c.rows[j + 1].tb <= row.ta) j++;
+  const an = analyzeTrack(t);
+  setSrc('track-cur', FC([{type:'Feature', properties:{k:'b'}, geometry:{type:'Point', coordinates:[an.lerp(c.rows[j].d, 'lng'), an.lerp(c.rows[j].d, 'lat')]}},
+    {type:'Feature', properties:{k:'a'}, geometry:{type:'Point', coordinates:[an.lerp(row.d, 'lng'), an.lerp(row.d, 'lat')]}}]));
+}
 
 function downloadText(name, text, type){
   const a = document.createElement('a');
@@ -3869,6 +4188,7 @@ function exitCockpit(){
   camStop(); hideGhost(); $('#ckLimit').classList.remove('show'); $('#ckSpeed').classList.remove('over');
   ckOn = false; document.body.classList.remove('cockpit', 'ckrec', 'gon');
   liveStop();
+  parkAuto(ck.dist, ck.ts && Date.now() - ck.ts < 120000 ? ck.last : null, ck.v);
   if(!(rec && !rec.stopped)) gStop();
   car3d.on = false; document.body.classList.remove('car3d'); if(mapReady) map.triggerRepaint();
   ckTarget = null; updateCourseLayers();
@@ -3903,6 +4223,7 @@ function onDrivePos(p){
   if(onOff('limit')) limitFix(pt); else if(limitNow){ showLimit(null); }
   if(nav && nav.active) onNavFix(pt, c.accuracy);
   liveFeed(pt, ck.v, (ck.v || 0) > 1.4 ? ck.h : null, c.accuracy);
+  if(prefs.park && ck.dist > 200 && dist(pt, prefs.park) > 300){ delete prefs.park; savePrefs(); renderPark(); }   // weggefahren: alter Parkplatz gilt nicht mehr
 }
 map.on('dragstart', () => { if(ckOn){ ckFollow = false; $('#ckRecenter').hidden = false; } });
 map.on('rotatestart', e => { if(ckOn && e.originalEvent){ ckFollow = false; $('#ckRecenter').hidden = false; } });
@@ -3956,6 +4277,60 @@ function updateCockpitUI(){
   }
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && ckOn) exitCockpit(); });
+
+/* ================= Parkplatz merken ================= */
+let parkMk = null;
+const isApple = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+function parkSave(p, quiet){
+  prefs.park = {lat:+p.lat.toFixed(6), lng:+p.lng.toFixed(6), at:Date.now()}; savePrefs(); renderPark();
+  if(!quiet) toast('Parkplatz gemerkt – tipp auf das Auto-Symbol, um zurückzufinden');
+}
+function parkAuto(driven, p, v){   // nach einer echten Fahrt, wenn man steht
+  if(!onOff('autoPark') || !p || driven < 400 || (v != null && v > 4)) return;
+  if(prefs.park && Date.now() - prefs.park.at < 15000) return;
+  parkSave(p);
+}
+function renderPark(){
+  const p = prefs.park;
+  if(!p){ if(parkMk){ parkMk.remove(); parkMk = null; } return; }
+  if(!parkMk){
+    const el = document.createElement('div'); el.className = 'mk-car';
+    el.innerHTML = `<div class="cpk">${svg(UI.car, 19, 2.2)}</div><span class="ct">Dein Auto</span>`;
+    el.addEventListener('click', ev => { ev.stopPropagation(); openPark(); });
+    parkMk = new maplibregl.Marker({element:el, anchor:'top', offset:[0, -18]}).setLngLat(LL(p)).addTo(map);
+  } else parkMk.setLngLat(LL(p));
+}
+function openPark(){
+  const p = prefs.park; if(!p) return;
+  const d = me ? dist(me, p) : null, ll = `${p.lat},${p.lng}`;
+  const walk = isApple ? `https://maps.apple.com/?daddr=${ll}&dirflg=w` : `https://www.google.com/maps/dir/?api=1&destination=${ll}&travelmode=walking`;
+  $('#modal').innerHTML = `<div class="dlg park-dlg" role="dialog" aria-modal="true" aria-label="Parkplatz"><div class="pad" style="padding:18px 16px 16px">
+    <div class="park-hero"><span class="cpk">${svg(UI.car, 28, 2)}</span><div><h2>Dein Auto</h2><span class="muted">Geparkt ${ago(p.at)} · ${new Date(p.at).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} Uhr</span></div></div>
+    ${d != null ? `<div class="tstats"><div><b>${fmtDist(d)}</b><span>Luftlinie</span></div><div><b>${d < 25 ? 'Du bist da' : 'ca. ' + fmtMin(walkMin(d))}</b><span>zu Fuß</span></div></div>` : ''}
+    <div class="btns"><a class="btn primary" href="${walk}" target="_blank" rel="noopener">${svg(UI.nav, 15)} Hinlaufen</a><button class="btn" data-pk="show">Auf der Karte</button></div>
+    <div class="btns"><button class="btn" data-pk="share">${svg(UI.share, 15)} Teilen</button><button class="btn danger" data-pk="del">Vergessen</button></div>
+    <button class="txtbtn" data-pk="close" style="align-self:center">Schließen</button></div></div>`;
+  $('#modal').hidden = false;
+}
+$('#modal').addEventListener('click', e => {
+  const b = e.target.closest('[data-pk]'); if(!b) return;
+  const a = b.dataset.pk, p = prefs.park;
+  if(a === 'close'){ $('#modal').hidden = true; return; }
+  if(!p) return;
+  if(a === 'show'){ $('#modal').hidden = true; if(mobile() && snap === 'full') setSnap('peek'); const pts = me ? [me, p] : [p];
+    if(pts.length > 1 && dist(me, p) > 60){ const bb = new maplibregl.LngLatBounds(LL(me), LL(me)); bb.extend(LL(p)); map.fitBounds(bb, {padding:camPad(), maxZoom:17, duration:900}); }
+    else map.flyTo({center:LL(p), zoom:Math.max(map.getZoom(), 16.5), padding:camPad(), duration:900}); }
+  if(a === 'share') shareURL(`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`, 'Mein Auto', 'Hier steht mein Auto:');
+  if(a === 'del'){ delete prefs.park; savePrefs(); renderPark(); $('#modal').hidden = true; toast('Parkplatz vergessen'); }
+});
+$('#b-park').addEventListener('click', () => {
+  $('#layersPop').hidden = true; $('#b-layers').classList.remove('on'); $('#b-layers').setAttribute('aria-expanded', 'false');
+  if(prefs.park && (!me || dist(me, prefs.park) > 30)) return openPark();
+  if(!me){ toast('Warte auf deinen Standort …'); startGPS(true); return; }
+  parkSave(me);
+});
+function parkPopUI(){ const b = $('#b-park'); if(b) b.querySelector('span').textContent = prefs.park && (!me || dist(me, prefs.park) > 30) ? 'Mein Auto' : 'Hier geparkt'; }
+$('#b-layers').addEventListener('click', parkPopUI);
 
 /* ================= Live-Standort =================
    Freiwillig und nur im Cockpit: geht beim Verlassen automatisch wieder aus.
@@ -4184,7 +4559,7 @@ $('#modal').addEventListener('click', e => {
   if(b.dataset.lv === 'ok'){ prefs.liveOk = true; savePrefs(); liveStart(); }
 });
 $('#ckLive').addEventListener('click', () => { if(live.on) liveStop(); else liveStart(); });
-document.addEventListener('visibilitychange', () => { liveWatch(); if(!document.hidden) liveRender(); });
+document.addEventListener('visibilitychange', () => { liveWatch(); if(!document.hidden) liveRender(); else wsShow = null; });
 window.addEventListener('pagehide', () => {   // App wird geschlossen: Position sofort entfernen
   if(!live.on || !grp()) return;
   live.lastSent = null;
@@ -4696,16 +5071,18 @@ function progAt(splits, t){
 function hideGhost(){ if(ghostM){ ghostM.remove(); ghostM = null; } }
 function updateGhost(){
   if(!onOff('ghost')){ hideGhost(); return; }
-  const ar = ckOn ? activeRun() : null, best = ar && courseEfforts(ar.cid)[0];
+  const ar = ckOn ? activeRun() : null, best = ar && ghostRef(ar.cid);
   if(!ar || !best || !best.splits || best.splits.length < 2){ hideGhost(); return; }
   const el = runElapsed(ar.run), gp = progAt(best.splits, el);
   const a = ar.g.at(gp), b = ar.g.at(Math.min(ar.g.L, gp + 6)), pos = ar.g.toLL(a[0], a[1]);
   const brg = (Math.atan2(b[0] - a[0], b[1] - a[1]) * 180 / Math.PI + 360) % 360;
   if(!ghostM){
     const e = document.createElement('div'); e.className = 'ghost';
-    e.innerHTML = carSVG('ghost') + '<span class="ghost-tag">Bestzeit</span>';
+    e.innerHTML = carSVG('ghost') + '<span class="ghost-tag"></span>';
     ghostM = new maplibregl.Marker({element:e, anchor:'center', rotationAlignment:'map', pitchAlignment:'map'}).setLngLat(LL(pos)).addTo(map);
   }
+  const ge = ghostM.getElement(), gl = best.rival ? best.name : 'Bestzeit';
+  if(ge._gl !== gl){ ge._gl = gl; ge.querySelector('.ghost-tag').textContent = gl; ge.classList.toggle('rival', !!best.rival); }
   ghostM.setLngLat(LL(pos)); ghostM.setRotation(brg);
 }
 
@@ -5405,12 +5782,14 @@ function feedLive(p){
       const course = m.g.c;
       if(ev.type === 'start'){ if(ckOn) beep(880, .12); }
       if(ev.type === 'finish'){
+        const ref = ghostRef(cid);
         const f = addEffort(cid, ev.start, ev.time, ev.splits, 'live');
         if(!f) continue;
         const rank = rankOf(f), n = courseEfforts(cid).length;
-        raceFlash = {cid, time:f.time, rank, n, until:Date.now() + 12000};
+        const vs = ref && ref.rival ? (f.time < ref.time ? `${ref.name} geschlagen! ${fmtDelta(f.time - ref.time)}` : `${ref.name} war ${fmtDelta(ref.time - f.time).replace('−', '')} schneller`) : null;
+        raceFlash = {cid, time:f.time, rank, n, vs, until:Date.now() + 12000};
         beep(1046, .18, .3); setTimeout(() => beep(1318, .25, .3), 160);
-        toast(`${course.name}: ${fmtLap(f.time)} · ${rank === 1 ? 'Neue Bestzeit!' : `Platz ${rank} von ${n}`}`);
+        toast(`${course.name}: ${fmtLap(f.time)} · ${vs || (rank === 1 ? 'Neue Bestzeit!' : `Platz ${rank} von ${n}`)}`);
         if(view === 'course' && selCourse === cid) renderCourseView();
         if(tab === 'tracks' && sub === 'race' && view === 'list') renderList();
       }
@@ -5439,12 +5818,12 @@ function renderRaceCard(){
   if(raceFlash && Date.now() > raceFlash.until) raceFlash = null;
   let html = '';
   if(ar){
-    const c = ar.g.c, el2 = runElapsed(ar.run), best = courseEfforts(c.id)[0];
+    const c = ar.g.c, el2 = runElapsed(ar.run), best = ghostRef(c.id), gname = best && best.rival ? best.name : 'Geist';
     const ref = best ? bestAt(best.splits, ar.run.prog) : null, delta = ref != null && ar.run.prog > 30 ? el2 - ref : null;
     html = `<div class="rn"><span class="fl">${svg(ICONS.flag, 11)}</span>${esc(c.name)}</div>
       <div class="rt"><b data-race-t>${fmtLap(el2)}</b>${delta != null ? `<span class="dl ${delta <= 0 ? 'neg' : 'pos'}">${fmtDelta(delta)}</span>` : ''}</div>
       <div class="pg"><i style="width:${Math.min(100, ar.run.prog / ar.g.L * 100)}%"></i></div>
-      ${best ? (() => { const gp = progAt(best.splits, el2), gap = Math.round(gp - ar.run.prog); return Math.abs(gap) >= 5 ? `<div class="rs">Geist ${Math.abs(gap)} m ${gap > 0 ? 'vor dir' : 'hinter dir'}</div>` : '<div class="rs">Gleichauf mit dem Geist</div>'; })() : ''}`;
+      ${best ? (() => { const gp = progAt(best.splits, el2), gap = Math.round(gp - ar.run.prog); return Math.abs(gap) >= 5 ? `<div class="rs">${esc(gname)} ${Math.abs(gap)} m ${gap > 0 ? 'vor dir' : 'hinter dir'}</div>` : `<div class="rs">Gleichauf mit ${best.rival ? esc(gname) : 'dem Geist'}</div>`; })() : ''}`;
     cancelAnimationFrame(raceRaf);
     const tick = () => { const b = el.querySelector('[data-race-t]'); if(!b || !activeRun()) return; b.textContent = fmtLap(Math.max(0, runElapsed(activeRun().run))); raceRaf = requestAnimationFrame(tick); };
     raceRaf = requestAnimationFrame(tick);
@@ -5452,14 +5831,14 @@ function renderRaceCard(){
     const c = courses.find(x => x.id === raceFlash.cid);
     html = `<div class="rn"><span class="fl">${svg(ICONS.flag, 11)}</span>${esc(c ? c.name : '')}</div>
       <div class="rt"><b class="fin">${fmtLap(raceFlash.time)}</b></div>
-      <div class="rs">${raceFlash.rank === 1 ? 'Neue Bestzeit!' : `Platz ${raceFlash.rank} von ${raceFlash.n}`}</div>`;
+      <div class="rs">${raceFlash.vs ? esc(raceFlash.vs) : raceFlash.rank === 1 ? 'Neue Bestzeit!' : `Platz ${raceFlash.rank} von ${raceFlash.n}`}</div>`;
   } else if(ckTarget){
     const c = courses.find(x => x.id === ckTarget);
     if(c){
-      const d = me ? dist(me, {lat:c.pts[0][1], lng:c.pts[0][0]}) : null, best = courseEfforts(c.id)[0];
+      const d = me ? dist(me, {lat:c.pts[0][1], lng:c.pts[0][0]}) : null, best = ghostRef(c.id);
       html = `<div class="rn"><span class="fl">${svg(ICONS.flag, 11)}</span>${esc(c.name)}</div>
         <div class="rt"><b style="font-size:24px">${d == null ? 'Warte auf GPS …' : `Zum Start: ${fmtDist(d)}`}</b></div>
-        <div class="rs">Zeit startet an der grünen Linie${best ? ` · Bestzeit ${fmtLap(best.time)}` : ''}</div>`;
+        <div class="rs">Zeit startet an der grünen Linie${best ? best.rival ? ` · Gegen ${esc(best.name)}: ${fmtLap(best.time)}` : ` · Bestzeit ${fmtLap(best.time)}` : ''}</div>`;
     }
   }
   el.classList.toggle('show', !!html);
@@ -5523,7 +5902,8 @@ function renderCourseView(){
         <div><b>${best ? fmtLap(best.time) : '–'}</b><span>Bestzeit</span></div>
         <div><b>${best ? Math.round(c.len / best.time * 3.6) + ' km/h' : '–'}</b><span>Ø bei Bestzeit</span></div>
       </div>
-      <button class="btn primary" data-cv="drive">${svg(UI.gauge,16)} Jetzt fahren</button>
+      ${ghostChipsHTML(c)}
+      <button class="btn primary" data-cv="drive">${svg(UI.gauge,16)} ${(() => { const r = ghostRef(c.id); return r && r.rival ? `Gegen ${esc(r.name)} fahren` : 'Jetzt fahren'; })()}</button>
       ${FB ? `<button class="btn" data-cv="ws">${WS.courses.some(x => x._id === c.id) ? 'Im Workshop – Bestenliste der Gruppe ansehen' : 'In den Workshop: Gruppen-Bestenliste'}</button>` : ''}
       <div class="card"><div class="h">Bestenliste</div>${rows ? `<div class="lb">${rows}</div>` : '<div class="muted">Noch keine Zeit. Tippe auf „Jetzt fahren“ und fahr über die grüne Startlinie.</div>'}</div>
       <button class="btn" data-cv="scan">Aufzeichnungen nach Zeiten durchsuchen</button>
@@ -5543,6 +5923,7 @@ $('#courseView').addEventListener('click', e => {
     else wsUploadCourse(c);
     return;
   }
+  if(a === 'ghost'){ c.ghost = b.dataset.dev || null; saveCourses(); renderCourseView(); return; }
   if(a === 'rename'){ courseRenaming = true; renderCourseView(); }
   if(a === 'renamesave'){ c.name = $('#cv-name').value.trim() || c.name; saveCourses(); courseRenaming = false; renderCourseView(); }
   if(a === 'scan'){ let n = 0; tracks.forEach(t => n += scanTrack(t, c.id).length); renderCourseView(); toast(n ? `${n} neue Zeit${n > 1 ? 'en' : ''} gefunden` : 'Keine neuen Zeiten in deinen Aufzeichnungen'); }
@@ -5572,6 +5953,56 @@ function scanTrack(t, onlyCid){
     }
   }
   return found;
+}
+
+/* Geist: eigene Bestzeit oder die eines Freundes (aus der Gruppe oder aus einer geteilten Fahrt) */
+function ghostOptions(c){
+  const out = [], mine = courseEfforts(c.id)[0], byDev = new Map();
+  if(mine) out.push({dev:null, by:'Du', time:mine.time, splits:mine.splits});
+  (c.rivals || []).forEach(r => byDev.set(r.dev, r));
+  WS.efforts.filter(f => f.course === c.id && f.dev !== myId() && f.splits && f.splits.length > 1)
+    .forEach(f => { const cur = byDev.get(f.dev); if(!cur || f.time < cur.time) byDev.set(f.dev, {dev:f.dev, by:f.by, time:f.time, splits:f.splits, src:'ws'}); });
+  return out.concat([...byDev.values()]).sort((a, b) => a.time - b.time);
+}
+function ghostRef(cid){
+  const c = courses.find(x => x.id === cid); if(!c) return null;
+  if(c.ghost){ const o = ghostOptions(c).find(x => x.dev === c.ghost); if(o && o.splits && o.splits.length > 1) return {...o, name:crewName(o.dev, o.by), rival:true}; }
+  const b = courseEfforts(cid)[0];
+  return b ? {dev:null, by:'Du', name:'Bestzeit', time:b.time, splits:b.splits, rival:false} : null;
+}
+function ghostChipsHTML(c){
+  const opts = ghostOptions(c); if(!opts.some(o => o.dev)) return '';
+  const sel = ghostRef(c.id), on = o => sel && (sel.rival ? sel.dev === o.dev : !o.dev);
+  return `<div class="st-h">Geister-Rennen <em>gegen wen fährst du?</em></div>
+    <div class="chips ghost-chips">${opts.map(o => `<button class="chip${on(o) ? ' on' : ''}" data-cv="ghost" data-dev="${esc(o.dev || '')}">${avHTML(o.dev || myId(), o.by, 22)}${esc(o.dev ? crewName(o.dev, o.by) : 'Du')} · ${fmtLap(o.time)}</button>`).join('')}</div>`;
+}
+function rivalFromDrive(t){
+  const w = t._ws; if(!w) return;
+  let c = courses.find(x => x.fromDrive === w.docId);
+  if(c){ openCourse(c.id, true); return; }
+  const flat = t.segs.flat(); let D = 0; const cum = [0];
+  for(let i = 1; i < flat.length; i++) cum.push(D += dist({lat:flat[i-1][1], lng:flat[i-1][0]}, {lat:flat[i][1], lng:flat[i][0]}));
+  if(flat.length < 10 || D < 800){ toast('Die Fahrt ist zu kurz für ein Rennen.'); return; }
+  // 40 m nach dem Anfang starten und 40 m vor dem Ende aufhören, damit die Fahrt Start und Ziel sauber überquert
+  const pts = simplify(flat.filter((q, i) => cum[i] >= 40 && cum[i] <= D - 40).map(q => [q[0], q[1]]), 4);
+  c = {id:uid(), name:`${w.by}: ${t.name}`.slice(0, 80), created:Date.now(), pts:pts.map(q => [+q[0].toFixed(6), +q[1].toFixed(6)]), len:0, loop:false, fromDrive:w.docId, from:w.by};
+  c.len = Math.round(lineLen(c.pts));
+  c.loop = dist({lat:c.pts[0][1], lng:c.pts[0][0]}, {lat:c.pts[c.pts.length-1][1], lng:c.pts[c.pts.length-1][0]}) < GATE;
+  // Zeit des Freundes genauso messen wie deine
+  const m = makeMatcher(c); let fin = null;
+  for(const q of flat){ for(const ev of m.feed(q[1], q[0], t.created + q[2] * 1000)) if(ev.type === 'finish' && !fin) fin = ev; if(fin) break; }
+  if(!fin){   // Notlösung: Fortschritt entlang der Strecke über die Zeit
+    const g = prepCourse(c), sp = [[0, 0]]; let t0 = null, prog = 0, last = 0;
+    for(const q of flat){ const pr = project(g, g.toXY(q[0], q[1]), prog); if(pr.off > 60) continue; if(t0 == null){ if(pr.along > 30) continue; t0 = q[2]; }
+      if(pr.along > prog && pr.along < prog + 800) prog = pr.along; if(prog - last >= 25){ sp.push([Math.round(prog), Math.round((q[2] - t0) * 10) / 10]); last = prog; } }
+    if(t0 != null && prog > c.len * .9){ const tt = sp[sp.length - 1][1]; sp.push([c.len, tt]); fin = {time:tt, splits:sp}; }
+  }
+  if(!fin){ toast('Aus dieser Fahrt lässt sich keine Zeit ablesen.'); return; }
+  c.rivals = [{dev:w.dev, by:w.by, time:Math.round(fin.time * 100) / 100, splits:fin.splits, src:'drive'}]; c.ghost = w.dev;
+  courses.push(c); saveCourses(); syncMatchers();
+  let n = 0; tracks.forEach(tt => n += scanTrack(tt, c.id).length);
+  openCourse(c.id, true);
+  toast(`Rennen gegen ${w.by}: ${fmtLap(fin.time)} auf ${fmtKm(c.len)}${n ? ` · ${n} eigene Zeit${n > 1 ? 'en' : ''} gefunden` : ''} – fahr über die grüne Linie`);
 }
 
 /* Rennstrecke aus Aufzeichnung */
@@ -5735,6 +6166,7 @@ $('#death [data-dl="close"]').innerHTML = svg(UI.close, 15);
 applyLabels(); syncSpotsHead(); refreshAll();
 handleHash();
 if(grp()) setTimeout(() => wsSync(false), 1500);
+renderPark();
 if(rec){
   setTab('tracks'); renderTracksHead(); updateRecUI(); renderNearest();
   if(rec.stopped) setTimeout(openTrackSave, 300); else toast('Aufzeichnung wiederhergestellt – pausiert. Tippe ▶ zum Fortsetzen.');
