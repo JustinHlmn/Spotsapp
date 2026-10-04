@@ -419,13 +419,14 @@ h2{font-size:23px}
 .stack button{width:46px;height:46px}
 #b-compass{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;padding:0}
 #b-compass svg{transition:transform .1s linear}
-.pop-bases{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px 4px 6px}
+.pop-bases{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px 4px 6px}
 .pop-bases button{border:0;background:var(--fill);border-radius:12px;padding:6px;display:flex;flex-direction:column;gap:5px;align-items:stretch;font-size:12.5px;font-weight:600;color:var(--muted);text-align:left;transition:box-shadow .2s,color .2s}
 .pop-bases button i{height:34px;border-radius:8px;display:block}
 .pop-bases button.on{color:var(--fg);box-shadow:inset 0 0 0 2px var(--accent)}
 .sw-sat{background:radial-gradient(circle at 30% 30%,#7a8a5a,transparent 45%),radial-gradient(circle at 75% 70%,#2f4f63,transparent 50%),linear-gradient(135deg,#3d5233,#59683f 50%,#2c4252)}
 .sw-street{background:linear-gradient(90deg,transparent 46%,#fff 46% 54%,transparent 54%),linear-gradient(0deg,transparent 40%,#f6d58e 40% 50%,transparent 50%),#ebe6dc}
 .sw-dark{background:linear-gradient(90deg,transparent 46%,#3a3f48 46% 54%,transparent 54%),linear-gradient(0deg,transparent 40%,#2c3038 40% 50%,transparent 50%),#15171b}
+.sw-vec{background:linear-gradient(90deg,transparent 44%,#fff 44% 56%,transparent 56%),linear-gradient(0deg,transparent 36%,#f9c86b 36% 48%,transparent 48%),radial-gradient(circle at 78% 24%,#a8d4f5 0 9px,transparent 10px),radial-gradient(circle at 20% 78%,#d7ecc6 0 10px,transparent 11px),#f5f3ee}
 .sw-topo{background:repeating-radial-gradient(circle at 60% 60%,#c9d8b4 0 5px,#b4c99b 5px 6px),#d6e3c3}
 .pop{position:absolute;top:56px;right:56px;width:240px;border-radius:18px;padding:6px;display:flex;flex-direction:column;animation:popin .22s var(--ease);z-index:6}
 @keyframes popin{from{opacity:0;transform:translateX(8px) scale(.98)}}
@@ -1272,6 +1273,7 @@ body.nav #ckLive,body.replay #ckLive{display:none!important}
   <button id="liveBadge" class="glass" hidden aria-label="Live-Freunde auf der Karte zeigen"><span class="lv-dot"></span><span class="lv-avs"></span><b></b></button>
   <div id="layersPop" class="glass pop" hidden>
     <div class="pop-bases">
+      <button data-base="vec"><i class="sw-vec"></i>Clean</button>
       <button data-base="sat"><i class="sw-sat"></i>Satellit</button>
       <button data-base="street"><i class="sw-street"></i>Straße</button>
       <button data-base="dark"><i class="sw-dark"></i>Dunkel</button>
@@ -1451,7 +1453,8 @@ const BASES = {
   sat:{name:'Satellit', url:ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', kb:24, maxz:19, credit:'Bilder © Esri, Maxar, Earthstar Geographics'},
   street:{name:'Straße', url:ESRI + 'World_Street_Map/MapServer/tile/{z}/{y}/{x}', kb:20, maxz:19, credit:'Karte © Esri, HERE, Garmin, OpenStreetMap'},
   dark:{name:'Dunkel', url:ESRI + 'Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', kb:9, maxz:16, credit:'Karte © Esri, HERE, Garmin, OpenStreetMap'},
-  topo:{name:'Gelände', url:ESRI + 'World_Topo_Map/MapServer/tile/{z}/{y}/{x}', kb:26, maxz:19, credit:'Karte © Esri, HERE, Garmin, USGS'}
+  topo:{name:'Gelände', url:ESRI + 'World_Topo_Map/MapServer/tile/{z}/{y}/{x}', kb:26, maxz:19, credit:'Karte © Esri, HERE, Garmin, USGS'},
+  vec:{name:'Clean', vector:true, maxz:20, credit:'Karte © OpenFreeMap · OpenMapTiles'}
 };
 const DARK_REF = ESRI + 'Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}';
 const OVERLAYS = [ESRI + 'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', ESRI + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'];
@@ -1459,6 +1462,7 @@ const map = new maplibregl.Map({
   container:'map',
   style:{
     version:8,
+    glyphs:'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
     sources:{
       sat:{type:'raster', tiles:[ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize:256, maxzoom:19, attribution:'Bilder © Esri, Maxar, Earthstar Geographics'},
       street:{type:'raster', tiles:[BASES.street.url], tileSize:256, maxzoom:19},
@@ -1585,14 +1589,84 @@ setTimeout(hideSplash, 3500);
 function applyLabels(){
   const base = BASES[prefs.base] ? prefs.base : 'sat';
   if(mapReady){
-    for(const k of Object.keys(BASES)) map.setLayoutProperty(k, 'visibility', k === base ? 'visible' : 'none');
+    if(base === 'vec') vecEnsure();
+    for(const k of Object.keys(BASES)) if(!BASES[k].vector) map.setLayoutProperty(k, 'visibility', k === base ? 'visible' : 'none');
+    vecShow(base === 'vec');
     for(const l of ['roads','places']) map.setLayoutProperty(l, 'visibility', base === 'sat' && prefs.labels ? 'visible' : 'none');
     map.setLayoutProperty('darkref', 'visibility', base === 'dark' && prefs.labels ? 'visible' : 'none');
   }
   $('#b-labels').classList.toggle('on', prefs.labels);
-  $('#b-labels').hidden = base !== 'sat' && base !== 'dark';
+  $('#b-labels').hidden = base !== 'sat' && base !== 'dark' && base !== 'vec';
   document.querySelectorAll('[data-base]').forEach(b => b.classList.toggle('on', b.dataset.base === base));
   $('#attrib').textContent = BASES[base].credit + (prefs.terrain ? ' · Höhen © Mapzen' : '') + ' · Daten © OpenStreetMap';
+}
+
+/* ================= Clean-Karte (Vektor, OpenFreeMap) =================
+   Wird im Handy gezeichnet: scharf in jeder Zoomstufe, Schrift bleibt waagerecht. Farben angelehnt an Apple Karten, hell und dunkel. */
+const VEC_SRC = 'https://tiles.openfreemap.org/planet';
+const VEC_PAL = {
+  light:{land:'#f5f3ee', urban:'#efece6', park:'#d6ebc4', wood:'#cfe6bf', water:'#a9d3f2', waterTx:'#3f78a8', bld:'#e7e3da', bldLine:'#dad5ca',
+    minor:'#ffffff', minorCase:'#dfdad0', sec:'#ffffff', secCase:'#d3cdc1', pri:'#fde9a8', priCase:'#e3c87a', mot:'#f8c56a', motCase:'#d7a24a', rail:'#cbc6bc',
+    border:'#b6a8c8', tx:'#3a3a3c', txSoft:'#6e6e73', halo:'#ffffff', city:'#1c1c1e'},
+  dark:{land:'#1d2023', urban:'#22262a', park:'#1e3325', wood:'#1c2f22', water:'#14324a', waterTx:'#6fa3cf', bld:'#2a2e33', bldLine:'#33383e',
+    minor:'#363a40', minorCase:'#24272b', sec:'#454a52', secCase:'#2a2d31', pri:'#6b6553', priCase:'#3d3a30', mot:'#a87b3e', motCase:'#5c4422', rail:'#3c4046',
+    border:'#6d6280', tx:'#d9d9de', txSoft:'#9a9aa0', halo:'#121416', city:'#f2f2f7'}
+};
+let vecOn = false, vecPalKey = null;
+const vName = ['coalesce', ['get', 'name:de'], ['get', 'name_de'], ['get', 'name']];
+const zw = (...st) => ['interpolate', ['exponential', 1.5], ['zoom'], ...st];
+function vecLayers(P){
+  const road = (id, classes, fill, kase, w, minz) => [
+    {id:id + '-c', type:'line', source:'ofm', 'source-layer':'transportation', minzoom:minz, filter:['all', ['in', ['get', 'class'], ['literal', classes]], ['!=', ['get', 'brunnel'], 'tunnel']],
+      layout:{'line-cap':'round', 'line-join':'round'}, paint:{'line-color':kase, 'line-width':zw(...w.map((x, i) => i % 2 ? x * 1.35 + .8 : x))}},
+    {id:id, type:'line', source:'ofm', 'source-layer':'transportation', minzoom:minz, filter:['all', ['in', ['get', 'class'], ['literal', classes]], ['!=', ['get', 'brunnel'], 'tunnel']],
+      layout:{'line-cap':'round', 'line-join':'round'}, paint:{'line-color':fill, 'line-width':zw(...w)}}];
+  const txt = {'text-color':P.tx, 'text-halo-color':P.halo, 'text-halo-width':1.4, 'text-halo-blur':.4};
+  return [
+    {id:'v-land', type:'background', paint:{'background-color':P.land}},
+    {id:'v-urban', type:'fill', source:'ofm', 'source-layer':'landuse', filter:['in', ['get', 'class'], ['literal', ['residential', 'suburb', 'neighbourhood', 'commercial', 'retail', 'industrial']]], paint:{'fill-color':P.urban}},
+    {id:'v-wood', type:'fill', source:'ofm', 'source-layer':'landcover', filter:['in', ['get', 'class'], ['literal', ['wood', 'forest']]], paint:{'fill-color':P.wood, 'fill-opacity':['interpolate', ['linear'], ['zoom'], 5, .5, 12, 1]}},
+    {id:'v-grass', type:'fill', source:'ofm', 'source-layer':'landcover', filter:['in', ['get', 'class'], ['literal', ['grass', 'meadow', 'park']]], paint:{'fill-color':P.park, 'fill-opacity':.55}},
+    {id:'v-park', type:'fill', source:'ofm', 'source-layer':'park', paint:{'fill-color':P.park, 'fill-opacity':.85}},
+    {id:'v-water', type:'fill', source:'ofm', 'source-layer':'water', paint:{'fill-color':P.water}},
+    {id:'v-waterway', type:'line', source:'ofm', 'source-layer':'waterway', minzoom:8, layout:{'line-cap':'round'}, paint:{'line-color':P.water, 'line-width':zw(8, .6, 13, 1.6, 18, 5)}},
+    {id:'v-building', type:'fill', source:'ofm', 'source-layer':'building', minzoom:14, paint:{'fill-color':P.bld, 'fill-outline-color':P.bldLine, 'fill-opacity':['interpolate', ['linear'], ['zoom'], 14, 0, 15, 1]}},
+    {id:'v-tunnel', type:'line', source:'ofm', 'source-layer':'transportation', minzoom:12, filter:['==', ['get', 'brunnel'], 'tunnel'], layout:{'line-join':'round'}, paint:{'line-color':P.secCase, 'line-width':zw(12, 1, 18, 8), 'line-opacity':.5, 'line-dasharray':[2, 1.5]}},
+    {id:'v-rail', type:'line', source:'ofm', 'source-layer':'transportation', minzoom:10, filter:['==', ['get', 'class'], 'rail'], paint:{'line-color':P.rail, 'line-width':zw(10, .6, 16, 2), 'line-dasharray':[3, 2]}},
+    ...road('v-minor', ['minor', 'service', 'track', 'path'], P.minor, P.minorCase, [12, .5, 14, 2, 18, 12], 12),
+    ...road('v-sec', ['secondary', 'tertiary'], P.sec, P.secCase, [8, .5, 12, 1.8, 14, 4, 18, 18], 8),
+    ...road('v-pri', ['primary', 'trunk'], P.pri, P.priCase, [6, .5, 10, 1.6, 14, 5, 18, 22], 6),
+    ...road('v-mot', ['motorway'], P.mot, P.motCase, [5, .6, 10, 2, 14, 6, 18, 26], 4),
+    {id:'v-border', type:'line', source:'ofm', 'source-layer':'boundary', filter:['all', ['<=', ['to-number', ['get', 'admin_level'], 99], 4], ['!=', ['to-number', ['get', 'maritime'], 0], 1]], paint:{'line-color':P.border, 'line-width':['interpolate', ['linear'], ['zoom'], 3, .6, 10, 1.6], 'line-dasharray':[3, 2], 'line-opacity':.7}},
+    {id:'v-lbl-water', type:'symbol', source:'ofm', 'source-layer':'water_name', layout:{'text-field':vName, 'text-font':['Noto Sans Italic'], 'text-size':12, 'text-max-width':8}, paint:{...txt, 'text-color':P.waterTx}},
+    {id:'v-lbl-road', type:'symbol', source:'ofm', 'source-layer':'transportation_name', minzoom:12, filter:['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor']]],
+      layout:{'symbol-placement':'line', 'text-field':vName, 'text-font':['Noto Sans Regular'], 'text-size':['interpolate', ['linear'], ['zoom'], 12, 10, 17, 13], 'text-rotation-alignment':'map', 'text-pitch-alignment':'viewport', 'symbol-spacing':320}, paint:{...txt, 'text-color':P.txSoft}},
+    {id:'v-lbl-house', type:'symbol', source:'ofm', 'source-layer':'housenumber', minzoom:17, layout:{'text-field':['get', 'housenumber'], 'text-font':['Noto Sans Regular'], 'text-size':10}, paint:{...txt, 'text-color':P.txSoft}},
+    {id:'v-lbl-peak', type:'symbol', source:'ofm', 'source-layer':'mountain_peak', minzoom:11, layout:{'text-field':vName, 'text-font':['Noto Sans Italic'], 'text-size':11, 'text-offset':[0, .4]}, paint:{...txt, 'text-color':P.txSoft}},
+    {id:'v-lbl-village', type:'symbol', source:'ofm', 'source-layer':'place', minzoom:10, filter:['in', ['get', 'class'], ['literal', ['village', 'hamlet', 'suburb', 'neighbourhood']]],
+      layout:{'text-field':vName, 'text-font':['Noto Sans Regular'], 'text-size':['interpolate', ['linear'], ['zoom'], 10, 11, 15, 14], 'text-max-width':8}, paint:{...txt}},
+    {id:'v-lbl-town', type:'symbol', source:'ofm', 'source-layer':'place', minzoom:7, filter:['==', ['get', 'class'], 'town'],
+      layout:{'text-field':vName, 'text-font':['Noto Sans Regular'], 'text-size':['interpolate', ['linear'], ['zoom'], 7, 11, 14, 16], 'text-max-width':8}, paint:{...txt}},
+    {id:'v-lbl-city', type:'symbol', source:'ofm', 'source-layer':'place', minzoom:4, filter:['==', ['get', 'class'], 'city'],
+      layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 4, 11, 12, 19], 'text-max-width':8}, paint:{...txt, 'text-color':P.city}},
+    {id:'v-lbl-country', type:'symbol', source:'ofm', 'source-layer':'place', maxzoom:7, filter:['in', ['get', 'class'], ['literal', ['country', 'state']]],
+      layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 2, 11, 6, 15], 'text-transform':'uppercase', 'text-letter-spacing':.08, 'text-max-width':7}, paint:{...txt, 'text-color':P.txSoft}}
+  ];
+}
+const vecIds = () => vecLayers(VEC_PAL.light).map(l => l.id);
+function vecEnsure(){
+  if(!mapReady) return;
+  const key = curTheme() === 'light' ? 'light' : 'dark';
+  if(vecPalKey === key && map.getLayer('v-land')) return;
+  if(!map.getSource('ofm')) map.addSource('ofm', {type:'vector', url:VEC_SRC, attribution:'© OpenFreeMap © OpenMapTiles · Daten © OpenStreetMap'});
+  vecIds().forEach(id => { if(map.getLayer(id)) map.removeLayer(id); });
+  vecLayers(VEC_PAL[key]).forEach(l => map.addLayer({...l, layout:{...(l.layout || {}), visibility:vecOn ? 'visible' : 'none'}}, 'roads'));
+  vecPalKey = key;
+}
+function vecShow(on){
+  vecOn = on;
+  if(!mapReady || !map.getLayer || !map.getLayer('v-land')) return;
+  vecIds().forEach(id => { const lbl = id.startsWith('v-lbl'); map.setLayoutProperty(id, 'visibility', on && (!lbl || prefs.labels) ? 'visible' : 'none'); });
 }
 
 /* Erkennen, wenn keine Kacheln laden */
@@ -3442,13 +3516,14 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.13';
+const VERSION = '2026.10.04.14';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
 function curTheme(){ const t = prefs.theme || 'dark'; return t === 'auto' ? (darkMQ.matches ? 'dark' : 'light') : t; }
 function accentCol(th = curTheme()){ const a = ACCENTS[prefs.accent] || ACCENTS.blue; return th === 'light' ? a[1] : a[0]; }
 function applyTheme(){
+  if(typeof vecOn !== 'undefined' && vecOn && mapReady){ vecEnsure(); vecShow(true); }
   const th = curTheme(), root = document.documentElement, col = accentCol(th);
   root.dataset.theme = th;
   root.style.setProperty('--accent', col);
@@ -5547,7 +5622,7 @@ function areaURLs(a){
   return out;
 }
 function curArea(){
-  const b = map.getBounds(), base = BASES[prefs.base] ? prefs.base : 'sat';
+  const b = map.getBounds(), base = BASES[prefs.base] && !BASES[prefs.base].vector ? prefs.base : prefs.base === 'vec' ? 'street' : 'sat';
   return {bbox:[b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], maxZ:offDetail, base, labels:(base === 'sat' || base === 'dark') && prefs.labels};
 }
 function offEstimate(a){
