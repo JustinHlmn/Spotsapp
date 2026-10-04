@@ -461,6 +461,77 @@ h2{font-size:23px}
 #splash .logo{background:linear-gradient(180deg,#5aaeff,#2f86ef);border-radius:26px;box-shadow:0 18px 44px rgba(77,163,255,.35)}
 #splash .name{font-weight:700;letter-spacing:-.03em}
 
+/* ---------- Straßen-Sammler ---------- */
+.xh-tg{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:13px;border:1px solid var(--line);background:var(--solid);color:var(--muted);font-size:12px;font-weight:700;text-transform:none;letter-spacing:0}
+.xh-tg.on{background:linear-gradient(135deg,#21c4ff,#7dff6a 55%,#ffd60a);color:#0b1a10;border-color:transparent}
+.xpl{background:var(--solid);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.xpl-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.xpl-tiles div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.xpl-tiles b{font-size:19px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.xpl-tiles span{font-size:11.5px;color:var(--muted);line-height:1.25}
+.xbars{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;height:74px;align-items:end}
+.xb{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.xb i{display:block;width:100%;max-width:30px;border-radius:6px 6px 3px 3px;background:color-mix(in srgb,#21c4ff 40%,var(--fill))}
+.xb.on i{background:linear-gradient(180deg,#7dff6a,#21c4ff)}
+.xb span{font-size:10.5px;color:var(--muted);font-weight:600}
+.xpl-prog{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.xpl-prog i{width:8px;height:8px;border-radius:50%;background:#21c4ff;animation:rwpulse 1.2s ease-in-out infinite;flex:none}
+.xrs{display:flex;flex-direction:column;border-top:1px solid var(--line);margin:0 -14px -12px;padding:0 14px}
+.xr{display:flex;align-items:center;gap:10px;border:0;background:none;color:var(--fg);padding:9px 0;text-align:left;border-bottom:1px solid var(--line)}
+.xr:last-child{border-bottom:0}
+.xr .t{flex:1;min-width:0;display:flex;flex-direction:column;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xr .t small,.xr .v small{font-size:11.5px;color:var(--muted);font-weight:500}
+.xr .v{display:flex;flex-direction:column;align-items:flex-end;font-variant-numeric:tabular-nums}
+.xr .v b{color:#30d158;font-size:14.5px}
+.xt{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:18px;background:var(--solid);border:1px solid var(--line)}
+.xt-i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,#30d158 18%,transparent);color:#30d158}
+.xt div{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.xt b{font-size:15px;font-weight:650}
+.xt span{font-size:12.5px;color:var(--muted)}
+
+/* ---------- Regenradar ---------- */
+#radar{position:absolute;z-index:5;top:68px;left:50%;transform:translateX(-50%);width:min(440px,calc(100% - 150px));display:flex;align-items:center;gap:10px;padding:7px 8px 7px 7px;border-radius:22px;color:var(--fg);animation:viewin .35s var(--ease)}
+#radar[hidden],body.cockpit #radar,body.navprev #radar,body.replay #radar{display:none}
+@media (min-width:641px){#radar{left:calc(50% + 212px);width:min(440px,calc(100% - 590px));min-width:300px}body.pcol #radar{left:50%}}
+@media (max-width:640px){#radar{top:calc(66px + env(safe-area-inset-top,0px));left:10px;transform:none;width:calc(100% - 76px)}}
+.rd-play{width:36px;height:36px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-fg,#fff);display:grid;place-items:center;flex:none}
+.rd-play svg{margin-left:1px}
+.rd-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+#rdRange{width:100%;margin:0;height:20px;accent-color:var(--accent)}
+.rd-sc{position:relative;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);font-weight:600;height:13px}
+.rd-now{position:absolute;top:0;color:var(--fg)}
+.rd-t{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;min-width:66px;font-variant-numeric:tabular-nums}
+.rd-t b{font-size:15px;font-weight:700}
+.rd-t span{font-size:11px;color:var(--muted);white-space:nowrap}
+.rd-t a{color:var(--muted)}
+#radar.fc .rd-t span{color:#ffb84d}
+.rd-x{width:28px;height:28px;border-radius:50%;border:0;background:var(--fill);color:var(--fg);display:grid;place-items:center;flex:none}
+.rd-load{flex:1;display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted);padding-left:8px}
+.rd-load i{width:9px;height:9px;border-radius:50%;background:var(--accent);animation:rwpulse 1.2s ease-in-out infinite}
+
+/* ---------- Straßenwetter ---------- */
+.rwk-dry{--rw:#30d158}.rwk-cold{--rw:#5eb0ff}.rwk-wet{--rw:#6aa7d4}.rwk-rain{--rw:#32ade6}.rwk-heavy{--rw:#0a84ff}.rwk-frost{--rw:#c38cff}.rwk-snow{--rw:#9fb3c8}.rwk-ice{--rw:#bf5af2}.rwk-load{--rw:var(--muted)}
+.rw-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:18px;background:var(--solid);border:1px solid var(--line)}
+.rw-row.rwk-ice,.rw-row.rwk-snow,.rw-row.rwk-frost,.rw-row.rwk-heavy{border-color:color-mix(in srgb,var(--rw) 50%,var(--line))}
+.rw-i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--rw) 18%,transparent);color:var(--rw)}
+.rw-tx{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.rw-tx b{font-size:15px;font-weight:650}
+.rw-tx span{font-size:12.5px;color:var(--muted)}
+.rwk-load .rw-i{animation:rwpulse 1.2s ease-in-out infinite}
+@keyframes rwpulse{50%{opacity:.4}}
+.rw-tag{flex:none;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;font-size:11.5px;font-weight:700;color:var(--rw);background:color-mix(in srgb,var(--rw) 15%,transparent);white-space:nowrap}
+.rw-route{display:flex;flex-direction:column;gap:8px}
+.rw-bar{display:flex;gap:2px;height:7px;border-radius:4px;overflow:hidden}
+.rw-bar i{display:block;background:var(--rw);min-width:3px}
+.rw-route.load .rw-bar i{opacity:.35;animation:rwpulse 1.2s ease-in-out infinite}
+.rw-sum{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--fg)}
+.rw-sum svg{color:var(--rw);flex:none}
+.rw-sum.rwk-load{color:var(--muted);font-weight:500}
+#ckRoad{position:absolute;z-index:20;left:14px;bottom:calc(206px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 150px);height:40px;padding:0 14px 0 6px;border-radius:20px;display:flex;align-items:center;gap:8px;color:var(--fg);border:1px solid color-mix(in srgb,var(--rw) 45%,var(--line));animation:viewin .4s var(--ease)}
+#ckRoad[hidden],body:not(.cockpit) #ckRoad{display:none}
+#ckRoad .rw-i{width:28px;height:28px;border-radius:50%}
+#ckRoad b{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 /* ---------- Wetter & Sonne ---------- */
 .wx{gap:12px}
 .wx-now{display:flex;align-items:center;gap:12px}
@@ -1257,6 +1328,7 @@ body.nav #ckLive,body.replay #ckLive{display:none!important}
 <div id="map" aria-label="Karte"></div>
 <div id="ckTop" class="glass"></div>
 <div id="ckLimit" aria-label="Tempolimit"></div>
+<div id="ckRoad" class="glass" hidden aria-live="polite"></div>
 <div id="ckSpeed" aria-live="off"><b data-ck="v">–</b><span>KM/H</span></div>
 <div id="ckRace" class="glass"></div>
 <div id="liveCard" class="glass" hidden role="dialog" aria-label="Live-Stats"></div>
@@ -1338,6 +1410,8 @@ body.nav #ckLive,body.replay #ckLive{display:none!important}
     </div>
     <button class="pop-row" id="b-labels"><span>Straßen & Orte</span><i class="tg"></i></button>
     <button class="pop-row" id="b-3d"><span>3D-Gelände</span><i class="tg"></i></button>
+    <button class="pop-row" id="b-radar"><span>Regenradar</span><i class="tg"></i></button>
+    <button class="pop-row" id="b-heat"><span>Fahrten-Heatmap</span><i class="tg"></i></button>
     <div class="pop-sep"></div>
     <button class="pop-row" id="b-offline"><span>Offline-Karten</span><span class="ri" id="popOff"></span></button>
     <button class="pop-row" data-pf-open><span>0–100 messen</span><span class="ri" id="popTimer"></span></button>
@@ -1347,6 +1421,7 @@ body.nav #ckLive,body.replay #ckLive{display:none!important}
 </div>
 
 <button id="near" class="glass" hidden aria-live="polite"></button>
+<div id="radar" class="glass" hidden></div>
 <div id="recbar" class="glass" hidden>
   <span class="dot"></span>
   <div class="tx"><b data-rt>0:00</b><span data-rd>0 m</span></div>
@@ -1568,6 +1643,13 @@ function onMapStyle(){
   map.addSource('acc', {type:'geojson', data:FC([])});
   map.addSource('spots', {type:'geojson', data:FC([]), cluster:true, clusterRadius:52, clusterMaxZoom:14});
   map.addLayer({id:'spots-q', type:'circle', source:'spots', paint:{'circle-radius':0, 'circle-opacity':0}});
+  map.addSource('heat', {type:'geojson', data:FC([])});
+  map.addLayer({id:'heat', type:'heatmap', source:'heat', layout:{visibility:'none'}, paint:{
+    'heatmap-weight':['interpolate', ['linear'], ['get', 'n'], 1, .45, 8, 1],
+    'heatmap-intensity':['interpolate', ['linear'], ['zoom'], 6, .6, 12, 1.2, 16, 2],
+    'heatmap-radius':['interpolate', ['exponential', 1.6], ['zoom'], 6, 1.5, 10, 3, 13, 6, 16, 18],
+    'heatmap-color':['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(0,0,0,0)', .12, 'rgba(40,110,255,.55)', .35, '#21c4ff', .6, '#7dff6a', .82, '#ffd60a', 1, '#ff6a3d'],
+    'heatmap-opacity':.9}});
   map.addLayer({id:'acc-fill', type:'fill', source:'acc', paint:{'fill-color':'#4da3ff', 'fill-opacity':.14}});
   map.addLayer({id:'acc-line', type:'line', source:'acc', paint:{'line-color':'#4da3ff', 'line-opacity':.5, 'line-width':1}});
   for(const id of ['track-all','track-view','track-case','track-live','track-ends']) map.addSource(id, {type:'geojson', data:FC([])});
@@ -1585,6 +1667,9 @@ function onMapStyle(){
   map.addSource('nav-route', {type:'geojson', data:FC([])});
   map.addLayer({id:'nav-route-case', type:'line', source:'nav-route', layout:rl, paint:{'line-color':'#0b2f57', 'line-width':12, 'line-opacity':.9}});
   map.addLayer({id:'nav-route-line', type:'line', source:'nav-route', layout:rl, paint:{'line-color':'#4da3ff', 'line-width':7.5}});
+  map.addSource('nav-wx', {type:'geojson', data:FC([])});
+  map.addLayer({id:'nav-wx-ice', type:'line', source:'nav-wx', layout:rl, filter:['in', ['get', 'k'], ['literal', ['ice', 'frost', 'snow']]], paint:{'line-color':['get', 'c'], 'line-width':7.5}});
+  map.addLayer({id:'nav-wx-rain', type:'line', source:'nav-wx', layout:rl, filter:['in', ['get', 'k'], ['literal', ['rain', 'heavy']]], paint:{'line-color':'#ffffff', 'line-width':['case', ['==', ['get', 'k'], 'heavy'], 3.6, 3], 'line-dasharray':[.5, 1.7], 'line-opacity':.95}});
   for(const id of ['course-all','course-view','course-ends','draw-line','draw-pts']) map.addSource(id, {type:'geojson', data:FC([])});
   map.addLayer({id:'course-all-line', type:'line', source:'course-all', layout:rl, paint:{'line-color':'#bf5af2', 'line-width':3.5, 'line-opacity':.75}});
   map.addLayer({id:'course-all-hit', type:'line', source:'course-all', layout:rl, paint:{'line-color':'#000', 'line-width':20, 'line-opacity':0}});
@@ -1609,6 +1694,7 @@ function onMapStyle(){
   for(const id in pendingSrc) map.getSource(id)?.setData(pendingSrc[id]);
   applyLabels(); apply3D(false);
   updateTrackLayers(); drawLive();
+  if(prefs.radar) radToggle(true);
   renderMarkers();
   hideSplash();
 }
@@ -1656,8 +1742,127 @@ function applyLabels(){
   $('#b-labels').classList.toggle('on', prefs.labels);
   $('#b-labels').hidden = base !== 'sat' && base !== 'dark' && base !== 'vec';
   document.querySelectorAll('[data-base]').forEach(b => b.classList.toggle('on', b.dataset.base === base));
-  $('#attrib').textContent = BASES[base].credit + (prefs.terrain ? ' · Höhen © Mapzen' : '') + ' · Daten © OpenStreetMap';
+  setAttrib();
 }
+function setAttrib(){
+  const base = BASES[prefs.base] ? prefs.base : 'sat';
+  $('#attrib').textContent = BASES[base].credit + (prefs.terrain ? ' · Höhen © Mapzen' : '') + ' · Daten © OpenStreetMap' + (rad.on && rad.src ? (rad.src === 'dwd' ? ' · Radar © DWD' : ' · Radar © RainViewer') : '');
+}
+
+/* ================= Regenradar =================
+   In und um Deutschland: DWD-Niederschlagsradar (1 km, alle 5 Min, mit 2 h Vorhersage). Sonst: RainViewer (letzte Stunde).
+   Zwei Puffer-Ebenen: das nächste Bild lädt unsichtbar und wird erst eingeblendet, wenn es da ist – so flackert nichts. */
+const RAD_DWD = 'https://maps.dwd.de/geoserver/dwd/wms?service=WMS&version=1.3.0&request=GetMap&layers=dwd:Niederschlagsradar&styles=&format=image/png&transparent=true&width=256&height=256&crs=EPSG:3857&bbox={bbox-epsg-3857}';
+const RAD_BOX = [2, 46.2, 18.2, 55.9], RAD_OP = .75;
+const rad = {on:false, src:null, frames:[], now:0, idx:0, cur:'a', pend:null, play:false, timer:0, swapT:0, t:0, busy:false};
+const radArea = () => { const c = map.getCenter(); return c.lng > RAD_BOX[0] && c.lng < RAD_BOX[2] && c.lat > RAD_BOX[1] && c.lat < RAD_BOX[3] ? 'dwd' : 'rv'; };
+async function radLoadFrames(src){
+  if(src === 'dwd'){
+    let ref = Math.floor((Date.now() - 8 * 60000) / 300000) * 300000, end = ref + 7200e3;
+    try{
+      const t = await (await fetch('https://maps.dwd.de/geoserver/dwd/Niederschlagsradar/wms?service=WMS&version=1.3.0&request=GetCapabilities')).text();
+      const m = t.match(/name="REFERENCE_TIME" default="([^"]+)"/), e = t.match(/name="time"[^>]*>[^/<]+\/([^/<]+)\/PT5M/);
+      if(m && !isNaN(Date.parse(m[1]))) ref = Date.parse(m[1]);
+      if(e && !isNaN(Date.parse(e[1]))) end = Date.parse(e[1]);
+    }catch(_){}
+    const fr = []; for(let x = ref - 3600e3; x <= Math.min(end, ref + 7200e3) + 1; x += 600e3) fr.push({t:x, url:RAD_DWD + '&time=' + new Date(x).toISOString()});
+    return {frames:fr, now:ref};
+  }
+  const j = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
+  const past = ((j.radar && j.radar.past) || []).slice(-7);
+  if(!past.length) throw 0;
+  return {frames:past.map(f => ({t:f.time * 1000, url:`${j.host}${f.path}/512/{z}/{x}/{y}/2/1_1.png`})), now:past[past.length - 1].time * 1000};
+}
+const radSpec = url => rad.src === 'dwd' ? {type:'raster', tiles:[url], tileSize:256, maxzoom:11, bounds:[1.46, 45.68, 18.71, 56.21]} : {type:'raster', tiles:[url], tileSize:256, maxzoom:7};
+function radRemove(){ ['a', 'b'].forEach(k => { if(map.getLayer('radar-' + k)) map.removeLayer('radar-' + k); if(map.getSource('radar-' + k)) map.removeSource('radar-' + k); }); }
+async function radStart(){
+  if(!mapReady || rad.busy) return;
+  rad.busy = true; const src = radArea();
+  try{
+    const F = await radLoadFrames(src);
+    if(!rad.on) return;
+    radRemove();
+    rad.src = src; rad.frames = F.frames; rad.now = F.now; rad.t = Date.now(); rad.cur = 'a'; rad.pend = null;
+    rad.idx = Math.max(0, F.frames.findIndex(f => f.t >= F.now - 1));
+    const sym = map.getStyle().layers.find(l => l.type === 'symbol'), before = sym ? sym.id : 'roads';
+    ['a', 'b'].forEach(k => {
+      map.addSource('radar-' + k, radSpec(F.frames[rad.idx].url));
+      map.addLayer({id:'radar-' + k, type:'raster', source:'radar-' + k, paint:{'raster-opacity':k === 'a' ? RAD_OP : 0, 'raster-opacity-transition':{duration:250, delay:0}, 'raster-fade-duration':0}}, before);
+    });
+    $('#radar').innerHTML = '';
+  }catch(e){ if(rad.on) toast('Regenradar gerade nicht erreichbar.'); }
+  finally{ rad.busy = false; }
+  radUI(); setAttrib();
+}
+async function radRefresh(){   // alle 5 Minuten neue Bilder, solange man auf „Jetzt“ schaut
+  if(!rad.on || rad.busy || rad.play || !rad.frames.length) return;
+  if(radArea() !== rad.src) return radStart();
+  const atNow = rad.frames[rad.idx] && rad.frames[rad.idx].t === rad.now;
+  try{
+    const F = await radLoadFrames(rad.src); if(!rad.on || rad.play) return;
+    rad.frames = F.frames; rad.now = F.now; rad.t = Date.now(); $('#radar').innerHTML = '';
+    const ni = Math.max(0, F.frames.findIndex(f => f.t >= F.now - 1));
+    if(atNow) radShow(ni); else { rad.idx = Math.min(rad.idx, F.frames.length - 1); radUI(); }
+  }catch(e){ rad.t = Date.now(); }
+}
+function radShow(i){
+  const f = rad.frames[i]; if(!f || !map.getSource('radar-a')) return;
+  rad.idx = i; radUI();
+  const nxt = rad.cur === 'a' ? 'b' : 'a';
+  rad.pend = {nxt, i};
+  map.getSource('radar-' + nxt).setTiles([f.url]);
+  clearTimeout(rad.swapT); rad.swapT = setTimeout(radSwap, 3000);   // spätestens dann umschalten
+}
+function radSwap(){
+  const p = rad.pend; if(!p) return;
+  rad.pend = null; clearTimeout(rad.swapT);
+  if(!map.getLayer('radar-' + p.nxt)) return;
+  map.setPaintProperty('radar-' + p.nxt, 'raster-opacity', RAD_OP);
+  map.setPaintProperty('radar-' + rad.cur, 'raster-opacity', 0);
+  rad.cur = p.nxt;
+  if(rad.play){ clearTimeout(rad.timer); rad.timer = setTimeout(() => { if(rad.play) radShow((rad.idx + 1) % rad.frames.length); }, rad.frames[rad.idx].t === rad.now ? 1200 : 450); }
+}
+map.on('sourcedata', e => { const p = rad.pend; if(p && e.tile && e.sourceId === 'radar-' + p.nxt && map.isSourceLoaded(e.sourceId)) radSwap(); });
+map.on('moveend', () => { if(rad.on && !rad.busy && rad.src && radArea() !== rad.src){ rad.play = false; radStart(); } });
+setInterval(() => { if(rad.on && Date.now() - rad.t > 5 * 60000) radRefresh(); }, 60000);
+function radToggle(on){
+  rad.on = on; prefs.radar = on; savePrefs();
+  rad.play = false; clearTimeout(rad.timer); clearTimeout(rad.swapT); rad.pend = null;
+  if(on){ rad.frames = []; $('#radar').innerHTML = ''; radUI(); radStart(); }
+  else { if(mapReady) radRemove(); rad.src = null; rad.frames = []; radUI(); setAttrib(); }
+}
+const radMin = m => m < 60 ? `${m} Min` : m % 60 ? `${Math.floor(m / 60)} h ${m % 60} Min` : `${m / 60} h`;
+const RAD_PLAY = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M7.5 5.2v13.6L18.5 12z"/></svg>';
+const RAD_PAUSE = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/></svg>';
+function radUI(){
+  $('#b-radar').classList.toggle('on', rad.on);
+  const el = $('#radar'); el.hidden = !rad.on; if(!rad.on) return;
+  if(!rad.frames.length){
+    el.innerHTML = `<span class="rd-load"><i></i>Regenradar wird geladen …</span><button class="rd-x" data-rd="off" aria-label="Regenradar ausblenden">${svg(UI.close, 12)}</button>`; return;
+  }
+  const n = rad.frames.length, ni = Math.max(0, rad.frames.findIndex(f => f.t >= rad.now - 1)), pct = n > 1 ? ni / (n - 1) * 100 : 100;
+  if(!$('#rdRange')) el.innerHTML = `<button class="rd-play" data-rd="play"></button>
+    <div class="rd-mid"><input type="range" id="rdRange" min="0" max="${n - 1}" step="1" aria-label="Zeitpunkt des Radarbilds"><div class="rd-sc"><span>−1 h</span><span class="rd-now" style="left:${pct}%;transform:translateX(-${pct}%)">Jetzt</span><span>${ni < n - 1 ? '+' + radMin(Math.round((rad.frames[n - 1].t - rad.now) / 60000)) : ''}</span></div></div>
+    <div class="rd-t"><b id="rdTime"></b><span id="rdLbl"></span></div>
+    <button class="rd-x" data-rd="off" aria-label="Regenradar ausblenden">${svg(UI.close, 12)}</button>`;
+  const f = rad.frames[rad.idx], d = Math.round((f.t - rad.now) / 60000);
+  $('#rdRange').value = rad.idx;
+  $('#rdTime').textContent = hhmm(new Date(f.t));
+  $('#rdLbl').innerHTML = d === 0 ? (rad.src === 'rv' ? 'Jetzt · <a href="https://www.rainviewer.com" target="_blank" rel="noopener">RainViewer</a>' : 'Jetzt') : d > 0 ? `Vorhersage +${radMin(d)}` : `vor ${radMin(-d)}`;
+  el.classList.toggle('fc', d > 0);
+  const pb = el.querySelector('.rd-play'); pb.innerHTML = rad.play ? RAD_PAUSE : RAD_PLAY; pb.setAttribute('aria-label', rad.play ? 'Anhalten' : 'Abspielen');
+}
+$('#radar').addEventListener('click', e => {
+  const b = e.target.closest('[data-rd]'); if(!b) return;
+  if(b.dataset.rd === 'off') return radToggle(false);
+  if(b.dataset.rd === 'play'){
+    rad.play = !rad.play; clearTimeout(rad.timer);
+    if(rad.play) radShow(rad.idx >= rad.frames.length - 1 ? 0 : rad.idx + 1); else radUI();
+  }
+});
+$('#radar').addEventListener('input', e => { if(e.target.id !== 'rdRange') return; rad.play = false; clearTimeout(rad.timer); radShow(+e.target.value); });
+$('#b-heat').addEventListener('click', () => xplHeatToggle(!prefs.heat, true));
+$('#b-radar').addEventListener('click', () => { radToggle(!rad.on); if(rad.on) toast(radArea() === 'dwd' ? 'Regenradar an – mit Vorhersage für die nächsten 2 Stunden' : 'Regenradar an'); });
 
 /* ================= Clean-Karte (Vektor, OpenFreeMap) =================
    Wird im Handy gezeichnet: scharf in jeder Zoomstufe, Schrift bleibt waagerecht. Farben angelehnt an Apple Karten, hell und dunkel. */
@@ -2043,7 +2248,7 @@ function itemHTML(s){
   if(s.walk && s.parking) sub = `<span class="tag-p">P</span>${fmtDist(dist(s.parking, s))} zu Fuß · ` + sub;
   else if(s.walk) sub = 'Parkplatz fehlt · ' + sub;
   if(me) sub = `<span class="me-d">${fmtDist(dist(me, s))}</span> · ` + sub;
-  return `<button class="item" data-id="${s.id}"><span class="ic" style="--c:${cat.color}">${ic(cat.icon, 16)}</span><span class="tx"><span class="t">${esc(s.name)}</span><span class="s">${sub}</span></span></button>`;
+  return `<button class="item" data-id="${s.id}"><span class="ic" style="--c:${cat.color}">${ic(cat.icon, 16)}</span><span class="tx"><span class="t">${esc(s.name)}</span><span class="s">${sub}</span></span>${rwTagHTML(s)}</button>`;
 }
 const inWsView = () => tab === 'crew' || (tab === 'spots' && spotView === 'ws' && !searching);
 function renderList(){
@@ -2057,7 +2262,7 @@ function renderList(){
     const list = visibleSpots().slice().sort(me ? (a,b) => dist(me, a) - dist(me, b) : (a,b) => (b.created||0) - (a.created||0));
     if(!data.spots.length) body.innerHTML = `<div class="empty"><b>Noch keine Spots</b>Tippe auf <strong>+</strong> und dann auf die Karte, um deinen ersten Spot zu setzen.</div>`;
     else if(!list.length) body.innerHTML = `<div class="empty">Keine Spots in dieser Kategorie.</div>`;
-    else body.innerHTML = (filter.size ? '' : sunCardHTML()) + list.map(itemHTML).join('');
+    else{ body.innerHTML = (filter.size ? '' : sunCardHTML()) + list.map(itemHTML).join(''); rwListLoad(list); }
     return;
   }
   const own = data.spots.filter(s => (s.name + ' ' + (s.notes||'') + ' ' + catById(s.cat).name).toLowerCase().includes(q));
@@ -2163,6 +2368,7 @@ function renderDetail(s){
       <button class="btn primary wide" data-act="nav">${svg(UI.nav,16)} ${s.walk && s.parking ? 'Zum Parkplatz navigieren' : 'Navigation starten'}</button>
       <div class="btns"><button class="btn" data-act="share">${svg(UI.share, 15)} Link teilen</button><button class="btn${s.ws ? ' on-ws' : ''}" data-act="ws">${svg(s.ws ? '<path d="m5 12.5 4.5 4.5L19 7.5"/>' : '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 6M17.5 14.2A5.5 5.5 0 0 1 20.5 19"/>', 15, 2.2)} ${s.ws ? 'Im Workshop' : 'In den Workshop'}</button></div>
       ${s.notes ? `<p class="notes">${esc(s.notes)}</p>` : ''}
+      <div id="rwSpot">${rwSpotHTML(s)}</div>
       <div class="card wx" id="wxCard">${wxHTML(s)}</div>
       ${park}
       <div class="card">
@@ -2172,7 +2378,7 @@ function renderDetail(s){
       </div>
       <div class="btns"><button class="btn" data-act="edit">Bearbeiten</button><button class="btn danger" data-act="del">Löschen</button></div>
     </div>`;
-  loadWeather(s);
+  loadWeather(s); rwSpotLoad(s);
   fillPhotos($('#detailView'));
 }
 function closeDetail(){ selected = null; show('list', 'half'); renderMarkers(); }
@@ -2298,6 +2504,114 @@ async function loadWeather(s){
   }catch(e){ wxCache[k] = {t:Date.now() - 25 * 60000, err:true, data:c && c.data}; }
   const el = $('#wxCard');
   if(el && view === 'detail' && selected){ const cur = data.spots.find(x => x.id === selected); if(cur && wxKey(cur) === k) el.innerHTML = wxHTML(cur); }
+}
+
+/* ================= Straßenwetter: Regen- und Glättehinweise (Open-Meteo, ohne Key) ================= */
+const RW_VARS = 'temperature_2m,precipitation,precipitation_probability,snowfall,weather_code,soil_temperature_0cm,dew_point_2m';
+const RWI = {
+  dry:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  cold:'<path d="M10 14.6V5.2a2 2 0 0 1 4 0v9.4a3.8 3.8 0 1 1-4 0zM12 10.5v6"/>',
+  wet:'<path d="M12 3.5s6 6.3 6 10.4a6 6 0 0 1-12 0c0-4.1 6-10.4 6-10.4z"/>',
+  rain:WXI.rain, heavy:WXI.storm, snow:WXI.snow,
+  frost:'<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.6 12 7l2.5-2.4M9.5 19.4 12 17l2.5 2.4"/>'
+};
+RWI.ice = RWI.frost; RWI.load = RWI.wet;
+const RW_LV = {dry:0, cold:1, wet:2, rain:3, heavy:4, frost:5, snow:6, ice:7};
+const RWC = {ice:'#bf5af2', frost:'#c38cff', snow:'#f2f4f8'};   // Kartenfarben für Glätte-Abschnitte
+const rwCache = new Map(), rwWait = new Map();
+const rwKey = p => `${(+p.lat).toFixed(2)},${(+p.lng).toFixed(2)}`;   // ≈ 1 km Raster
+const rwFresh = k => { const c = rwCache.get(k); return !!c && Date.now() - c.t < (c.err ? 5 : 20) * 60000; };
+const rwPeek = p => { const c = rwCache.get(rwKey(p)); return c ? (c.h || null) : undefined; };   // undefined = noch nicht geladen
+async function rwGet(pts){
+  const keys = pts.map(rwKey), need = [...new Set(keys)].filter(k => !rwFresh(k) && !rwWait.has(k));
+  for(let i = 0; i < need.length; i += 40){
+    const part = need.slice(i, i + 40);
+    const pr = (async () => {
+      try{
+        const ll = part.map(k => k.split(','));
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${ll.map(x => x[0]).join(',')}&longitude=${ll.map(x => x[1]).join(',')}&hourly=${RW_VARS}&past_hours=6&forecast_hours=30&timeformat=unixtime&timezone=GMT`);
+        if(!r.ok) throw 0;
+        let j = await r.json(); if(!Array.isArray(j)) j = [j];
+        part.forEach((k, n) => rwCache.set(k, j[n] && j[n].hourly && j[n].hourly.time ? {t:Date.now(), h:j[n].hourly} : {t:Date.now(), err:true}));
+      }catch(e){ part.forEach(k => { const o = rwCache.get(k); rwCache.set(k, {t:Date.now(), err:true, h:o && o.h}); }); }
+      part.forEach(k => rwWait.delete(k));
+    })();
+    part.forEach(k => rwWait.set(k, pr));
+  }
+  await Promise.all([...new Set(keys.map(k => rwWait.get(k)).filter(Boolean))]);
+  return keys.map(k => { const c = rwCache.get(k); return c && c.h ? c.h : null; });
+}
+// Straßenzustand zu einem Zeitpunkt: Glätte schlägt Regen, Regen schlägt nass
+function rwAt(h, t){
+  const T = h && h.time; if(!T || !T.length) return null;
+  const i = Math.max(0, Math.min(T.length - 1, Math.floor((t / 1000 - T[0]) / 3600)));
+  const g = (k, j = i) => { const a = h[k]; return a && a[j] != null ? a[j] : null; };
+  const temp = g('temperature_2m'), soil = g('soil_temperature_0cm'), pr = g('precipitation') || 0, sn = g('snowfall') || 0, code = g('weather_code'), dew = g('dew_point_2m'), pp = g('precipitation_probability');
+  let wet3 = 0, snow6 = 0;
+  for(let j = Math.max(0, i - 6); j <= i; j++){ if(j >= i - 3) wet3 += g('precipitation', j) || 0; snow6 += g('snowfall', j) || 0; }
+  const cold = Math.min(temp == null ? 99 : temp, soil == null ? 99 : soil), deg = temp == null ? '' : `${Math.round(temp)}°`;
+  const R = (k, tt, d) => ({k, t:tt, d, lv:RW_LV[k], temp, pp, ts:T[i] * 1000, last:i >= T.length - 1});
+  if([56, 57, 66, 67].includes(code)) return R('ice', 'Glatteis', 'Gefrierender Regen');
+  if(sn >= .1 || (code >= 71 && code <= 77) || code === 85 || code === 86) return R('snow', 'Schnee', deg ? `Schneefall bei ${deg}` : 'Schneefall');
+  if(snow6 >= .5 && cold <= 1) return R('snow', 'Schneeglätte', 'Es hat gerade geschneit');
+  if(cold <= 1 && (wet3 >= .1 || pr > 0)) return R('ice', 'Glättegefahr', `Nass bei ${deg}`);
+  if(cold <= 0 && (code === 48 || (dew != null && temp != null && temp - dew <= 1.5))) return R('frost', 'Reifglätte möglich', `${deg} und feucht`);
+  if(code >= 95) return R('heavy', 'Gewitter', 'Starkregen möglich');
+  if(pr >= 2.5 || code === 65 || code === 82) return R('heavy', 'Starkregen', 'Aquaplaning möglich');
+  if(pr >= .1 || (code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return R('rain', 'Regen', 'Nasse Fahrbahn');
+  if(wet3 >= .3) return R('wet', 'Straße nass', 'Es hat gerade geregnet');
+  if(temp != null && temp <= 3) return R('cold', `Kalt, ${deg}`, 'Brücken und Waldstücke können glatt sein');
+  return R('dry', 'Trocken', deg);
+}
+const rwBad = r => !!r && r.lv >= RW_LV.rain;
+const rwWorst = rs => rs.reduce((w, r) => r && (!w || r.lv > w.lv) ? r : w, null);
+const rwHour = ts => `${new Date(ts).getHours()} Uhr`;
+function rwNextTxt(at, from = Date.now(), hours = 8){
+  const cur = at(from); if(!cur) return '';
+  for(let k = 1; k <= hours; k++){
+    const r = at(from + k * 3600e3); if(!r) break;
+    if(!rwBad(cur) && rwBad(r)) return `${r.t} ab ${rwHour(r.ts)}${r.pp != null && (r.k === 'rain' || r.k === 'heavy') ? ` (${r.pp} %)` : ''}`;
+    if(rwBad(cur) && !rwBad(r)) return `bis ca. ${rwHour(r.ts)}`;
+    if(r.last) break;
+  }
+  return rwBad(cur) ? 'auch die nächsten Stunden' : 'die nächsten Stunden trocken';
+}
+function rwRowHTML(at, title){
+  const r = at(Date.now()); if(!r) return '';
+  return `<div class="rw-row rwk-${r.k}"><span class="rw-i">${svg(RWI[r.k], 17, 2)}</span><div class="rw-tx"><b>${title}: ${esc(r.t)}</b><span>${esc([r.d, rwNextTxt(at)].filter(Boolean).join(' · '))}</span></div></div>`;
+}
+const rwLoadHTML = title => `<div class="rw-row rwk-load"><span class="rw-i">${svg(RWI.load, 17, 2)}</span><div class="rw-tx"><b>${title}</b><span>Straßenwetter wird geladen …</span></div></div>`;
+// Spot
+function rwSpotHTML(s){ const h = rwPeek(s); return h === undefined ? rwLoadHTML('Straße') : h ? rwRowHTML(t => rwAt(h, t), 'Straße') : ''; }
+function rwSpotLoad(s){
+  if(rwFresh(rwKey(s))) return;
+  rwGet([s]).then(() => { const el = $('#rwSpot'), cur = view === 'detail' && data.spots.find(x => x.id === selected); if(el && cur && rwKey(cur) === rwKey(s)) el.innerHTML = rwSpotHTML(cur); });
+}
+// Spot-Liste: nur echte Hinweise (Regen, Glätte, Schnee) in den nächsten 2 Stunden
+function rwTagHTML(s){
+  const h = rwPeek(s); if(!h) return '';
+  const now = Date.now(), rs = [0, 1, 2].map(k => rwAt(h, now + k * 3600e3)), w = rwWorst(rs);
+  if(!rwBad(w)) return '';
+  const lbl = {rain:'Regen', heavy:w.t, frost:'Reif', snow:'Schnee', ice:'Glätte'}[w.k], f = rs.find(rwBad);
+  return `<span class="rw-tag rwk-${w.k}" title="${esc(w.t + (w.d ? ' · ' + w.d : ''))}">${svg(RWI[w.k], 12, 2.2)}${esc(lbl)}${rwBad(rs[0]) ? '' : ` ab ${rwHour(f.ts)}`}</span>`;
+}
+let rwListBusy = false;
+function rwListLoad(list){
+  const pts = list.slice(0, 60);
+  if(rwListBusy || !pts.length || pts.every(x => rwFresh(rwKey(x)))) return;
+  rwListBusy = true;
+  rwGet(pts).then(() => { rwListBusy = false; if(tab === 'spots' && spotView === 'mine' && view === 'list' && !searching && !$('#q').value.trim()) renderList(); });
+}
+// Rennstrecke: Start, Mitte und Ziel – es zählt der schlechteste Wert
+function rwCoursePts(c){ const p = c.pts || []; return p.length ? [p[0], p[Math.floor(p.length / 2)], p[p.length - 1]].map(q => ({lng:q[0], lat:q[1]})) : []; }
+function rwCourseHTML(c){
+  const hs = rwCoursePts(c).map(rwPeek); if(!hs.length) return '';
+  if(hs.every(h => h === undefined)) return rwLoadHTML('Strecke');
+  const ok = hs.filter(Boolean); return ok.length ? rwRowHTML(t => rwWorst(ok.map(h => rwAt(h, t))), 'Strecke') : '';
+}
+function rwCourseLoad(c){
+  const pts = rwCoursePts(c); if(!pts.length || pts.every(q => rwFresh(rwKey(q)))) return;
+  rwGet(pts).then(() => { const el = $('#rwCourse'); if(el && view === 'course' && selCourse === c.id) el.innerHTML = rwCourseHTML(c); });
 }
 
 /* ================= Fotos ================= */
@@ -3713,7 +4027,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.18';
+const VERSION = '2026.10.04.19';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4035,6 +4349,7 @@ document.querySelector('.tabs').addEventListener('click', e => { const b = e.tar
 /* Kartenlinien */
 function updateTrackLayers(){
   if(!mapReady) return;
+  xplHeatApply();
   const showAll = tab === 'tracks' && sub === 'rec' && view === 'list';
   setSrc('track-all', FC(showAll ? tracks.filter(t => t.id !== selTrack).flatMap(t => segFeatures(t.segs, {id:t.id})) : []));
   const t = view === 'track' && curTrack();
@@ -4278,6 +4593,7 @@ function renderStats(){
       <div class="st-tile"><b>${Math.round(top * 3.6)} km/h</b><span>Top-Speed</span></div>
       <div class="st-tile"><b>${dur ? Math.round(tot / (dur / 1000) * 3.6) : 0} km/h</b><span>Ø Tempo</span></div>
     </div>
+    <div id="xplCard">${xplCardHTML()}</div>
     <div class="st-h"><span>Kilometer pro Woche</span><em id="stCap">Diese Woche ${fmtKmS(kmWeek)}</em></div>
     <div class="st-chart" id="stChart">${chart}</div>
     <div class="st-list">
@@ -4297,9 +4613,156 @@ function renderStats(){
   chartEl.addEventListener('pointerover', e => { const t = e.target.closest('[data-i]'); if(t) pick(+t.dataset.i); });
   chartEl.addEventListener('click', e => { const t = e.target.closest('[data-i]'); if(t) pick(+t.dataset.i); });
   chartEl.addEventListener('pointerleave', () => pick(7));
+  setTimeout(xrRun, 400);
+}
+
+/* ================= Straßen-Sammler: Heatmap und Neuland =================
+   Jede Fahrt wird in ein 30-m-Raster gelegt. Felder, die vorher noch keine Fahrt berührt hat, sind Neuland.
+   Straßennamen kommen per Map-Matching (OSRM) – ohne die ersten und letzten 300 m, damit die Haustür nicht rausgeht. */
+const XC = 30, XLAT = XC / 111320, XLNG = XC / (111320 * .64), XM = 25;   // ≈ 25 m Straße pro Rasterfeld
+const xCell = (lng, lat) => `${Math.round(lat / XLAT)}:${Math.round(lng / XLNG)}`;
+const myTracks = () => tracks.filter(t => !(t._ws && t._ws.dev !== myId()));
+let xpl = null;
+function trackCells(t){
+  const set = new Set();
+  for(const sg of t.segs || []) for(let i = 0; i < sg.length; i++){
+    const p = sg[i]; set.add(xCell(p[0], p[1]));
+    if(!i) continue;
+    const q = sg[i-1], d = Math.hypot((p[0] - q[0]) * 111320 * .64, (p[1] - q[1]) * 111320);
+    if(d > XC * .5 && d < 400){ const n = Math.ceil(d / (XC * .5)); for(let k = 1; k < n; k++) set.add(xCell(q[0] + (p[0] - q[0]) * k / n, q[1] + (p[1] - q[1]) * k / n)); }
+  }
+  return set;
+}
+function xplCalc(){
+  const ts = myTracks().sort((a, b) => (a.created || 0) - (b.created || 0));
+  const sig = ts.map(t => t.id + (t.segs || []).reduce((a, sg) => a + sg.length, 0)).join('|');
+  if(xpl && xpl.sig === sig) return xpl;
+  const seen = new Map(), per = {};
+  for(const t of ts){
+    const cs = trackCells(t); let nw = 0;
+    cs.forEach(k => { const n = seen.get(k); if(n) seen.set(k, n + 1); else { seen.set(k, 1); nw++; } });
+    per[t.id] = {newKm:nw * XM / 1000, km:cs.size * XM / 1000};
+  }
+  xpl = {sig, ts, per, seen, total:seen.size * XM / 1000, heat:null};
+  return xpl;
+}
+function xplHeatFC(){
+  const X = xplCalc();
+  if(!X.heat){ const f = []; X.seen.forEach((n, k) => { const [r, c] = k.split(':'); f.push({type:'Feature', properties:{n}, geometry:{type:'Point', coordinates:[+(c * XLNG).toFixed(6), +(r * XLAT).toFixed(6)]}}); }); X.heat = FC(f); }
+  return X.heat;
+}
+let xplHeatShown = null;
+function xplHeatApply(){
+  if(!mapReady || !map.getLayer('heat')) return;
+  const on = !!prefs.heat && !ckOn;
+  map.setLayoutProperty('heat', 'visibility', on ? 'visible' : 'none');
+  const fc = on ? xplHeatFC() : null;
+  if(on && fc !== xplHeatShown){ setSrc('heat', fc); xplHeatShown = fc; }
+  const pb = $('#b-heat'); if(pb) pb.classList.toggle('on', !!prefs.heat);
+}
+function xplHeatToggle(on, fit){
+  prefs.heat = on; savePrefs(); xplHeatApply();
+  const tb = document.querySelector('[data-xh]'); if(tb) tb.classList.toggle('on', on);
+  if(on && fit && mapReady){
+    let b = null; myTracks().forEach(t => (t.segs || []).forEach(sg => sg.forEach(q => { b = b ? b.extend([q[0], q[1]]) : new maplibregl.LngLatBounds([q[0], q[1]], [q[0], q[1]]); })));
+    if(b) map.fitBounds(b, {padding:{top:60, bottom:mobile() ? 300 : 60, left:mobile() ? 30 : 460, right:60}, maxZoom:14, duration:900});
+  }
+  if(on && !myTracks().length) toast('Noch keine Fahrten – die Heatmap füllt sich mit jeder Aufzeichnung.');
+}
+// Straßennamen
+const XR_KEY = 'meine-spots-roads';
+let xRoads = {}; try{ xRoads = JSON.parse(localStorage.getItem(XR_KEY) || '{}') || {}; }catch(e){ xRoads = {}; }
+let xrBusy = false;
+const xrKey = st => ((st.ref || '').split(';')[0].trim() || (st.name || '').trim()).replace(/\s+/g, ' ');
+async function xrFetch(ch){
+  const q = ch.map(p => `${p[0].toFixed(5)},${p[1].toFixed(5)}`).join(';');
+  for(const base of ROUTERS){
+    try{
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 12000);
+      const r = await fetch(`${base.replace('/route/', '/match/')}${q}?overview=false&steps=true&gaps=split&tidy=true&radiuses=${ch.map(() => 30).join(';')}`, {signal:ctl.signal});
+      clearTimeout(to);
+      const j = await r.json();
+      if(j.code === 'Ok') return j;
+      if(j.code === 'NoMatch' || j.code === 'NoSegment') return {matchings:[]};
+    }catch(e){}
+  }
+  return null;
+}
+async function xrMatch(t){
+  const flat = []; (t.segs || []).forEach(sg => sg.forEach(q => flat.push(q)));
+  const cum = [0]; for(let i = 1; i < flat.length; i++) cum.push(cum[i-1] + dist({lng:flat[i-1][0], lat:flat[i-1][1]}, {lng:flat[i][0], lat:flat[i][1]}));
+  const L = cum[cum.length - 1] || 0; if(flat.length < 2 || L < 900) return {r:[]};
+  const pick = []; let la = -1e9;
+  for(let i = 0; i < flat.length; i++) if(cum[i] >= 300 && cum[i] <= L - 300 && cum[i] - la >= 120){ pick.push(flat[i]); la = cum[i]; }
+  const names = new Set();
+  for(let i = 0; i < pick.length - 1; i += 89){
+    const j = await xrFetch(pick.slice(i, i + 90)); if(!j) return null;
+    (j.matchings || []).forEach(m => (m.legs || []).forEach(l => (l.steps || []).forEach(st => { const k = xrKey(st); if(k) names.add(k); })));
+    await new Promise(r => setTimeout(r, 1100));
+  }
+  return {r:[...names]};
+}
+const xplOpen = () => tab === 'tracks' && sub === 'stats' && view === 'list' && !!$('#xplCard');
+async function xrRun(){
+  if(xrBusy || !navigator.onLine) return; xrBusy = true;
+  try{
+    const ids = new Set(tracks.map(t => t.id)); let pruned = false;
+    for(const k of Object.keys(xRoads)) if(!ids.has(k)){ delete xRoads[k]; pruned = true; }
+    if(pruned) try{ localStorage.setItem(XR_KEY, JSON.stringify(xRoads)); }catch(e){}
+    for(const t of myTracks().sort((a, b) => (a.created || 0) - (b.created || 0))){   // älteste zuerst, damit „neu“ stimmt
+      if(xRoads[t.id] || (t.dist || 0) < 900) continue;
+      if(!xplOpen()) break;
+      const r = await xrMatch(t); if(!r) break;
+      xRoads[t.id] = r; try{ localStorage.setItem(XR_KEY, JSON.stringify(xRoads)); }catch(e){}
+      const el = $('#xplCard'); if(el && xplOpen()) el.innerHTML = xplCardHTML();
+    }
+  }finally{ xrBusy = false; }
+}
+function xrStats(){
+  const ts = myTracks().sort((a, b) => (a.created || 0) - (b.created || 0)), seen = new Set(), per = {};
+  let done = 0, need = 0;
+  for(const t of ts){
+    if((t.dist || 0) < 900) continue;
+    need++; const r = xRoads[t.id]; if(!r) continue;
+    done++; const nw = r.r.filter(k => !seen.has(k)); nw.forEach(k => seen.add(k)); per[t.id] = nw;
+  }
+  return {total:seen.size, per, done, need};
+}
+function xplCardHTML(){
+  const X = xplCalc(), R = xrStats();
+  const d0 = new Date(); d0.setDate(1); d0.setHours(0, 0, 0, 0);
+  const months = []; for(let i = 5; i >= 0; i--){ const d = new Date(d0); d.setMonth(d.getMonth() - i); months.push({st:d.getTime(), km:0}); }
+  X.ts.forEach(t => { const pp = X.per[t.id]; if(!pp) return; for(let i = months.length - 1; i >= 0; i--) if((t.created || 0) >= months[i].st){ months[i].km += pp.newKm; break; } });
+  const mx = Math.max(.1, ...months.map(m => m.km));
+  const bars = months.map((m, i) => `<div class="xb${i === 5 ? ' on' : ''}" title="${fmtKmS(m.km * 1000)} Neuland"><i style="height:${Math.max(4, m.km / mx * 100)}%"></i><span>${new Date(m.st).toLocaleDateString('de-DE', {month:'short'}).replace('.', '')}</span></div>`).join('');
+  const recent = X.ts.slice(-3).reverse().map(t => {
+    const pp = X.per[t.id] || {newKm:0, km:0}, nr = R.per[t.id], pct = pp.km ? Math.round(pp.newKm / pp.km * 100) : 0;
+    return `<button class="xr" data-xt="${t.id}"><span class="t">${esc(t.name || 'Fahrt')}<small>${fmtDate(t.created)}</small></span><span class="v"><b>+${fmtKmS(pp.newKm * 1000)}</b><small>${pct} % neu${nr && nr.length ? ` · ${nr.length} neue Straße${nr.length === 1 ? '' : 'n'}` : ''}</small></span></button>`;
+  }).join('');
+  return `<div class="st-h"><span>Straßen-Sammler</span><button class="xh-tg${prefs.heat ? ' on' : ''}" data-xh>${svg('<path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.6 1.2 2.6 2.3 2.9C10.8 9 11 6 12 3z"/>', 13, 2)} Heatmap</button></div>
+    <div class="xpl">
+      <div class="xpl-tiles">
+        <div><b>${fmtKmS(X.total * 1000)}</b><span>Straße erkundet</span></div>
+        <div><b>${R.done ? R.total : '–'}</b><span>verschiedene Straßen</span></div>
+        <div><b>+${fmtKmS(months[5].km * 1000)}</b><span>Neuland im ${new Date().toLocaleDateString('de-DE', {month:'long'})}</span></div>
+      </div>
+      <div class="xbars" aria-label="Neuland pro Monat">${bars}</div>
+      ${R.done < R.need ? `<div class="xpl-prog"><i></i>Straßennamen werden erkannt … ${R.done} von ${R.need} Fahrten</div>` : ''}
+      ${recent ? `<div class="xrs">${recent}</div>` : ''}
+    </div>`;
+}
+function xplTrackHTML(t){
+  if(t._ws && t._ws.dev !== myId()) return '';
+  const X = xplCalc(), pp = X.per[t.id]; if(!pp || !pp.km) return '';
+  const nr = xrStats().per[t.id], pct = Math.round(pp.newKm / pp.km * 100);
+  return `<div class="xt"><span class="xt-i">${svg('<path d="M4 19 9 5l3 8 3-5 5 11z"/>', 16, 2)}</span><div><b>${pp.newKm >= .05 ? `Neuland: +${fmtKmS(pp.newKm * 1000)}` : 'Kein Neuland'}</b><span>${pct} % der Strecke zum ersten Mal${nr && nr.length ? ` · neu: ${esc(nr.slice(0, 4).join(', '))}${nr.length > 4 ? ` +${nr.length - 4}` : ''}` : ''}</span></div></div>`;
 }
 
 /* Liste & Detail */
+$('#listBody').addEventListener('click', e => {
+  const h = e.target.closest('[data-xh]'); if(h){ xplHeatToggle(!prefs.heat, true); return; }
+  const x = e.target.closest('[data-xt]'); if(x) openTrack(x.dataset.xt);
+});
 function renderTrackList(){
   if(sub === 'race') return renderCourseList();
   if(sub === 'stats') return renderStats();
@@ -4340,6 +4803,7 @@ function renderTrackView(){
         <div><b>${fmtSpd(t.maxSpd || 0)}</b><span>Max. Tempo</span></div>
       </div>
       ${riskCardHTML(t)}
+      ${xplTrackHTML(t)}
       ${cmpHTML(t)}
       ${analyzeTrack(t) ? `<button class="btn primary" data-tv="replay">${svg(UI.play, 15)} Fahrt abspielen</button>` : ''}
       ${tvDetailsHTML(t)}
@@ -4772,7 +5236,7 @@ function enterCockpit(){
   if(ckOn) return;
   if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
   if(mode || view === 'edit'){ toast('Erst den Spot fertig bearbeiten.'); return; }
-  ckOn = true; document.body.classList.add('cockpit');
+  ckOn = true; document.body.classList.add('cockpit'); xplHeatApply();
   car3d.on = onOff('car3d'); car3d.pos = me ? {...me} : null;
   if(car3d.on) enableCar3d(); else document.body.classList.remove('car3d');
   document.body.classList.toggle('gon', onOff('gforce')); gStart(); gRender(null);
@@ -4786,6 +5250,7 @@ function enterCockpit(){
   }, {enableHighAccuracy:true, maximumAge:0, timeout:30000});
   requestWake();
   clearInterval(ckTick); ckTick = setInterval(updateCockpitUI, 1000);
+  rwCk.t = 0; rwCk.r = null; rwCk.warned = '';
   renderCkTop(); updateRecUI(); updateCockpitUI(); liveUI();
   cam.fix = me ? {lat:me.lat, lng:me.lng, t:performance.now(), v:0, h:null} : null;
   cam.disp = null; cam.bearing = null; cam.zoom = null; ckUserPitch = null; userGesture = false;
@@ -4796,8 +5261,8 @@ function enterCockpit(){
 function exitCockpit(){
   if(!ckOn) return;
   if(nav && nav.active) endNav(true);
-  camStop(); hideGhost(); $('#ckLimit').classList.remove('show'); $('#ckSpeed').classList.remove('over');
-  ckOn = false; document.body.classList.remove('cockpit', 'ckrec', 'gon');
+  camStop(); hideGhost(); $('#ckLimit').classList.remove('show'); $('#ckSpeed').classList.remove('over'); $('#ckRoad').hidden = true;
+  ckOn = false; document.body.classList.remove('cockpit', 'ckrec', 'gon'); xplHeatApply();
   liveStop();
   parkAuto(ck.dist, ck.ts && Date.now() - ck.ts < 120000 ? ck.last : null, ck.v);
   if(!(rec && !rec.stopped)) gStop();
@@ -4864,7 +5329,7 @@ function renderCkTop(){
 }
 function updateCockpitUI(){
   if(!ckOn) return;
-  renderRaceCard();
+  renderRaceCard(); rwCkCheck(); rwCkRender();
   const stale = !ck.ts || Date.now() - ck.ts > 6000;
   const kmh = ck.v == null ? null : ck.v * 3.6;
   const vtxt = stale || kmh == null ? '–' : String(kmh < 1 ? 0 : Math.round(kmh));
@@ -6196,6 +6661,77 @@ function navState(){
   return {i, st, d, then, remDist:Math.max(0, R.L - prog), remTime:rem};
 }
 
+/* Wetter entlang der Route: alle ~5 km, jeweils zur voraussichtlichen Durchfahrtszeit */
+function routeAt(R, a){
+  let i = 1; while(i < R.cum.length - 1 && R.cum[i] < a) i++;
+  const sl = (R.cum[i] - R.cum[i-1]) || 1, f = Math.max(0, Math.min(1, (a - R.cum[i-1]) / sl)), A = R.xy[i-1], B = R.xy[i];
+  return {i, ...R.toLL(A[0] + f * (B[0] - A[0]), A[1] + f * (B[1] - A[1]))};
+}
+function routeSlice(R, a, b){
+  const p = routeAt(R, a), q = routeAt(R, b), out = [[p.lng, p.lat]];
+  for(let k = p.i; k < q.i; k++) out.push(R.coords[k]);
+  out.push([q.lng, q.lat]); return out;
+}
+async function rwNav(){
+  if(!nav) return;
+  const R = nav.route; nav.rw = null;
+  const n = Math.min(25, Math.max(2, Math.ceil(R.L / 5000) + 1)), S = [];
+  for(let k = 0; k < n; k++){ const a = R.L * k / (n - 1); S.push({a, ...routeAt(R, a)}); }
+  const hs = await rwGet(S);
+  if(!nav || nav.route !== R) return;
+  const t0 = Date.now(), half = R.L / (n - 1) / 2, segs = [];
+  S.forEach((q, k) => {
+    const eta = R.dur * q.a / R.L, r = hs[k] ? rwAt(hs[k], t0 + eta * 1000) : null; if(!r) return;
+    const a = Math.max(0, q.a - half), b = Math.min(R.L, q.a + half), last = segs[segs.length - 1];
+    if(last && last.r.k === r.k && Math.abs(last.b - a) < 1) last.b = b; else segs.push({a, b, r, eta});
+  });
+  nav.rw = segs;
+  if(navPrevOn) renderNavPrev();
+  rwNavDraw();
+}
+function rwNavDraw(){
+  if(!nav || !nav.rw){ setSrc('nav-wx', FC([])); return; }
+  const R = nav.route, from = nav.active ? nav.prog : 0;
+  setSrc('nav-wx', FC(nav.rw.filter(x => rwBad(x.r) && x.b > from + 5).map(x => ({type:'Feature', properties:{k:x.r.k, c:RWC[x.r.k] || '#ffffff'}, geometry:{type:'LineString', coordinates:routeSlice(R, Math.max(x.a, from), x.b)}}))));
+}
+function rwNavHTML(){
+  if(!nav.rw) return `<div class="rw-route load"><div class="rw-bar"><i class="rwk-load" style="flex:1"></i></div><span class="rw-sum rwk-load">${svg(RWI.load, 15, 2.2)}Wetter auf der Strecke wird geladen …</span></div>`;
+  if(!nav.rw.length) return '';
+  const segs = nav.rw, L = nav.route.L, first = ks => segs.find(x => ks.includes(x.r.k));
+  const where = x => x.a < 500 ? 'ab Start' : `ab km ${Math.round(x.a / 1000)} · ca. ${hhmm(new Date(Date.now() + x.eta * 1000))}`;
+  const icy = first(['ice', 'snow', 'frost']), heavy = first(['heavy']), rain = first(['rain', 'heavy']);
+  let k = 'dry', txt = 'Trocken auf der ganzen Strecke';
+  if(icy){ k = icy.r.k; txt = `${icy.r.t} ${where(icy)}`; }
+  else if(heavy){ k = 'heavy'; txt = `${heavy.r.t} ${where(heavy)}`; }
+  else if(rain){ k = 'rain'; txt = `Regen auf ${fmtKmS(segs.filter(x => x.r.k === 'rain' || x.r.k === 'heavy').reduce((t, x) => t + x.b - x.a, 0))} · ${where(rain)}`; }
+  else if(first(['wet'])){ k = 'wet'; txt = 'Teilweise nasse Straße'; }
+  else if(first(['cold'])){ k = 'cold'; txt = 'Trocken, aber kalt – Brücken können glatt sein'; }
+  return `<div class="rw-route"><div class="rw-bar">${segs.map(x => `<i class="rwk-${x.r.k}" style="flex:${Math.max(1, Math.round((x.b - x.a) / L * 1000))}"></i>`).join('')}</div><span class="rw-sum rwk-${k}">${svg(RWI[k], 15, 2.2)}${esc(txt)}</span></div>`;
+}
+/* Cockpit: Hinweis am eigenen Standort und – mit Navi – voraus auf der Route */
+const rwCk = {t:0, r:null, warned:'', html:''};
+async function rwCkCheck(){
+  if(!ckOn || !me || Date.now() - rwCk.t < 10 * 60000) return;
+  rwCk.t = Date.now();
+  const [h] = await rwGet([me]); if(!ckOn) return;
+  rwCk.r = h ? rwAt(h, Date.now()) : null;
+  if(rwCk.r && rwCk.r.lv >= RW_LV.heavy && rwCk.warned !== rwCk.r.k){ rwCk.warned = rwCk.r.k; toast(`${rwCk.r.t}: ${rwCk.r.d}. Fahr vorsichtig.`); }
+  rwCkRender();
+}
+function rwCkRender(){
+  const el = $('#ckRoad'); if(!el) return;
+  let k = null, txt = '';
+  if(nav && nav.active && nav.rw){
+    const x = nav.rw.find(q => q.b > nav.prog && rwBad(q.r));
+    if(x){ k = x.r.k; txt = x.a <= nav.prog ? x.r.t : `${x.r.t} in ${fmtNav(x.a - nav.prog)}`; }
+  }
+  const r = rwCk.r;
+  if(r && r.k !== 'dry' && (!k || r.lv > RW_LV[k])){ k = r.k; txt = r.t; }
+  const html = k ? `<span class="rw-i">${svg(RWI[k], 15, 2.2)}</span><b>${esc(txt)}</b>` : '';
+  el.hidden = !k || !ckOn;
+  if(html !== rwCk.html){ rwCk.html = html; el.className = `glass rwk-${k || 'dry'}`; el.innerHTML = html; }
+}
+
 /* Vorschau & Start */
 async function planNav(target, name, walkTo){
   if(ckOn) exitCockpit();
@@ -6208,7 +6744,7 @@ async function planNav(target, name, walkTo){
   nav = {active:false, dest:{lat:target.lat, lng:target.lng}, name, walkTo, route:prepRoute(r), prog:0, off:0, lastReroute:0, arrived:false};
   navPrevOn = true; document.body.classList.add('navprev');
   setSrc('nav-route', routeFC(nav.route.coords));
-  renderNavPrev();
+  renderNavPrev(); rwNav();
   const c = nav.route.coords, b = c.reduce((bb, q) => bb.extend(q), new maplibregl.LngLatBounds(c[0], c[0]));
   map.fitBounds(b, {padding:{top:80, bottom:mobile() ? 270 : 250, left:50, right:mobile() ? 50 : 80}, maxZoom:16, duration:1200});
 }
@@ -6217,6 +6753,7 @@ function renderNavPrev(){
   $('#navPrev').innerHTML = `
     <div class="nh"><span class="ni">${svg(UI.nav, 20)}</span><div><b>${esc(nav.name)}</b><span>${nav.walkTo ? `Zum Parkplatz · danach ca. ${fmtMin(walkMin(walk))} zu Fuß` : 'Mit dem Auto'}</span></div></div>
     <div class="nsum"><div><b>${fmtDurNav(R.dur)}</b><span>Fahrzeit</span></div><div><b>${fmtNav(R.L).replace('Jetzt', '0 m')}</b><span>Strecke</span></div><div><b>${clock(R.dur)}</b><span>Ankunft</span></div></div>
+    ${rwNavHTML()}
     <div class="btns"><button class="btn" data-nav="cancel">Abbrechen</button><button class="btn primary" data-nav="go">${svg(UI.nav, 16)} Los</button></div>`;
 }
 function startNav(){
@@ -6232,7 +6769,7 @@ function endNav(fromExit){
   const wasActive = nav.active;
   nav = null; navPrevOn = false;
   document.body.classList.remove('nav', 'navprev');
-  setSrc('nav-route', FC([]));
+  setSrc('nav-route', FC([])); setSrc('nav-wx', FC([]));
   if(wasActive && !fromExit && ckOn) exitCockpit();
   if(mobile()) setSnap(snap, false);
 }
@@ -6246,6 +6783,7 @@ function onNavFix(pt, acc){
   if(nav.off >= 3 && Date.now() - nav.lastReroute > 10000){ reroute(pt); return; }
   if(R.L - nav.prog < 30 || dist(pt, nav.dest) < 25){ arrive(); return; }
   setSrc('nav-route', routeFC(remainingCoords(R, nav.prog)));
+  if(nav.rw) rwNavDraw();
   renderNav();
 }
 async function reroute(pt){
@@ -6255,11 +6793,11 @@ async function reroute(pt){
   if(!nav || !nav.active) return;
   if(!r){ toast('Neue Route gerade nicht verfügbar.'); return; }
   nav.route = prepRoute(r); nav.prog = 0;
-  setSrc('nav-route', routeFC(nav.route.coords)); renderNav();
+  setSrc('nav-route', routeFC(nav.route.coords)); renderNav(); rwNav();
 }
 function arrive(){
   nav.arrived = true;
-  setSrc('nav-route', FC([]));
+  setSrc('nav-route', FC([])); setSrc('nav-wx', FC([]));
   const walk = nav.walkTo ? dist(nav.dest, nav.walkTo) : 0;
   renderNav();
 }
@@ -6712,6 +7250,7 @@ function renderCourseView(){
         <div><b>${best ? fmtLap(best.time) : '–'}</b><span>Bestzeit</span></div>
         <div><b>${best ? Math.round(c.len / best.time * 3.6) + ' km/h' : '–'}</b><span>Ø bei Bestzeit</span></div>
       </div>
+      <div id="rwCourse">${rwCourseHTML(c)}</div>
       ${ghostChipsHTML(c)}
       <button class="btn primary" data-cv="drive">${svg(UI.gauge,16)} ${(() => { const r = ghostRef(c.id); return r && r.rival ? `Gegen ${esc(r.name)} fahren` : 'Jetzt fahren'; })()}</button>
       ${FB ? `<button class="btn" data-cv="ws">${WS.courses.some(x => x._id === c.id) ? 'Im Workshop – Bestenliste der Gruppe ansehen' : 'In den Workshop: Gruppen-Bestenliste'}</button>` : ''}
@@ -6720,6 +7259,7 @@ function renderCourseView(){
       <div class="btns"><button class="btn" data-cv="rename">Umbenennen</button><button class="btn danger" data-cv="del">Löschen</button></div>
     </div>`;
   if(courseRenaming) setTimeout(() => { const i = $('#cv-name'); if(i){ i.focus(); i.select(); } }, 50);
+  rwCourseLoad(c);
 }
 let effDelArmed = null;
 $('#courseView').addEventListener('click', e => {
