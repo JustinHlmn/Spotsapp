@@ -766,17 +766,17 @@ body.car3d .rp-car{visibility:hidden}
 .mk-ws .by{position:absolute;right:-7px;top:-7px;width:19px;height:19px;border-radius:50%;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .mk-ws.sel .pin{transform:rotate(-45deg) scale(1.22)}
 .btn.on-ws{color:#30d158}
-.av{display:inline-grid;place-items:center;border-radius:50%;object-fit:cover;flex:none;color:#fff;font-weight:800;line-height:1;vertical-align:middle;box-shadow:0 0 0 1.5px var(--glass-strong)}
+.uav{display:inline-grid;place-items:center;border-radius:50%;object-fit:cover;flex:none;color:#fff;font-weight:800;line-height:1;vertical-align:middle;box-shadow:0 0 0 1.5px var(--glass-strong)}
 .ws-by{display:inline-flex;align-items:center;gap:6px}
 .ws-faces{display:flex;align-items:center;margin-top:3px}
-.ws-faces .av{margin-right:-6px}
+.ws-faces .uav{margin-right:-6px}
 .ws-faces em{font-style:normal;margin-left:12px;font-size:12.5px;color:var(--muted)}
 .ws-avtip{display:flex;align-items:center;gap:10px;margin:0 6px 10px;padding:8px 12px 8px 8px;border:1px dashed var(--fill-2);border-radius:14px;background:none;color:var(--accent);font-weight:600;width:calc(100% - 12px);text-align:left}
-.ws-drive .av{box-shadow:none}
+.ws-drive .uav{box-shadow:none}
 .ws-drive .tx .s+.s{margin-top:1px}
-.lb-row .av{margin-left:-2px}
+.lb-row .uav{margin-left:-2px}
 .mk-ws .by{overflow:hidden;padding:0;background:none;border:2px solid #fff}
-.mk-ws .by .av{width:15px!important;height:15px!important;font-size:8.5px!important;box-shadow:none}
+.mk-ws .by .uav{width:15px!important;height:15px!important;font-size:8.5px!important;box-shadow:none}
 
 /* ---------- Sonnenuntergang ---------- */
 .sun-card{position:relative;display:flex;flex-direction:column;gap:5px;width:calc(100% - 12px);margin:2px 6px 10px;padding:13px 14px 12px;border:0;border-radius:16px;text-align:left;color:#2a1405;overflow:hidden;
@@ -1176,12 +1176,13 @@ function onMapStyle(){
   map.addLayer({id:'spots-q', type:'circle', source:'spots', paint:{'circle-radius':0, 'circle-opacity':0}});
   map.addLayer({id:'acc-fill', type:'fill', source:'acc', paint:{'fill-color':'#4da3ff', 'fill-opacity':.14}});
   map.addLayer({id:'acc-line', type:'line', source:'acc', paint:{'line-color':'#4da3ff', 'line-opacity':.5, 'line-width':1}});
-  for(const id of ['track-all','track-view','track-live','track-ends']) map.addSource(id, {type:'geojson', data:FC([])});
+  for(const id of ['track-all','track-view','track-case','track-live','track-ends']) map.addSource(id, {type:'geojson', data:FC([])});
   const rl = {'line-cap':'round', 'line-join':'round'};
   map.addLayer({id:'track-all-line', type:'line', source:'track-all', layout:rl, paint:{'line-color':'#ff9f0a', 'line-width':3, 'line-opacity':.6}});
   map.addLayer({id:'track-all-hit', type:'line', source:'track-all', layout:rl, paint:{'line-color':'#000', 'line-width':20, 'line-opacity':0}});
-  map.addLayer({id:'track-view-case', type:'line', source:'track-view', layout:rl, paint:{'line-color':'#0b0d10', 'line-width':11, 'line-opacity':.8}});
-  map.addLayer({id:'track-view-line', type:'line', source:'track-view', layout:rl, paint:{'line-color':['interpolate', ['linear'], ['coalesce', ['get','k'], .5], 0, TRAMP[0], .25, TRAMP[1], .5, TRAMP[2], .75, TRAMP[3], 1, TRAMP[4]], 'line-width':6.5}});
+  // Rand als durchgehende Linie und deckende Farbstücke – sonst entstehen an den Stößen dunkle Perlen
+  map.addLayer({id:'track-view-case', type:'line', source:'track-case', layout:rl, paint:{'line-color':'#111419', 'line-width':11}});
+  map.addLayer({id:'track-view-line', type:'line', source:'track-view', layout:rl, paint:{'line-color':rampExpr(), 'line-width':6.5}});
   map.addLayer({id:'track-live-case', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ffffff', 'line-width':8, 'line-opacity':.9}});
   map.addLayer({id:'track-live-line', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ff3b30', 'line-width':5}});
   map.addSource('nav-route', {type:'geojson', data:FC([])});
@@ -2167,9 +2168,9 @@ const AV_COLS = ['#ff9f0a', '#30d158', '#0a84ff', '#bf5af2', '#ff375f', '#64d2ff
 function avHTML(dev, name, size = 22){
   const m = dev === myId() ? {av:prefs.avatar, name:myName()} : WS.members.find(x => x._id === dev);
   const nm = (m && m.name) || name || '?', av = okImg(m && m.av);
-  if(av) return `<img class="av" src="${av}" style="width:${size}px;height:${size}px" alt="">`;
+  if(av) return `<img class="uav" src="${av}" style="width:${size}px;height:${size}px" alt="">`;
   const col = AV_COLS[[...nm].reduce((a, c) => a + c.charCodeAt(0), 0) % AV_COLS.length];
-  return `<span class="av" style="width:${size}px;height:${size}px;background:${col};font-size:${Math.round(size * .46)}px">${esc(nm.slice(0, 1).toUpperCase())}</span>`;
+  return `<span class="uav" style="width:${size}px;height:${size}px;background:${col};font-size:${Math.round(size * .46)}px">${esc(nm.slice(0, 1).toUpperCase())}</span>`;
 }
 async function avatarFrom(file){
   const url = URL.createObjectURL(file);
@@ -2476,8 +2477,18 @@ async function wsUploadDrive(t){
   try{
     if(!t.place) await fetchPlace(t).catch(() => {});
     const r = trackRisk(t);
-    const obj = {name:t.name, created:t.created, dist:t.dist, dur:t.dur, maxSpd:t.maxSpd, segs, g:t.g || null, place:t.place || null, by:myName(), dev:myId(), at:Date.now()};
+    let g = null;
+    if(t.g){
+      const flat = segs.flat(), near = ll => ll && flat.some(q => dist({lat:q[1], lng:q[0]}, {lat:ll[1], lng:ll[0]}) < 40);
+      g = {};
+      if(t.g.lat && near(t.g.latAt)){ g.lat = t.g.lat; g.latAt = t.g.latAt; }
+      if(t.g.brake && near(t.g.brakeAt)){ g.brake = t.g.brake; g.brakeAt = t.g.brakeAt; }
+      if(t.g.acc && near(t.g.accAt)){ g.acc = t.g.acc; g.accAt = t.g.accAt; }
+      if(!Object.keys(g).length) g = null;
+    }
+    const obj = {name:t.name, created:t.created, dist:t.dist, dur:t.dur, maxSpd:t.maxSpd, segs, g, place:t.place || null, by:myName(), dev:myId(), at:Date.now()};
     while(JSON.stringify(obj).length > 850000) obj.segs = obj.segs.map(sg => sg.filter((_, i) => i % 2 === 0 || i === sg.length - 1));
+    if(r) obj.risk = {score:r.score, why:r.why.slice(0, 4).map(x => x.t)};
     const meta = {name:t.name, created:t.created, dist:t.dist, dur:t.dur, maxSpd:t.maxSpd, place:t.place || null, risk:r ? r.score : null, by:myName(), dev:myId(), at:obj.at};
     const docId = `${myId()}_${t.id}`;
     await fsPut('drives', docId, obj, meta);
@@ -2509,8 +2520,10 @@ async function openWsDrive(id){
     toast('Fahrt wird geladen …');
     try{
       const f = await fsGet('drives', id);
-      wsTrackObjs.set(id, {id:'ws:' + id, name:f.name, created:f.created, dist:f.dist, dur:f.dur, maxSpd:f.maxSpd, segs:f.segs || [], g:f.g || null, place:f.place || null, _ws:{dev:f.dev, by:f.by, docId:id}});
+      wsTrackObjs.set(id, {id:'ws:' + id, name:f.name, created:f.created, dist:f.dist, dur:f.dur, maxSpd:f.maxSpd, segs:f.segs || [], g:f.g || null, place:f.place || null,
+        _ws:{dev:f.dev, by:f.by, docId:id, risk:f.risk && typeof f.risk.score === 'number' ? f.risk : (typeof d.risk === 'number' ? {score:d.risk, why:[]} : null)}});
     }catch(e){ toast('Fahrt konnte nicht geladen werden. Prüfe dein Internet.'); return; }
+    hideToast();
   }
   const t = wsTrackObjs.get(id);
   selTrack = t.id; trackRenaming = false; trackDelArmed = false; tvSel = -1;
@@ -2683,7 +2696,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.6';
+const VERSION = '2026.10.04.7';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -3006,10 +3019,11 @@ function updateTrackLayers(){
     const first = segs[0][0], lastSeg = segs[segs.length - 1], last = lastSeg[lastSeg.length - 1];
     const an = analyzeTrack(t);
     setSrc('track-view', FC(an ? an.feats : segFeatures(t.segs)));
+    setSrc('track-case', FC(segFeatures(t.segs)));
     setSrc('track-secs', FC(an ? an.bounds : []));
     setSrc('track-ends', FC([{type:'Feature', properties:{k:'start'}, geometry:{type:'Point', coordinates:[first[0], first[1]]}},
                              {type:'Feature', properties:{k:'end'}, geometry:{type:'Point', coordinates:[last[0], last[1]]}}]));
-  } else { setSrc('track-view', FC([])); setSrc('track-ends', FC([])); setSrc('track-secs', FC([])); setSrc('track-cur', FC([])); }
+  } else { setSrc('track-view', FC([])); setSrc('track-case', FC([])); setSrc('track-ends', FC([])); setSrc('track-secs', FC([])); setSrc('track-cur', FC([])); }
   tvPaint(); tvGMarkers(t || null);
   updateCourseLayers();
 }
@@ -3339,6 +3353,7 @@ function toGPX(t){
 }
 /* ================= Strecken-Analyse: Tempo-Verlauf & Sektoren ================= */
 const TRAMP = ['#22c55e', '#a3e635', '#facc15', '#f97316', '#ef4444'];   // Linienfarbe = Tempo: grün = langsam, rot = schnell
+const rampExpr = () => ['interpolate', ['linear'], ['coalesce', ['get', 'k'], .5], 0, TRAMP[0], .25, TRAMP[1], .5, TRAMP[2], .75, TRAMP[3], 1, TRAMP[4]];
 const tCol = k => { const i = Math.max(0, Math.min(.9999, k)) * (TRAMP.length - 1), a = Math.floor(i), f = i - a, h = x => [1, 3, 5].map(j => parseInt(x.slice(j, j + 2), 16)); const p = h(TRAMP[a]), q = h(TRAMP[a + 1]); return '#' + p.map((v, j) => Math.round(v + (q[j] - v) * f).toString(16).padStart(2, '0')).join(''); };
 const anCache = new WeakMap();
 let tvSel = -1, tvDown = false;
@@ -3474,8 +3489,7 @@ function tvPaint(){
   if(!mapReady) return;
   const on = view === 'track' && tvSel >= 0, m = ['==', ['get', 's'], tvSel];
   try{
-    map.setPaintProperty('track-view-line', 'line-opacity', on ? ['case', m, 1, .2] : 1);
-    map.setPaintProperty('track-view-case', 'line-opacity', on ? ['case', m, .9, .12] : .8);
+    map.setPaintProperty('track-view-line', 'line-color', on ? ['case', m, rampExpr(), '#5b616c'] : rampExpr());
   }catch(e){}
 }
 function tvApplySel(fit = true){
@@ -3751,9 +3765,11 @@ function trackRisk(t){
     {w:.12, c:clamp01(evPer10 / 6), t:`${ev} harte${ev === 1 ? 's' : ''} Manöver`},
     {w:.10, c:clamp01((ratio - 1) / .3), t:cmpTxt},
   ];
-  const score = Math.round(100 * F.reduce((a, x) => a + x.w * x.c, 0));
+  let score = Math.round(100 * F.reduce((a, x) => a + x.w * x.c, 0));
+  const shared = t._ws && t._ws.risk;   // geteilte Fahrt: Wert so, wie ihn der Fahrer selbst hat
+  if(shared) score = Math.max(0, Math.min(100, Math.round(shared.score)));
   const r = {score, lv:riskLevel(score), F, cmpTxt, ratio, top:Math.max((t.maxSpd || 0) * 3.6, b.p95), avg:b.avg, brake, lat, acc, ev, an,
-             why:F.filter(x => x.c > .05).sort((x, y) => y.w * y.c - x.w * x.c)};
+             why:shared && shared.why && shared.why.length ? shared.why.slice(0, 4).map(x => ({t:String(x)})) : F.filter(x => x.c > .05).sort((x, y) => y.w * y.c - x.w * x.c)};
   riskCache.set(t, r); return r;
 }
 function riskRank(t){ const i = deathTop().findIndex(x => x.t === t); return i >= 0 ? i + 1 : 0; }
