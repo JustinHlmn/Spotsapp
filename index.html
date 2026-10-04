@@ -1685,8 +1685,10 @@ function vecLayers(P){
       layout:{'text-field':vName, 'text-font':['Noto Sans Regular'], 'text-size':['interpolate', ['linear'], ['zoom'], 7, 11, 14, 16], 'text-max-width':8}, paint:{...txt}},
     {id:'v-lbl-city', type:'symbol', source:'ofm', 'source-layer':'place', minzoom:4, filter:['==', ['get', 'class'], 'city'],
       layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 4, 11, 12, 19], 'text-max-width':8}, paint:{...txt, 'text-color':P.city}},
-    {id:'v-lbl-country', type:'symbol', source:'ofm', 'source-layer':'place', maxzoom:7, filter:['in', ['get', 'class'], ['literal', ['country', 'state']]],
-      layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 2, 11, 6, 15], 'text-transform':'uppercase', 'text-letter-spacing':.08, 'text-max-width':7}, paint:{...txt, 'text-color':P.txSoft}}
+    {id:'v-lbl-country', type:'symbol', source:'ofm', 'source-layer':'place', maxzoom:6.5, filter:['==', ['get', 'class'], 'country'],
+      layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 2, 11, 6, 15], 'text-transform':'uppercase', 'text-letter-spacing':.08, 'text-max-width':7}, paint:{...txt, 'text-color':P.txSoft}},
+    {id:'v-lbl-state', type:'symbol', source:'ofm', 'source-layer':'place', minzoom:5.5, maxzoom:8, filter:['==', ['get', 'class'], 'state'],
+      layout:{'text-field':vName, 'text-font':['Noto Sans Regular'], 'text-size':11, 'text-transform':'uppercase', 'text-letter-spacing':.06, 'text-max-width':7}, paint:{...txt, 'text-color':P.txSoft, 'text-opacity':.75}}
   ];
 }
 // scharfe Straßen und Namen über dem Satellitenbild (wie „Hybrid“ bei Apple)
@@ -1709,8 +1711,10 @@ function hybLayers(){
       layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 7, 11, 14, 16], 'text-max-width':8}, paint:{...txt}},
     {id:'h-lbl-city', type:'symbol', source:'ofm', 'source-layer':'place', minzoom:4, filter:['==', ['get', 'class'], 'city'],
       layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 4, 12, 12, 20], 'text-max-width':8}, paint:{...txt}},
-    {id:'h-lbl-country', type:'symbol', source:'ofm', 'source-layer':'place', maxzoom:7, filter:['in', ['get', 'class'], ['literal', ['country', 'state']]],
-      layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 2, 11, 6, 15], 'text-transform':'uppercase', 'text-letter-spacing':.08, 'text-max-width':7}, paint:{...txt, 'text-color':'rgba(255,255,255,.85)'}}
+    {id:'h-lbl-country', type:'symbol', source:'ofm', 'source-layer':'place', maxzoom:6.5, filter:['==', ['get', 'class'], 'country'],
+      layout:{'text-field':vName, 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 2, 11, 6, 15], 'text-transform':'uppercase', 'text-letter-spacing':.08, 'text-max-width':7}, paint:{...txt, 'text-color':'rgba(255,255,255,.85)'}},
+    {id:'h-lbl-state', type:'symbol', source:'ofm', 'source-layer':'place', minzoom:5.5, maxzoom:8, filter:['==', ['get', 'class'], 'state'],
+      layout:{'text-field':vName, 'text-font':['Noto Sans Regular'], 'text-size':11, 'text-transform':'uppercase', 'text-letter-spacing':.06, 'text-max-width':7}, paint:{...txt, 'text-color':'rgba(255,255,255,.6)'}}
   ];
 }
 const vecIds = () => vecLayers(VEC_PAL.light).map(l => l.id);
@@ -3682,7 +3686,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.16';
+const VERSION = '2026.10.04.17';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
