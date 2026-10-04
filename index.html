@@ -1608,7 +1608,7 @@ const VEC_PAL = {
   light:{land:'#f5f3ee', urban:'#efece6', park:'#d6ebc4', wood:'#cfe6bf', water:'#a9d3f2', waterTx:'#3f78a8', bld:'#e7e3da', bldLine:'#dad5ca',
     minor:'#ffffff', minorCase:'#dfdad0', sec:'#ffffff', secCase:'#d3cdc1', pri:'#fde9a8', priCase:'#e3c87a', mot:'#f8c56a', motCase:'#d7a24a', rail:'#cbc6bc',
     border:'#b6a8c8', tx:'#3a3a3c', txSoft:'#6e6e73', halo:'#ffffff', city:'#1c1c1e'},
-  dark:{land:'#1d2023', urban:'#22262a', park:'#1e3325', wood:'#1c2f22', water:'#14324a', waterTx:'#6fa3cf', bld:'#2a2e33', bldLine:'#33383e',
+  dark:{land:'#1d2023', urban:'#22262a', park:'#1d3024', wood:'#1b2a20', water:'#14324a', waterTx:'#6fa3cf', bld:'#2a2e33', bldLine:'#33383e',
     minor:'#363a40', minorCase:'#24272b', sec:'#454a52', secCase:'#2a2d31', pri:'#6b6553', priCase:'#3d3a30', mot:'#a87b3e', motCase:'#5c4422', rail:'#3c4046',
     border:'#6d6280', tx:'#d9d9de', txSoft:'#9a9aa0', halo:'#121416', city:'#f2f2f7'}
 };
@@ -1625,7 +1625,7 @@ function vecLayers(P){
   return [
     {id:'v-land', type:'background', paint:{'background-color':P.land}},
     {id:'v-urban', type:'fill', source:'ofm', 'source-layer':'landuse', filter:['in', ['get', 'class'], ['literal', ['residential', 'suburb', 'neighbourhood', 'commercial', 'retail', 'industrial']]], paint:{'fill-color':P.urban}},
-    {id:'v-wood', type:'fill', source:'ofm', 'source-layer':'landcover', filter:['in', ['get', 'class'], ['literal', ['wood', 'forest']]], paint:{'fill-color':P.wood, 'fill-opacity':['interpolate', ['linear'], ['zoom'], 5, .5, 12, 1]}},
+    {id:'v-wood', type:'fill', source:'ofm', 'source-layer':'landcover', filter:['in', ['get', 'class'], ['literal', ['wood', 'forest']]], paint:{'fill-color':P.wood, 'fill-opacity':['interpolate', ['linear'], ['zoom'], 5, .45, 12, P === VEC_PAL.dark ? .75 : 1]}},
     {id:'v-grass', type:'fill', source:'ofm', 'source-layer':'landcover', filter:['in', ['get', 'class'], ['literal', ['grass', 'meadow', 'park']]], paint:{'fill-color':P.park, 'fill-opacity':.55}},
     {id:'v-park', type:'fill', source:'ofm', 'source-layer':'park', paint:{'fill-color':P.park, 'fill-opacity':.85}},
     {id:'v-water', type:'fill', source:'ofm', 'source-layer':'water', paint:{'fill-color':P.water}},
@@ -3516,7 +3516,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.04.14';
+const VERSION = '2026.10.04.15';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
