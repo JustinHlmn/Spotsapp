@@ -467,6 +467,11 @@ h2{font-size:23px}
 #splash .logo{background:linear-gradient(180deg,#5aaeff,#2f86ef);border-radius:26px;box-shadow:0 18px 44px rgba(77,163,255,.35)}
 #splash .name{font-weight:700;letter-spacing:-.03em}
 
+/* ---------- Fahrt als Bild ---------- */
+.shimg-prev{display:grid;place-items:center;background:#000;border-radius:16px;overflow:hidden}
+.shimg-prev img{display:block;max-width:100%;max-height:56vh}
+.shimg-prev.square img{max-height:46vh}
+
 /* ---------- Garage ---------- */
 .gar-dlg .top{display:flex;justify-content:space-between;align-items:center}
 .gcar{display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;border:1px solid var(--line);background:var(--solid);color:var(--fg);text-align:left;width:100%}
@@ -4410,7 +4415,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.05.29';
+const VERSION = '2026.10.05.30';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4813,6 +4818,95 @@ function tsCarHTML(){
   return `<div class="f">Gefahren mit<div class="chips ts-cars">${garage.cars.map(c => `<button class="chip${c.id === tsCar ? ' on' : ''}" data-tscar="${c.id}">${esc(gTitle(c))}</button>`).join('')}</div></div>`;
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-tscar]'); if(!b) return; tsCar = b.dataset.tscar; document.querySelectorAll('[data-tscar]').forEach(x => x.classList.toggle('on', x === b)); });
+
+/* ================= Fahrt als Bild teilen =================
+   Story (9:16) oder Quadrat. Start und Ziel sind um 250 m gekürzt, damit die Haustür nicht drauf ist. */
+let shareImg = {t:null, fmt:'story', url:null, blob:null};
+async function drawDriveImage(t, fmt){
+  const W = 1080, H = fmt === 'story' ? 1920 : 1080, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  try{ await Promise.all([document.fonts.load('800 80px Geist'), document.fonts.load('600 40px Geist')]); }catch(e){}
+  const F = (w, px) => `${w} ${px}px Geist, system-ui, -apple-system, sans-serif`;
+  const acc = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4da3ff';
+  // Hintergrund
+  const bg = x.createLinearGradient(0, 0, W * .4, H); bg.addColorStop(0, '#0d1422'); bg.addColorStop(.55, '#0a0d14'); bg.addColorStop(1, '#06070a');
+  x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  const glow = x.createRadialGradient(W * .7, H * .32, 20, W * .7, H * .32, W * .9); glow.addColorStop(0, 'rgba(77,163,255,.16)'); glow.addColorStop(1, 'rgba(77,163,255,0)');
+  x.fillStyle = glow; x.fillRect(0, 0, W, H);
+  const segs = trimSegs(t.segs || [], 250) || [];
+  const flat = segs.flat(); if(flat.length < 2) throw new Error('kurz');
+  // Projektion (Mercator) in den Kartenbereich
+  const my = lat => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) * 180 / Math.PI;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  flat.forEach(q => { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); const yy = my(q[1]); y0 = Math.min(y0, yy); y1 = Math.max(y1, yy); });
+  const box = fmt === 'story' ? {l:110, t:370, w:W - 220, h:H - 370 - 590} : {l:110, t:290, w:W - 220, h:H - 290 - 400};
+  const sc = Math.min(box.w / Math.max(1e-6, x1 - x0), box.h / Math.max(1e-6, y1 - y0)), ox = box.l + (box.w - (x1 - x0) * sc) / 2, oy = box.t + (box.h - (y1 - y0) * sc) / 2;
+  const P = q => [ox + (q[0] - x0) * sc, oy + (y1 - my(q[1])) * sc];
+  // andere eigene Fahrten in der Gegend ganz leicht als Kulisse
+  const pad = (x1 - x0) * .25 + .002;
+  x.lineCap = x.lineJoin = 'round';
+  myTracks().filter(o => o.id !== t.id).forEach(o => (o.segs || []).forEach(sg => {
+    if(!sg.some(q => q[0] > x0 - pad && q[0] < x1 + pad && my(q[1]) > y0 - pad && my(q[1]) < y1 + pad)) return;
+    x.beginPath(); sg.forEach((q, i) => { const [a, b] = P(q); i ? x.lineTo(a, b) : x.moveTo(a, b); }); x.strokeStyle = 'rgba(255,255,255,.07)'; x.lineWidth = 5; x.stroke();
+  }));
+  // die Fahrt: Leuchten, dann Farbverlauf
+  const [sx, sy] = P(flat[0]), [ex, ey] = P(flat[flat.length - 1]);
+  const gr = x.createLinearGradient(sx, sy, ex, ey); gr.addColorStop(0, acc); gr.addColorStop(1, '#ff9f0a');
+  const path = () => { x.beginPath(); segs.forEach(sg => sg.forEach((q, i) => { const [a, b] = P(q); i ? x.lineTo(a, b) : x.moveTo(a, b); })); };
+  x.save(); x.shadowColor = 'rgba(77,163,255,.55)'; x.shadowBlur = 36; path(); x.strokeStyle = gr; x.lineWidth = 14; x.stroke(); x.restore();
+  path(); x.strokeStyle = 'rgba(255,255,255,.85)'; x.lineWidth = 3.5; x.stroke();
+  const dot = (a, b, col) => { x.beginPath(); x.arc(a, b, 17, 0, 7); x.fillStyle = '#fff'; x.fill(); x.beginPath(); x.arc(a, b, 11, 0, 7); x.fillStyle = col; x.fill(); };
+  dot(sx, sy, '#30d158'); dot(ex, ey, '#ff453a');
+  // Kopf
+  x.fillStyle = 'rgba(255,255,255,.55)'; x.font = F(700, 30); x.textBaseline = 'alphabetic';
+  x.fillText('JAMSIS SPOTS', 90, fmt === 'story' ? 150 : 110);
+  x.fillStyle = '#fff'; x.font = F(800, fmt === 'story' ? 78 : 64);
+  let title = t.name || 'Fahrt'; while(x.measureText(title).width > W - 180 && title.length > 4) title = title.slice(0, -2);
+  if(title !== (t.name || 'Fahrt')) title = title.trim() + '…';
+  x.fillText(title, 90, fmt === 'story' ? 240 : 185);
+  const when = new Date(t.created).toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const where = t.place && (t.place.a || t.place.b) ? (t.place.a && t.place.b && t.place.a !== t.place.b ? `${t.place.a} → ${t.place.b}` : t.place.a || t.place.b) : '';
+  x.fillStyle = 'rgba(255,255,255,.62)'; x.font = F(600, 32);
+  x.fillText(where ? `${when} · ${where}` : when, 90, fmt === 'story' ? 292 : 228, W - 180);
+  // Zahlen
+  const avg = t.dur ? t.dist / (t.dur / 1000) * 3.6 : 0, xp = xplCalc().per[t.id], car = t.car && gCar(t.car);
+  const mins = Math.round((t.dur || 0) / 60000), dur = mins < 60 ? [`${mins}`, 'Minuten'] : [`${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')}`, 'Stunden'];
+  const stats = [[fmtKm1(t.dist), 'Kilometer'], dur, [String(Math.round(avg)), 'Ø km/h']];
+  const sy0 = fmt === 'story' ? H - 430 : H - 250, cw = (W - 180) / 3;
+  x.fillStyle = 'rgba(255,255,255,.08)'; x.beginPath(); x.roundRect ? x.roundRect(60, sy0 - 95, W - 120, 190, 36) : x.rect(60, sy0 - 95, W - 120, 190); x.fill();
+  stats.forEach(([v, l], i) => {
+    x.fillStyle = '#fff'; x.font = F(800, 72); x.fillText(v, 90 + i * cw, sy0 + 10, cw - 20);
+    x.fillStyle = 'rgba(255,255,255,.55)'; x.font = F(600, 28); x.fillText(l, 92 + i * cw, sy0 + 58);
+  });
+  const extra = [xp && xp.newKm >= .5 ? `Neuland +${fmtKm1(xp.newKm * 1000)} km` : '', car ? `mit ${gTitle(car)}` : ''].filter(Boolean).join('  ·  ');
+  if(extra && fmt === 'story'){ x.fillStyle = 'rgba(255,255,255,.7)'; x.font = F(600, 34); x.fillText(extra, 90, H - 210, W - 180); }
+  x.fillStyle = 'rgba(255,255,255,.35)'; x.font = F(600, 24); x.fillText('Start und Ziel gekürzt', 90, fmt === 'story' ? H - 120 : H - 60);
+  return await new Promise(res => c.toBlob(res, 'image/png'));
+}
+async function openShareImg(t, fmt = shareImg.fmt){
+  shareImg.t = t; shareImg.fmt = fmt;
+  let blob; try{ blob = await drawDriveImage(t, fmt); }catch(e){ toast('Die Fahrt ist zu kurz für ein Bild.'); return; }
+  if(shareImg.url) URL.revokeObjectURL(shareImg.url);
+  shareImg.blob = blob; shareImg.url = URL.createObjectURL(blob);
+  $('#modal').innerHTML = `<div class="dlg shimg-dlg" role="dialog" aria-modal="true" aria-label="Fahrt als Bild"><div class="pad" style="padding:16px;gap:12px">
+    <div class="seg2">${[['story', 'Story 9:16'], ['square', 'Quadrat']].map(([k, n]) => `<button class="${k === fmt ? 'on' : ''}" data-shi="fmt" data-v="${k}">${n}</button>`).join('')}</div>
+    <div class="shimg-prev ${fmt}"><img src="${shareImg.url}" alt="Vorschau"></div>
+    <div class="btns"><button class="btn" data-shi="save">Speichern</button><button class="btn primary" data-shi="share">${svg(UI.share, 15)} Teilen</button></div>
+    <button class="txtbtn" data-shi="close" style="align-self:center">Schließen</button></div></div>`;
+  $('#modal').hidden = false;
+}
+$('#modal').addEventListener('click', async e => {
+  const b = e.target.closest('[data-shi]'); if(!b || !shareImg.t) return;
+  const a = b.dataset.shi, name = `${(shareImg.t.name || 'fahrt').replace(/[^\wäöüÄÖÜß -]+/g, '').trim() || 'fahrt'}.png`;
+  if(a === 'fmt') return openShareImg(shareImg.t, b.dataset.v);
+  if(a === 'close'){ $('#modal').hidden = true; return; }
+  if(a === 'share'){
+    const f = new File([shareImg.blob], name, {type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[f]})){ try{ await navigator.share({files:[f], title:shareImg.t.name || 'Fahrt'}); }catch(_){} return; }
+  }
+  const l = document.createElement('a'); l.href = shareImg.url; l.download = name; document.body.appendChild(l); l.click(); l.remove();
+  if(a === 'share') toast('Teilen geht hier nicht direkt – das Bild wurde gespeichert.');
+});
 
 /* ================= Export / Import ================= */
 $('#exportBtn').addEventListener('click', () => {
@@ -5505,6 +5599,7 @@ function renderTrackView(){
       ${tvDetailsHTML(t)}
       ${t._ws && t._ws.dev !== myId() ? `<button class="btn rival" data-tv="rival">${svg(ICONS.flag,15)} ${courses.some(c => c.fromDrive === t._ws.docId) ? `Geister-Rennen gegen ${esc(t._ws.by)} öffnen` : `Geister-Rennen gegen ${esc(t._ws.by)}`}</button>` : ''}
       ${t._ws && t._ws.dev !== myId() ? '' : `<button class="btn" data-tv="course">${svg(ICONS.flag,15)} Als Rennstrecke speichern</button>`}
+      ${t._ws && t._ws.dev !== myId() ? '' : `<button class="btn" data-tv="img">${svg(UI.share,15)} Als Bild teilen</button>`}
       <button class="btn" data-tv="gpx">${svg(UI.share,15)} Als GPX exportieren</button>
       ${FB && !t._ws ? `<button class="btn${t.ws ? ' on-ws' : ''}" data-tv="ws">${t.ws ? 'Im Workshop geteilt · entfernen' : 'Fahrt in den Workshop teilen'}</button>` : ''}
       ${t._ws ? '' : `<div class="btns"><button class="btn" data-tv="rename">Umbenennen</button><button class="btn danger" data-tv="del">Löschen</button></div>`}
@@ -5522,6 +5617,7 @@ $('#trackView').addEventListener('click', e => {
   if(a === 'course') return courseFromTrack(t);
   if(a === 'rival') return rivalFromDrive(t);
   if(a === 'replay') return startReplay(t);
+  if(a === 'img'){ if(!t.place) fetchPlace(t).catch(() => {}).finally(() => openShareImg(t)); else openShareImg(t); return; }
   if(a === 'ws'){
     if(!t.ws) return wsUploadDrive(t);
     if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = 'Wirklich aus dem Workshop nehmen?'; setTimeout(() => { if(b.isConnected){ b.classList.remove('armed'); b.textContent = 'Im Workshop geteilt · entfernen'; } }, 3500); return; }
