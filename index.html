@@ -4377,7 +4377,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.05.27';
+const VERSION = '2026.10.05.28';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -7113,11 +7113,25 @@ async function osrm(pts, q = ''){
   return null;
 }
 async function fetchRoute(a, b){ const rs = await osrm([a, b]); return rs ? rs[0] : null; }
+// Landstraßen-Route: Valhalla (FOSSGIS, ohne Key) mit „Autobahn meiden“, Antwort im OSRM-Format
+async function valhalla(pts, noHighway){
+  const q = {locations:pts.map(p => ({lat:+p.lat.toFixed(6), lon:+p.lng.toFixed(6)})), costing:'auto', costing_options:{auto:{use_highways:noHighway ? 0 : 1}},
+    directions_options:{units:'kilometers', language:'de-DE'}, format:'osrm', shape_format:'geojson'};
+  try{
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 15000);
+    const r = await fetch('https://valhalla1.openstreetmap.de/route?json=' + encodeURIComponent(JSON.stringify(q)), {signal:ctl.signal});
+    clearTimeout(to);
+    const j = await r.json();
+    if(j.routes && j.routes[0] && j.routes[0].geometry && j.routes[0].geometry.coordinates && j.routes[0].geometry.coordinates.length > 1) return j.routes;
+  }catch(e){}
+  return null;
+}
 // Wie viele Meter laufen über Autobahn?
 const mwM = r => { let m = 0; (r.legs || []).forEach(l => (l.steps || []).forEach(x => { if((x.intersections || []).some(i => (i.classes || []).includes('motorway')) || /^A\s?\d/.test(x.ref || '')) m += x.distance; })); return m; };
 // Schnellste Route und eine ohne Autobahn (falls der Server das nicht kann: die Alternative mit am wenigsten Autobahn)
 async function navRoutes(pts){
-  const [fr, lr] = await Promise.all([osrm(pts, pts.length === 2 ? '&alternatives=true' : ''), osrm(pts, '&exclude=motorway')]);
+  let [fr, lr] = await Promise.all([osrm(pts, pts.length === 2 ? '&alternatives=true' : ''), valhalla(pts, true)]);
+  if(!fr) fr = await valhalla(pts, false);
   if(!fr) return null;
   const fast = fr[0]; let land = lr ? lr[0] : null;
   if(land && mwM(land) > mwM(fast) * .5) land = null;   // Ausschluss hat nicht gegriffen
@@ -7438,8 +7452,8 @@ async function reroute(pt){
   nav.lastReroute = Date.now(); nav.off = 0;
   toast('Neue Route wird berechnet …');
   const pts = navPts({lat:pt.lat, lng:pt.lng}), names = navLeft().map(x => x.name);
-  const rs = await osrm(pts, nav.mode === 'land' ? '&exclude=motorway' : '');
-  const r = rs ? rs[0] : (nav.mode === 'land' ? await osrm(pts).then(x => x && x[0]) : null);
+  const rs = nav.mode === 'land' ? await valhalla(pts, true) : await osrm(pts);
+  const r = rs ? rs[0] : await osrm(pts).then(x => x && x[0]);
   if(!nav || !nav.active) return;
   if(!r){ toast('Neue Route gerade nicht verfügbar.'); return; }
   nav.route = prepRoute(r, names); nav.route.viaStops = navLeft(); nav.prog = 0; navStopMarks();
