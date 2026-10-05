@@ -4758,7 +4758,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.05.32';
+const VERSION = '2026.10.05.33';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -5962,7 +5962,7 @@ async function wayGeoFetch(){
       let n = null, r = null;
       try{
         const j = await (await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=16&accept-language=de&lat=${p.lat.toFixed(4)}&lon=${p.lng.toFixed(4)}`)).json(), ad = j.address || {};
-        n = ad.suburb || ad.village || ad.hamlet || ad.town || ad.city_district || ad.city || ad.municipality || null; r = ad.road || j.name || null;
+        n = ad.village || ad.hamlet || ad.town || ad.city || ad.municipality || ad.suburb || null; r = ad.road || ad.suburb || j.name || null;
       }catch(e){ break; }
       prefs.wayGeo = {...(prefs.wayGeo || {}), [k]:{n:n || 'Ort', r}}; savePrefs(); wayRefresh();
       await sleep(1100);
