@@ -472,6 +472,55 @@ h2{font-size:23px}
 .shimg-prev img{display:block;max-width:100%;max-height:56vh}
 .shimg-prev.square img{max-height:46vh}
 
+/* ---------- Ausfahrten ---------- */
+.ev-sec{display:flex;flex-direction:column;gap:8px;margin:0 6px 8px}
+.ev-new{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(135deg,rgba(48,209,88,.16),transparent 70%),var(--solid);color:var(--fg);text-align:left;width:100%}
+.ev-new .ic{font-size:20px;flex:none}
+.ev-new .tx{display:flex;flex-direction:column;min-width:0;flex:1}
+.ev-new b{font-size:14px}
+.ev-new small{font-size:12px;color:var(--muted)}
+.ev-new .pl{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--fill)}
+.ev-card{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(140deg,rgba(48,209,88,.13),transparent 60%),var(--solid);transition:box-shadow .3s}
+.ev-card.now{border-color:rgba(48,209,88,.55)}
+.ev-card.flash{box-shadow:0 0 0 3px rgba(48,209,88,.6)}
+.ev-top{display:flex;align-items:center;gap:12px;min-width:0}
+.ev-cal{flex:none;width:46px;height:50px;border-radius:12px;background:var(--fill);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.ev-cal small{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#ff453a}
+.ev-cal b{font-size:21px;font-weight:800;margin-top:3px}
+.ev-h{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ev-h b{font-size:16.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-h span{font-size:13px;color:var(--muted)}
+.ev-h em{font-style:normal;font-weight:700;color:#30d158}
+.ev-pts{display:flex;flex-direction:column;margin:-4px -4px 0}
+.ev-pt{display:flex;align-items:center;gap:8px;padding:6px 4px;border:0;background:none;color:var(--fg);text-align:left;border-radius:10px;font-size:14px;min-width:0;width:100%}
+.ev-pt:active,.ev-pt:hover{background:var(--fill)}
+.ev-pt .i{flex:none;display:flex;color:var(--muted)}
+.ev-pt .n{min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-pt em{font-style:normal;color:var(--muted);margin-right:3px}
+.ev-pt small{flex:none;font-size:12.5px;color:var(--muted)}
+.ev-note{font-size:13.5px;color:var(--muted);line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
+.ev-who{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);min-width:0}
+.ev-faces{display:flex;flex:none}
+.ev-faces .uav{margin-right:-6px;box-shadow:0 0 0 2px var(--solid)}
+.ev-faces .uav:last-child{margin-right:0}
+.ev-rsvp button.on.yes{background:#30d158;color:#fff}
+.ev-rsvp button.on.no{color:var(--danger)}
+.ev-live{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#30d158}
+.ev-acts{display:flex;flex-wrap:wrap;gap:6px}
+.ev-acts .btn{flex:1 1 auto}
+.ev-more{align-self:center;display:inline-flex;align-items:center;gap:5px;font-size:13.5px}
+.ev-dlg .top{display:flex;justify-content:space-between;align-items:center}
+.ev-set{display:flex;align-items:center;gap:8px}
+.ev-set .i{flex:none;display:flex;color:var(--muted)}
+.ev-set .inp{flex:1;min-width:0}
+.ev-x{flex:none;width:32px;height:32px;border-radius:50%;border:0;background:var(--fill);color:var(--fg);display:grid;place-items:center}
+.ev-sub{font-size:12px;color:var(--muted);margin:-6px 0 0 24px}
+.ev-pick{display:flex;gap:8px}
+.ev-pick .inp{flex:1;min-width:0}
+.ev-pick .btn{flex:none}
+.ev-opt{text-transform:none;letter-spacing:0;font-weight:500}
+.ev-hint{font-size:12.5px;line-height:1.4}
+
 /* ---------- Garage ---------- */
 .gar-dlg .top{display:flex;justify-content:space-between;align-items:center}
 .gcar{display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;border:1px solid var(--line);background:var(--solid);color:var(--fg);text-align:left;width:100%}
@@ -2528,7 +2577,7 @@ function rememberPlace(r){
 function openPlace(r){
   if(!r) return;
   geoLastQ = $('#q').value.trim();
-  if(r.type !== 'coord') rememberPlace(r);
+  if(r.type !== 'coord' && !r.noRecent) rememberPlace(r);
   placeCur = r;
   if(searching) closeSearch();
   if(placeM) placeM.remove();
@@ -2545,7 +2594,7 @@ function renderPlace(){
   const r = placeCur; if(!r) return;
   const k = geoKind(r), d = me ? dist(me, r) : null, co = `${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}`;
   $('#placeView').innerHTML = `
-    <div class="top"><button class="txtbtn" data-pl="back">${svg(UI.back, 14)} Suche</button><button class="icon-btn press" data-pl="close" aria-label="Schließen">${svg(UI.close, 14)}</button></div>
+    <div class="top"><button class="txtbtn" data-pl="back">${svg(UI.back, 14)} ${esc(r.back || 'Suche')}</button><button class="icon-btn press" data-pl="close" aria-label="Schließen">${svg(UI.close, 14)}</button></div>
     <div class="pad">
       <div class="pl-head"><span class="pl-ic k-${k}">${svg(GEO_IC[k], 22, 2)}</span><div><h2>${esc(r.name)}</h2>${r.sub ? `<span class="muted">${esc(r.sub)}</span>` : ''}</div></div>
       ${d != null ? `<div class="pl-dist">${fmtDist(d)} Luftlinie von dir</div>` : ''}
@@ -2562,7 +2611,8 @@ $('#placeView').addEventListener('click', e => {
   const b = e.target.closest('[data-pl]'); if(!b || !placeCur) return;
   const a = b.dataset.pl, r = placeCur;
   if(a === 'close') return closePlace();
-  if(a === 'back'){ openSearch(); if(geoLastQ){ $('#q').value = geoLastQ; renderList(); } return; }
+  if(a === 'back' && r.back){ closePlace(false); show('list', 'half'); return; }
+  if(a === 'back'){ openSearch();if(geoLastQ){ $('#q').value = geoLastQ; renderList(); } return; }
   if(a === 'copy') return copy(`${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}`);
   if(a === 'route'){ closePlace(); planNav({lat:r.lat, lng:r.lng}, r.name, null); return; }
   if(a === 'spot'){
@@ -2940,8 +2990,8 @@ document.addEventListener('keydown', e => { if(!lb) return; if(e.key === 'Escape
 function enterMode(m){
   mode = m;
   $('#map').classList.add('placing');
-  const txt = m === 'spot' ? 'Tippe auf die Karte, um den Spot zu setzen.' : 'Tippe auf die Karte, wo du parkst.';
-  const tip = m === 'spot' ? 'Tipp: Reinzoomen für mehr Genauigkeit.' : 'Zum Beispiel Wanderparkplatz oder Straßenrand am Wegbeginn.';
+  const txt = m === 'spot' ? 'Tippe auf die Karte, um den Spot zu setzen.' : m === 'ev-meet' ? 'Tippe auf die Karte, wo ihr euch trefft.' : m === 'ev-dest' ? 'Tippe auf die Karte, wo es hingehen soll.' : 'Tippe auf die Karte, wo du parkst.';
+  const tip = m === 'spot' || m.startsWith('ev-') ? 'Tipp: Reinzoomen für mehr Genauigkeit.' : 'Zum Beispiel Wanderparkplatz oder Straßenrand am Wegbeginn.';
   $('#modeView').innerHTML = `<div class="mode">
       <div class="big"><span class="pulse"></span>${txt}</div>
       <div class="muted">${tip}</div>
@@ -2954,7 +3004,8 @@ $('#modeView').addEventListener('click', e => {
   const a = e.target.closest('button')?.dataset.act;
   if(a === 'cancel'){
     const was = mode; exitMode();
-    if(was === 'spot' && draft && draft.lat == null){ draft = null; renderDraftMarkers(); renderMarkers(); show(selected ? 'detail' : 'list', 'half'); }
+    if(was && was.startsWith('ev-')){ show('list', 'half'); openEvDlg(); }
+    else if(was === 'spot' && draft && draft.lat == null){ draft = null; renderDraftMarkers(); renderMarkers(); show(selected ? 'detail' : 'list', 'half'); }
     else showEdit();
   }
   if(a === 'center') place(map.getCenter());
@@ -2983,6 +3034,7 @@ map.on('click', e => {
 map.on('contextmenu', e => { if(!mode && view !== 'edit'){ newDraft(); place(e.lngLat); } });
 function place(ll){
   const p = {lat:ll.lat, lng:ll.lng};
+  if(mode && mode.startsWith('ev-')){ const k = mode.slice(3); exitMode(); evPicked(k, p); return; }
   if(mode === 'spot'){ draft.lat = p.lat; draft.lng = p.lng; }
   else if(mode === 'parking'){ draft.parking = {...p, note: draft.parking?.note || ''}; }
   exitMode(); showEdit();
@@ -3248,7 +3300,7 @@ async function onbJoinChecked(code, gname){
 }
 function onbJoin(code, gname, mk){
   prefs.group = {code, name:gname || 'Gruppe', joined:Date.now(), ...(mk ? {mkAdmin:true} : {})}; delete prefs.wsSeen; delete prefs.feedSeen; savePrefs();
-  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.loaded = 0; wsSub = 'feed';
+  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.loaded = 0; wsSub = 'feed';
   syncSpotsHead(); wsSync(true);
 }
 $('#onb').addEventListener('click', async e => {
@@ -3320,7 +3372,7 @@ window.addEventListener('hashchange', handleHash);
    Geschützt über einen langen Gruppen-Code im Pfad (groups/<code>/…) – ohne Code sieht niemand etwas. */
 const FB = {apiKey:'AIzaSyDPD8Bpe1WkswwwSThBUKjlKwDiCAKE4Tw', projectId:'jamsis-spots'};   // Firebase-Projekt der Gruppe (öffentlich, kein Geheimnis)
 const WSKEY = 'meine-spots-ws';
-const WS = {spots:[], runs:[], courses:[], efforts:[], members:[], drives:[], reacts:[], crew:null, loaded:0, busy:false, err:null, rulesOld:false, nameClash:null};
+const WS = {spots:[], runs:[], courses:[], efforts:[], members:[], drives:[], reacts:[], events:[], rsvps:[], crew:null, loaded:0, busy:false, err:null, rulesOld:false, nameClash:null};
 const wsFull = new Map(), wsTrackObjs = new Map();
 const okImg = u => typeof u === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u) ? u : '';
 try{ Object.assign(WS, JSON.parse(localStorage.getItem(WSKEY) || '{}'), {busy:false, err:null}); }catch(e){}
@@ -3357,7 +3409,7 @@ async function fsDel(col, id){
   if(!r.ok && r.status !== 404) throw new Error('Firestore ' + r.status);
 }
 function wsCache(){
-  try{ localStorage.setItem(WSKEY, JSON.stringify({spots:WS.spots.map(s => ({...s, ph:[]})), runs:WS.runs, courses:WS.courses, efforts:WS.efforts, members:WS.members, drives:WS.drives, reacts:WS.reacts, crew:WS.crew, loaded:WS.loaded})); }catch(e){}
+  try{ localStorage.setItem(WSKEY, JSON.stringify({spots:WS.spots.map(s => ({...s, ph:[]})), runs:WS.runs, courses:WS.courses, efforts:WS.efforts, members:WS.members, drives:WS.drives, reacts:WS.reacts, events:WS.events, rsvps:WS.rsvps, crew:WS.crew, loaded:WS.loaded})); }catch(e){}
 }
 const wsUpsert = (arr, obj) => { const i = arr.findIndex(x => x._id === obj._id); if(i >= 0) arr[i] = obj; else arr.push(obj); };
 function newCode(){ const a = new Uint8Array(18); crypto.getRandomValues(a); return Array.from(a, x => 'abcdefghijkmnpqrstuvwxyz23456789'[x % 32]).join('') + uid().slice(0, 6); }
@@ -3423,7 +3475,7 @@ async function crewSave(patch){
 }
 function leaveGroupLocal(msg){
   liveStop(true); delete prefs.group; delete prefs.wsSeen; delete prefs.rxSeen; savePrefs(); liveWatch();
-  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.crew = null; WS.loaded = 0; wsCache();
+  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.crew = null; WS.loaded = 0; wsCache();
   syncSpotsHead(); refreshAll(); renderWsMarkers();
   if(msg){
     $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Hinweis"><div class="pad" style="padding:20px 16px 16px;gap:12px"><h2>Nicht mehr in der Crew</h2><div class="muted">${esc(msg)}</div><button class="btn primary" data-gp-ok>OK</button></div></div>`;
@@ -3526,7 +3578,7 @@ $('#modal').addEventListener('click', async e => {
   if(a === 'create') toast('Gruppe erstellt – lad jetzt deine Freunde ein');
   if(a === 'join' || a === 'code') toast(`Willkommen in „${prefs.group.name}“`);
   wsSub = 'feed'; if(tab !== 'crew') setTab('crew');
-  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.loaded = 0; delete prefs.wsSeen; delete prefs.rxSeen;
+  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.loaded = 0; delete prefs.wsSeen; delete prefs.rxSeen;
   syncSpotsHead(); refreshAll(); wsSync(true);
   if(next.arg && next.arg.then) next.arg.then();
 });
@@ -3548,7 +3600,7 @@ async function wsSync(force){
     const [sp, ru, co, ef, mb, dr, rx] = await Promise.all([fsList('spots', true), fsList('runs'), fsList('courses'), fsList('efforts'), fsList('members').catch(soft('members')), fsList('drives', true).catch(soft('drives')), fsList('reactions').catch(() => null)]);
     Object.assign(WS, {spots:sp, runs:ru, courses:co, efforts:ef, loaded:Date.now()});
     if(mb){ WS.crew = mb.find(m => m._id === CREW_DOC) || null; WS.members = mb.filter(m => m._id !== CREW_DOC); WS.drives = dr || []; WS.rulesOld = false; }
-    if(rx) WS.reacts = rx;
+    if(rx){ WS.reacts = rx.filter(r => !isEvDoc(r)); WS.events = rx.filter(r => r.kind === 'ev'); WS.rsvps = rx.filter(r => r.kind === 'rv'); evTidy(); }
     if(mb && crewEnforce()){ WS.busy = false; return; }
     if(mb && grp().mkAdmin && !(crewDoc().admin || []).length){ await crewSave({admin:[myId()], since:Date.now()}).catch(() => {}); }
     if(grp() && grp().mkAdmin){ delete prefs.group.mkAdmin; savePrefs(); }
@@ -3559,7 +3611,7 @@ async function wsSync(force){
       delete prefs.linkAdopt; savePrefs();
     }
     await pushBests(); await pushMember();
-    wsCache(); feedNotify();
+    wsCache(); feedNotify(); evLiveCheck();
   }catch(e){ WS.err = 'Workshop gerade nicht erreichbar. Prüfe dein Internet.'; }
   WS.busy = false; wsRefreshUI();
 }
@@ -3898,6 +3950,7 @@ $('#listBody').addEventListener('click', e => {
   if(sv){ e.stopPropagation(); const w = WS.spots.find(x => x._id === sv.dataset.wsave); if(w) wsSaveSpot(w).then(() => renderList()); return; }
   const fd = e.target.closest('[data-feed]'); if(fd){ feedGo(fd.dataset.feed); return; }
   const ro = e.target.closest('[data-rvopen]'); if(ro){ openReview(ro.dataset.rvopen, 1); return; }
+  const evb = e.target.closest('[data-ev]'); if(evb){ evAct(evb); return; }
   const ss = e.target.closest('[data-wss]'); if(ss){ wsSub = ss.dataset.wss; renderList(); return; }
   const cp = e.target.closest('[data-crewp]'); if(cp){ crewPeriod = cp.dataset.crewp; renderList(); return; }
   const cav = e.target.closest('.crew-card [data-crewav]'); if(cav && zoomAvatar(cav.dataset.crewav)) return;
@@ -3998,7 +4051,7 @@ function rxWhat(k){
   return c ? `deine Zeit auf „${c.name}“` : 'deine Rundenzeit';
 }
 /* News: was in der Gruppe passiert ist */
-const feedCat = go => go.startsWith('sp:') ? 'sp' : go.startsWith('dr:') ? 'dr' : 'lb';
+const feedCat = go => go.startsWith('sp:') ? 'sp' : go.startsWith('dr:') || go.startsWith('ev:') ? 'dr' : 'lb';
 function rxGo(k){
   const id = k.slice(3), pre = k.slice(0, 3);
   if(pre === 'sp:' || pre === 'dr:') return k;
@@ -4018,6 +4071,8 @@ function feedItems(){
   WS.spots.forEach(x => add(x._t || x.at, x.dev, x.by, '📍', `hat einen Spot geteilt: <b>„${esc(x.name)}“</b>`, `Spot ${esc(x.name)}`, 'sp:' + x._id));
   WS.courses.forEach(c => add(c._t || c.at, c.dev, c.by, '🚩', `hat eine Rennstrecke geteilt: <b>„${esc(c.name)}“</b>`, `Rennstrecke ${esc(c.name)}`, 'co:' + c._id));
   WS.reacts.filter(r => r.o === mine && r.dev !== mine).forEach(r => add(r._t || r.at, r.dev, r.by, RX[r.e], `hat auf ${esc(rxWhat(r.k))} mit ${RX[r.e]} reagiert`, `${RX[r.e]} ${esc(rxWhat(r.k))}`, rxGo(r.k)));
+  WS.events.forEach(ev => add(ev.created || ev._t, ev.dev, ev.by, '📅', `plant eine Ausfahrt: <b>„${esc(ev.title)}“</b> · ${esc(evWhen(ev.at))}`, `Ausfahrt ${esc(ev.title)} · <b>${esc(evWhen(ev.at))}</b>`, 'ev:' + ev._id));
+  WS.rsvps.forEach(r => { const ev = WS.events.find(x => x._id === r.ev); if(ev && ev.dev === mine && r.dev !== mine && r.s === 'yes') add(r._t || r.at, r.dev, r.by, '✅', `ist bei <b>„${esc(ev.title)}“</b> dabei`, `dabei bei ${esc(ev.title)}`, 'ev:' + ev._id); });
   return out.sort((a, b) => (b.live ? 1 : 0) - (a.live ? 1 : 0) || b.t - a.t).slice(0, 80);
 }
 const feedWho = it => it.dev === myId() ? 'Du' : crewName(it.dev, it.by);
@@ -4041,7 +4096,7 @@ function feedTime(it, day){
 }
 function wsFeedHTML(){
   const items = feedItems();
-  let html = reviewCardsHTML();
+  let html = reviewCardsHTML() + evSecHTML();
   if(!items.length) return html + `<div class="empty"><b>Noch nichts los</b>Hier landen neue Bestzeiten, geteilte Fahrten und Spots und wer gerade live ist.</div>`;
   let day = null;
   html += '<div class="feed">';
@@ -4057,6 +4112,7 @@ function wsFeedHTML(){
 function feedGo(go){
   const [k, ...rest] = go.split(':'), v = rest.join(':');
   if(k === 'lv') return openLiveCard(v);
+  if(k === 'ev') return evShow(v);
   if(k === 'dr') return openWsDrive(v);
   if(k === 'sp') return openWsSpot(v);
   if(k === 'ru'){ wsSub = 'lb'; if(v) wsRunKey = v; renderList(); return; }
@@ -4071,6 +4127,206 @@ function feedNotify(){
   if(!since || !items.length) return;
   toast(items.length === 1 ? `${items[0].ic} ${feedText(items[0])}` : `${items.length} Neuigkeiten in deiner Gruppe – schau in die News`);
 }
+
+/* ================= Ausfahrten: Treffpunkt, Uhrzeit, Route – die Crew sagt zu, beim Treffen geht Live an =================
+   Liegen als ev_… und rv_… in der Reaktionen-Sammlung (keine neuen Firebase-Regeln nötig; ältere App-Versionen ignorieren sie). */
+const EV_PRE = 'ev_', RV_PRE = 'rv_', EV_BEFORE = 30 * 60000, EV_AFTER = 3 * 3600e3;
+const isEvDoc = r => r && (r.kind === 'ev' || r.kind === 'rv');
+const evList = () => WS.events.filter(e => e.at + EV_AFTER > Date.now()).sort((a, b) => a.at - b.at);
+const evRsvps = id => WS.rsvps.filter(r => r.ev === id && r.s);
+const evMine = id => (WS.rsvps.find(r => r.ev === id && r.dev === myId()) || {}).s || null;
+const evCanDel = ev => ev.dev === myId() || isAdmin();
+const pad2 = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+function evX(id){ prefs.evx = prefs.evx || {}; return prefs.evx[id] || (prefs.evx[id] = {}); }
+function evWhen(at){
+  const d = new Date(at), d0 = new Date(); d0.setHours(0, 0, 0, 0);
+  const day = Math.round((new Date(at).setHours(0, 0, 0, 0) - d0.getTime()) / 864e5), hm = d.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+  const dl = day === 0 ? 'Heute' : day === 1 ? 'Morgen' : day > 1 && day < 7 ? d.toLocaleDateString('de-DE', {weekday:'long'}) : d.toLocaleDateString('de-DE', {weekday:'short', day:'numeric', month:'numeric'});
+  return `${dl}, ${hm} Uhr`;
+}
+function evCountdown(at){
+  const ms = at - Date.now();
+  if(ms <= 0) return Date.now() < at + EV_AFTER ? 'läuft' : 'vorbei';
+  const m = Math.ceil(ms / 60000), dd = Math.round(m / 1440);
+  return m < 60 ? `in ${m} Min` : m < 1440 ? `in ${Math.floor(m / 60)} Std${m % 60 ? ` ${m % 60} Min` : ''}` : `in ${dd} Tag${dd === 1 ? '' : 'en'}`;
+}
+function evSecHTML(){
+  if(!grp()) return '';
+  const list = evList();
+  if(!list.length) return `<div class="ev-sec"><button class="ev-new" data-ev="new"><span class="ic">📅</span><span class="tx"><b>Ausfahrt planen</b><small>Treffpunkt, Uhrzeit und Route – die Crew sagt zu</small></span><span class="pl">${svg(UI.plus, 16)}</span></button></div>`;
+  return `<div class="ev-sec">${list.map(evCardHTML).join('')}<button class="txtbtn ev-more" data-ev="new">${svg(UI.plus, 14)} Weitere Ausfahrt planen</button></div>`;
+}
+function evCardHTML(ev){
+  const id = esc(ev._id), rs = evRsvps(ev._id), yes = rs.filter(r => r.s === 'yes'), maybe = rs.filter(r => r.s === 'maybe'), mine = evMine(ev._id);
+  const now = Date.now(), d = new Date(ev.at), soon = now >= ev.at - EV_BEFORE, host = ev.dev === myId() ? 'dir' : esc(crewName(ev.dev, ev.by));
+  const pt = (k, icon, label) => { const p = ev[k]; return p ? `<button class="ev-pt" data-ev="${k}" data-id="${id}"><span class="i">${svg(icon, 15, 2)}</span><span class="n"><em>${label}</em> ${esc(p.n)}${k === 'dest' ? ` · ${ev.rt === 'land' ? 'Landstraße' : 'schnellste Route'}` : ''}</span>${me ? `<small>${fmtDist(dist(me, p))}</small>` : ''}</button>` : ''; };
+  return `<div class="ev-card${now >= ev.at ? ' now' : ''}" id="ev-${id}">
+    <div class="ev-top"><span class="ev-cal"><small>${esc(d.toLocaleDateString('de-DE', {month:'short'}).replace('.', ''))}</small><b>${d.getDate()}</b></span>
+      <div class="ev-h"><b>${esc(ev.title)}</b><span>${esc(evWhen(ev.at))} · <em>${evCountdown(ev.at)}</em></span></div></div>
+    <div class="ev-pts">${pt('meet', GEO_IC.poi, 'Treffen')}${pt('dest', ICONS.flag, 'Ziel')}</div>
+    ${ev.note ? `<div class="ev-note">${esc(ev.note)}</div>` : ''}
+    <div class="ev-who">${yes.length ? `<span class="ev-faces">${yes.slice(0, 6).map(r => avHTML(r.dev, r.by, 24)).join('')}</span>` : ''}<span>${yes.length ? `${yes.length} dabei` : 'Noch keine Zusagen'}${maybe.length ? ` · ${maybe.length} vielleicht` : ''} · von ${host}</span></div>
+    <div class="seg2 ev-rsvp">${[['yes', 'Bin dabei'], ['maybe', 'Vielleicht'], ['no', 'Kann nicht']].map(([s, n]) => `<button class="${mine === s ? 'on ' + s : ''}" data-ev="rsvp" data-s="${s}" data-id="${id}">${n}</button>`).join('')}</div>
+    ${mine === 'yes' ? `<div class="ev-live"><i class="lv-dot on"></i>${soon ? (liveIsOn() ? 'Du bist live' : evX(ev._id).off ? 'Live hast du für diese Ausfahrt ausgemacht' : 'Öffne das Cockpit – Live geht automatisch an') : 'Beim Treffen geht Live im Cockpit automatisch an'}</div>` : ''}
+    <div class="ev-acts"><button class="btn sm" data-ev="route" data-id="${id}">${svg(UI.nav, 14)} Zum Treffpunkt</button>${ev.dest ? `<button class="btn sm" data-ev="routeall" data-id="${id}">${svg(ICONS.flag, 14)} Ganze Route</button>` : ''}${ev.dev === myId() ? `<button class="btn sm" data-ev="edit" data-id="${id}">Ändern</button>` : ''}${evCanDel(ev) ? `<button class="btn sm danger" data-ev="del" data-id="${id}">${ev.dev === myId() ? 'Absagen' : 'Entfernen'}</button>` : ''}</div>
+  </div>`;
+}
+function evShow(id){
+  wsSub = 'feed'; renderList();
+  setTimeout(() => { const el = document.getElementById('ev-' + id); if(!el) return; el.scrollIntoView({block:'center', behavior:'smooth'}); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1600); }, 60);
+}
+function evRefresh(){ if(inWsView() && view === 'list') renderList(); }
+async function evAct(b){
+  const a = b.dataset.ev, id = b.dataset.id, ev = WS.events.find(x => x._id === id);
+  if(a === 'new'){ if(evDraft && evDraft.id) evDraft = null; return openEvDlg(); }
+  if(!ev) return;
+  if(a === 'rsvp') return evRsvp(ev, b.dataset.s);
+  if(a === 'meet' || a === 'dest'){ const p = ev[a]; openPlace({name:p.n, sub:`${a === 'meet' ? 'Treffpunkt' : 'Ziel'} · ${ev.title} · ${evWhen(ev.at)}`, lat:p.lat, lng:p.lng, type:'other', noRecent:true, back:'Crew'}); return; }
+  if(a === 'route') return planNav(ev.meet, ev.meet.n, null);
+  if(a === 'routeall') return planNav(ev.dest, ev.dest.n, null, {stops:[{lat:ev.meet.lat, lng:ev.meet.lng, name:ev.meet.n, kind:'place'}], mode:ev.rt});
+  if(a === 'edit') return openEvDlg(id);
+  if(a === 'del'){
+    const lbl = b.textContent;
+    if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = 'Wirklich?'; setTimeout(() => { if(b.isConnected){ b.classList.remove('armed'); b.textContent = lbl; } }, 3500); return; }
+    return evDelete(id);
+  }
+}
+async function evRsvp(ev, s, quiet){
+  if(!needGroup(() => evRsvp(ev, s, quiet))) return;
+  const rid = `${RV_PRE}${ev._id}_${myId()}`, before = WS.rsvps.slice(), o = {kind:'rv', ev:ev._id, s, by:myName(), dev:myId(), at:Date.now()};
+  wsUpsert(WS.rsvps, {...o, _id:rid, _t:o.at}); evRefresh();
+  try{ await fsPut('reactions', rid, o); }
+  catch(e){ WS.rsvps = before; evRefresh(); toast('Zusage hat nicht geklappt. Prüfe dein Internet.'); return; }
+  wsCache();
+  if(s === 'yes'){
+    const x = evX(ev._id), act = evActive(), soon = !!act && act._id === ev._id; delete x.off;
+    if(soon && !ckOn) x.h = 1;   // der Hinweis steckt schon im Toast
+    savePrefs();
+    if(!quiet) toast(soon && !ckOn ? 'Du bist dabei – öffne zum Treffen das Cockpit, dann geht Live automatisch an' : 'Du bist dabei – beim Treffen geht Live im Cockpit automatisch an');
+    evLiveCheck();
+  }
+}
+async function evDelete(id, quiet){
+  const rs = WS.rsvps.filter(r => r.ev === id);
+  try{ await fsDel('reactions', id); }catch(e){ if(!quiet) toast('Ging gerade nicht. Prüfe dein Internet.'); return; }
+  rs.forEach(r => fsDel('reactions', r._id).catch(() => {}));
+  WS.events = WS.events.filter(e => e._id !== id); WS.rsvps = WS.rsvps.filter(r => r.ev !== id); wsCache();
+  if(!quiet){ toast('Ausfahrt ist abgesagt'); evRefresh(); }
+}
+// nach dem Abgleich: alte eigene Ausfahrten wegräumen, gemerkte Hinweise ausdünnen
+function evTidy(){
+  WS.events.filter(e => e.dev === myId() && e.at < Date.now() - 7 * 864e5).forEach(e => evDelete(e._id, true));
+  if(prefs.evx){ let ch = false; Object.keys(prefs.evx).forEach(k => { if(!WS.events.some(e => e._id === k)){ delete prefs.evx[k]; ch = true; } }); if(ch) savePrefs(); }
+}
+// Live beim Treffen: wer zugesagt hat, ist ab 30 Min vorher bis 3 Std danach im Cockpit automatisch live
+const evTried = new Set();
+const liveIsOn = () => { try{ return live.on; }catch(e){ return false; } };   // live ist weiter unten deklariert
+function evActive(){
+  if(!grp()) return null;
+  const now = Date.now();
+  return WS.events.filter(e => evMine(e._id) === 'yes' && now >= e.at - EV_BEFORE && now <= e.at + EV_AFTER).sort((a, b) => a.at - b.at)[0] || null;
+}
+function evLiveCheck(){
+  const ev = evActive(); if(!ev) return;
+  const x = evX(ev._id);
+  if(!ckOn){
+    if(!x.h && !document.hidden){ x.h = 1; savePrefs(); toast(`📅 „${ev.title}“ ${Date.now() < ev.at ? evCountdown(ev.at) : 'läuft'} – öffne das Cockpit, dann geht Live automatisch an`); }
+    return;
+  }
+  if(live.on || x.off || evTried.has(ev._id)) return;
+  evTried.add(ev._id); liveStart({ev});
+}
+setInterval(evLiveCheck, 30000);
+
+/* Ausfahrt anlegen / ändern */
+let evDraft = null;
+function evChoices(){
+  const out = [], seen = new Set(), key = s => normName(s.name) + '|' + Math.round(s.lat * 1e3) + '|' + Math.round(s.lng * 1e3);
+  data.spots.forEach(s => { if(s.lat == null) return; out.push({k:'m:' + s.id, n:s.name || 'Spot', lat:s.lat, lng:s.lng, g:'Meine Spots'}); seen.add(key(s)); });
+  WS.spots.forEach(s => { if(s.lat == null || seen.has(key(s))) return; out.push({k:'w:' + s._id, n:s.name || 'Spot', lat:s.lat, lng:s.lng, g:'Crew-Spots'}); });
+  return me ? out.sort((a, b) => dist(me, a) - dist(me, b)) : out.sort((a, b) => a.n.localeCompare(b.n, 'de'));
+}
+function openEvDlg(edit){
+  if(!needGroup(() => openEvDlg(edit))) return;
+  if(edit){ const ev = WS.events.find(x => x._id === edit); if(ev){ const d = new Date(ev.at); evDraft = {id:ev._id, created:ev.created, title:ev.title, date:ymd(d), time:`${pad2(d.getHours())}:${pad2(d.getMinutes())}`, meet:{...ev.meet}, dest:ev.dest ? {...ev.dest} : null, rt:ev.rt || 'fast', note:ev.note || ''}; } }
+  if(!evDraft){ const d = new Date(); if(d.getHours() >= 17) d.setDate(d.getDate() + 1); evDraft = {title:'', date:ymd(d), time:'19:00', meet:null, dest:null, rt:prefs.navMode === 'land' ? 'land' : 'fast', note:''}; }
+  const e = evDraft, ch = evChoices(), keep = $('#modal .ev-dlg .pad'), st = keep ? keep.scrollTop : 0;
+  const opts = () => ['Meine Spots', 'Crew-Spots'].map(g => { const l = ch.filter(c => c.g === g); return l.length ? `<optgroup label="${g}">${l.map(c => `<option value="${esc(c.k)}">${esc(c.n)}${me ? ' · ' + fmtDist(dist(me, c)) : ''}</option>`).join('')}</optgroup>` : ''; }).join('');
+  const pt = (k, label) => { const p = e[k];
+    if(p) return `<div class="ev-set"><span class="i">${svg(k === 'meet' ? GEO_IC.poi : ICONS.flag, 16, 2)}</span><input class="inp" data-evf="${k}N" value="${esc(p.n)}" maxlength="60" aria-label="${label}"><button class="ev-x" data-evd="${k}x" aria-label="${label} entfernen">${svg(UI.close, 12)}</button></div>${me ? `<small class="ev-sub">${fmtDist(dist(me, p))} von dir</small>` : ''}`;
+    return `<div class="ev-pick">${ch.length ? `<select class="inp" data-evsel="${k}" aria-label="${label}: Spot wählen"><option value="">Spot wählen …</option>${opts()}</select>` : ''}<button class="btn" data-evd="${k}map">${svg(GEO_IC.coord, 15, 2)} Auf der Karte</button></div>`; };
+  $('#modal').innerHTML = `<div class="dlg ev-dlg" role="dialog" aria-modal="true" aria-label="Ausfahrt planen">
+    <div class="top" style="padding:12px 14px"><button class="txtbtn" data-evd="cancel">Abbrechen</button><strong style="font-size:17px">${e.id ? 'Ausfahrt ändern' : 'Ausfahrt planen'}</strong><button class="txtbtn bold" data-evd="save">${e.id ? 'Sichern' : 'Posten'}</button></div>
+    <div class="pad" style="padding-top:2px;gap:12px">
+      <label class="f">Name<input class="inp" data-evf="title" value="${esc(e.title)}" maxlength="50" placeholder="z. B. Sonntagsrunde Spessart"></label>
+      <div class="g2"><label class="f">Tag<input class="inp" type="date" data-evf="date" value="${esc(e.date)}" min="${ymd(new Date())}"></label><label class="f">Uhrzeit<input class="inp" type="time" data-evf="time" value="${esc(e.time)}" step="300"></label></div>
+      <div class="set-sec">Treffpunkt</div>
+      ${pt('meet', 'Treffpunkt')}
+      <div class="set-sec">Ziel <span class="ev-opt">optional</span></div>
+      ${pt('dest', 'Ziel')}
+      ${e.dest ? `<div class="set-sec">Route vom Treffpunkt</div><div class="seg2">${[['fast', 'Schnellste'], ['land', 'Landstraße ohne Autobahn']].map(([k, n]) => `<button class="${e.rt === k ? 'on' : ''}" data-evd="rt" data-v="${k}">${n}</button>`).join('')}</div>` : ''}
+      <label class="f">Info für die Crew<textarea class="inp" data-evf="note" rows="2" maxlength="300" placeholder="z. B. Vollgetankt kommen, danach gibt’s Essen">${esc(e.note)}</textarea></label>
+      <div class="muted ev-hint">Wer zusagt, ist beim Treffen im Cockpit automatisch live – ab 30 Minuten vorher bis 3 Stunden danach. Treffpunkt und Ziel sieht nur die Crew.</div>
+      <div class="err" id="ev-err"></div>
+    </div></div>`;
+  $('#modal').hidden = false;
+  if(st) $('#modal .ev-dlg .pad').scrollTop = st;
+}
+function evSync(){
+  const m = $('#modal'); if(!evDraft || !m.querySelector('.ev-dlg')) return;
+  m.querySelectorAll('[data-evf]').forEach(i => { const k = i.dataset.evf; if(k === 'meetN' || k === 'destN'){ const p = evDraft[k.slice(0, -1)]; if(p) p.n = i.value; } else evDraft[k] = i.value; });
+}
+async function evRevName(p){
+  try{
+    const j = await (await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=17&accept-language=de&lat=${p.lat.toFixed(5)}&lon=${p.lng.toFixed(5)}`)).json(), ad = j.address || {};
+    return [j.name || ad.road || '', ad.city || ad.town || ad.village || ad.municipality || ''].filter(Boolean).join(', ') || null;
+  }catch(e){ return null; }
+}
+function evPicked(k, p){
+  if(!evDraft) return;
+  const def = k === 'meet' ? 'Treffpunkt' : 'Ziel', pt = {lat:p.lat, lng:p.lng, n:def};
+  evDraft[k] = pt; show('list', 'half'); openEvDlg();
+  evRevName(p).then(n => {
+    if(!n || !evDraft || evDraft[k] !== pt || pt.n !== def) return;
+    pt.n = n; const i = $(`#modal .ev-dlg [data-evf="${k}N"]`); if(i && i.value === def) i.value = n;
+  });
+}
+async function evSave(b){
+  evSync();
+  const e = evDraft, err = m => { const x = $('#ev-err'); if(x) x.textContent = m; };
+  if(!e.title.trim()) return err('Gib der Ausfahrt einen Namen.');
+  const at = new Date(`${e.date}T${e.time || '19:00'}`).getTime();
+  if(!e.date || isNaN(at)) return err('Tag und Uhrzeit fehlen.');
+  if(at < Date.now() - 15 * 60000 && !e.id) return err('Der Zeitpunkt liegt in der Vergangenheit.');
+  if(at > Date.now() + 120 * 864e5) return err('Höchstens vier Monate im Voraus.');
+  if(!e.meet) return err('Wähle einen Treffpunkt.');
+  const P = p => p ? {lat:+p.lat.toFixed(5), lng:+p.lng.toFixed(5), n:(p.n || '').trim().slice(0, 60) || 'Treffpunkt'} : null;
+  const id = e.id || EV_PRE + uid() + uid(), doc = {kind:'ev', title:e.title.trim().slice(0, 50), at, meet:P(e.meet), dest:P(e.dest), rt:e.rt === 'land' ? 'land' : 'fast', note:(e.note || '').trim().slice(0, 300), by:myName(), dev:myId(), created:e.created || Date.now()};
+  if(doc.dest && doc.dest.n === 'Treffpunkt') doc.dest.n = 'Ziel';
+  b.disabled = true; err('');
+  try{ await fsPut('reactions', id, doc); }
+  catch(x){ b.disabled = false; return err('Ging gerade nicht. Prüfe dein Internet.'); }
+  wsUpsert(WS.events, {...doc, _id:id, _t:Date.now()}); wsCache();
+  const isNew = !e.id; evDraft = null; $('#modal').hidden = true;
+  if(isNew) await evRsvp({...doc, _id:id}, 'yes', true);
+  toast(isNew ? 'Ausfahrt ist in der Crew – du bist dabei' : 'Ausfahrt geändert');
+  evShow(id);
+}
+$('#modal').addEventListener('click', e => {
+  const b = e.target.closest('[data-evd]'); if(!b || !$('#modal .ev-dlg')) return;
+  const a = b.dataset.evd; evSync();
+  if(a === 'cancel'){ evDraft = null; $('#modal').hidden = true; return; }
+  if(a === 'save') return evSave(b);
+  if(a === 'meetx' || a === 'destx'){ evDraft[a.slice(0, -1)] = null; return openEvDlg(); }
+  if(a === 'meetmap' || a === 'destmap'){ $('#modal').hidden = true; enterMode('ev-' + a.slice(0, -3)); return; }
+  if(a === 'rt'){ evDraft.rt = b.dataset.v; return openEvDlg(); }
+});
+$('#modal').addEventListener('change', e => {
+  const s = e.target.closest('[data-evsel]'); if(!s || !evDraft || !s.value) return;
+  evSync(); const c = evChoices().find(x => x.k === s.value); if(!c) return;
+  evDraft[s.dataset.evsel] = {lat:c.lat, lng:c.lng, n:c.n}; openEvDlg();
+});
 
 /* Wochen- und Monatsrückblick mit Awards */
 function isoWeek(ts){ const d = new Date(ts); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7); const w1 = new Date(d.getFullYear(), 0, 4); return 1 + Math.round(((d - w1) / 864e5 - 3 + (w1.getDay() + 6) % 7) / 7); }
@@ -4415,7 +4671,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.05.30';
+const VERSION = '2026.10.05.31';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4675,7 +4931,7 @@ $('#modal').addEventListener('click', e => {
     prefs.dev = o.dev; if(o.name) prefs.myName = o.name; prefs.linkAdopt = true; prefs.memberSig = ''; prefs.onb = 1;
     if(o.code) prefs.group = {code:o.code, name:o.g, joined:Date.now()};
     delete prefs.wsSeen; delete prefs.rxSeen; savePrefs();
-    WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.crew = null; WS.loaded = 0; wsCache();
+    WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.crew = null; WS.loaded = 0; wsCache();
     $('#modal').hidden = true; if(!$('#onb').hidden) $('#onb').hidden = true;
     syncSpotsHead(); refreshAll(); liveWatch(); wsSync(true);
     toast(`Verknüpft – du bist jetzt auch hier ${o.name || 'du'}`);
@@ -6044,6 +6300,7 @@ function enterCockpit(){
   clearInterval(ckTick); ckTick = setInterval(updateCockpitUI, 1000);
   rwCk.t = 0; rwCk.r = null; rwCk.warned = '';
   renderCkTop(); updateRecUI(); updateCockpitUI(); liveUI();
+  evTried.clear(); setTimeout(evLiveCheck, 1500);   // geplante Ausfahrt: Live automatisch an
   const fresh = me && Date.now() - meTime < 120000;   // alter Standort würde irgendwohin zentrieren
   cam.fix = fresh ? {lat:me.lat, lng:me.lng, t:performance.now(), v:0, h:null} : null;
   cam.disp = null; cam.bearing = null; cam.zoom = null; ckUserPitch = null; userGesture = false;
@@ -6416,19 +6673,21 @@ map.on('dragstart', () => { if(liveFollowId){ liveFollowId = null; if(liveCardId
 setInterval(() => { if(liveCardId && !$('#liveCard').hidden && !document.hidden) renderLiveCard(); }, 2000);
 
 /* eigenen Standort senden (nur im Cockpit, nach Zustimmung) */
-function liveStart(){
+function liveStart(o){
   if(!ckOn || live.on) return;
+  const ev = o && o.ev ? o.ev : null;
   if(!needGroup(liveStart)) return;
-  if(!prefs.liveOk){ openLiveConsent(); return; }
-  live.on = true; live.until = Date.now() + LIVE_MAX; live.lastSent = null; live.fails = 0;
+  if(!prefs.liveOk){ openLiveConsent(ev); return; }
+  live.on = true; live.until = Date.now() + LIVE_MAX; live.lastSent = null; live.fails = 0; live.ev = ev ? ev._id : null;
+  if(ev) live.until = Math.min(live.until, ev.at + EV_AFTER);
   liveWatch(); if(live.code && live.mode !== 'rt') liveRealtime(live.code);
-  toast(`Live an – „${grp().name}“ sieht dich auf der Karte`);
+  toast(ev ? `📅 „${ev.title}“: Live ist automatisch an, bis ${new Date(live.until).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} Uhr` : `Live an – „${grp().name}“ sieht dich auf der Karte`);
   liveUI();
   if(ck.last && ck.ts && Date.now() - ck.ts < 10000) liveFeed(ck.last, ck.v, (ck.v || 0) > 1.4 ? ck.h : null, 0);
 }
 function liveStop(quiet){
   if(!live.on) return;
-  live.on = false; live.lastSent = null;
+  live.on = false; live.lastSent = null; live.ev = null;
   liveDelete(); liveUI();
   if(!quiet) toast('Live aus – dein Standort wird nicht mehr geteilt');
 }
@@ -6441,7 +6700,7 @@ async function liveDelete(){
 function liveFeed(pt, v, h, acc){
   if(!live.on || !grp()) return;
   const now = Date.now();
-  if(now > live.until){ liveStop(true); toast('Live nach 4 Stunden automatisch beendet'); return; }
+  if(now > live.until){ const ev = live.ev; liveStop(true); toast(ev ? 'Ausfahrt vorbei – Live ist automatisch aus' : 'Live nach 4 Stunden automatisch beendet'); return; }
   if(acc > 80) return;
   const L = live.lastSent, kmh = (v || 0) * 3.6;
   if(L){
@@ -6468,10 +6727,12 @@ async function liveWrite(o){
   if(!live.on) liveDelete();   // während des Sendens ausgeschaltet
   liveUI();
 }
-function openLiveConsent(){
+let liveConsentEv = null;
+function openLiveConsent(ev){
+  liveConsentEv = ev || null;
   $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Live-Standort"><div class="pad" style="padding:18px 16px 16px">
     <h2>Live-Standort teilen?</h2>
-    <div class="muted">Alle in „${esc(grp().name)}“ sehen dich auf der Karte, mit Richtung und Tempo, solange das Cockpit offen ist.</div>
+    <div class="muted">${ev ? `Du bist bei „${esc(ev.title)}“ dabei. ` : ''}Alle in „${esc(grp().name)}“ sehen dich auf der Karte, mit Richtung und Tempo, solange das Cockpit offen ist.</div>
     <ul class="live-pts"><li>Geht beim Verlassen des Cockpits automatisch aus</li><li>Gespeichert wird nur die letzte Position, keine Route</li><li>Die App muss dafür offen bleiben</li></ul>
     <div class="btns"><button class="btn" data-lv="cancel">Abbrechen</button><button class="btn primary" data-lv="ok">Live teilen</button></div></div></div>`;
   $('#modal').hidden = false;
@@ -6479,9 +6740,14 @@ function openLiveConsent(){
 $('#modal').addEventListener('click', e => {
   const b = e.target.closest('[data-lv]'); if(!b) return;
   $('#modal').hidden = true;
-  if(b.dataset.lv === 'ok'){ prefs.liveOk = true; savePrefs(); liveStart(); }
+  const ev = liveConsentEv; liveConsentEv = null;
+  if(b.dataset.lv === 'ok'){ prefs.liveOk = true; savePrefs(); liveStart(ev ? {ev} : null); }
 });
-$('#ckLive').addEventListener('click', () => { if(live.on) liveStop(); else liveStart(); });
+$('#ckLive').addEventListener('click', () => {
+  if(!live.on) return liveStart();
+  if(live.ev){ evX(live.ev).off = 1; savePrefs(); }   // bei dieser Ausfahrt nicht wieder automatisch einschalten
+  liveStop();
+});
 document.addEventListener('visibilitychange', () => { liveWatch(); if(!document.hidden) liveRender(); else wsShow = null; });
 window.addEventListener('pagehide', () => {   // App wird geschlossen: Position sofort entfernen
   if(!live.on || !grp()) return;
@@ -7584,12 +7850,13 @@ function rwCkRender(){
 /* Vorschau & Start */
 const navLeft = () => nav.stops.filter(x => !x.done);
 const navPts = from => [from, ...navLeft(), nav.dest];
-async function planNav(target, name, walkTo){
+async function planNav(target, name, walkTo, o = {}){
   if(ckOn) exitCockpit();
   if(nav) endNav();
   const here = await getHere(); if(!here) return;
   toast('Route wird berechnet …');
-  nav = {active:false, start:{lat:here.lat, lng:here.lng}, dest:{lat:target.lat, lng:target.lng}, name, walkTo, stops:[], mode:prefs.navMode === 'land' ? 'land' : 'fast', opts:null, route:null, prog:0, off:0, lastReroute:0, arrived:false, pick:null};
+  const stops = (o.stops || []).filter(x => dist(x, here) > 300).map(x => ({...x}));   // Zwischenstopp, an dem ich schon stehe, weglassen
+  nav = {active:false, start:{lat:here.lat, lng:here.lng}, dest:{lat:target.lat, lng:target.lng}, name, walkTo, stops, mode:(o.mode || prefs.navMode) === 'land' ? 'land' : 'fast', opts:null, route:null, prog:0, off:0, lastReroute:0, arrived:false, pick:null};
   if(!(await navReplan(true))){ nav = null; toast('Route konnte nicht berechnet werden. Prüfe deine Internetverbindung.'); return; }
   hideToast();
   navPrevOn = true; document.body.classList.add('navprev');
