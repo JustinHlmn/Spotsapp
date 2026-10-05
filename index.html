@@ -467,6 +467,33 @@ h2{font-size:23px}
 #splash .logo{background:linear-gradient(180deg,#5aaeff,#2f86ef);border-radius:26px;box-shadow:0 18px 44px rgba(77,163,255,.35)}
 #splash .name{font-weight:700;letter-spacing:-.03em}
 
+/* ---------- Crew-Rechte ---------- */
+.adm-tag{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:10px;background:linear-gradient(135deg,#ffd60a,#ff9f0a);color:#3a2600;font-size:11px;font-weight:800;font-style:normal;letter-spacing:.02em;vertical-align:middle;margin-left:6px}
+.adm-tag.sm{height:16px;padding:0 5px;font-size:9.5px;border-radius:8px;margin-left:5px}
+.adm-row .ri{display:flex;align-items:center;gap:4px}
+.adm-dlg .top{display:flex;justify-content:space-between;align-items:center}
+.adm-head{display:flex;align-items:center;gap:12px;padding:4px 2px}
+.adm-head b{display:block;font-size:18px;font-weight:750}
+.adm-head span{font-size:13px;color:var(--muted)}
+.adm-shield{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#ffd60a,#ff9f0a);color:#3a2600;flex:none}
+.adm-list{padding:0}
+.adm-m{display:flex;align-items:center;gap:11px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.adm-m:last-child{border-bottom:0}
+.adm-tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.adm-tx b{font-size:15px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-tx b small{color:var(--muted);font-weight:500}
+.adm-tx span{font-size:12.5px;color:var(--muted)}
+.adm-acts{display:flex;gap:6px;flex:none}
+.btn.sm{height:32px;padding:0 11px;font-size:13px;border-radius:10px}
+.btn.sm.danger{color:var(--danger)}
+.btn.armed{background:var(--danger);color:#fff;border-color:transparent}
+.adm-note{font-size:12.5px;color:var(--muted);line-height:1.45;padding:0 4px}
+.adm-renew{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.adm-renew .adm-tx span{line-height:1.45}
+.adm-prog{font-size:13px;color:var(--accent);min-height:1em;font-variant-numeric:tabular-nums}
+.lnk-box{font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--fill);border-radius:12px;padding:10px 12px;word-break:break-all;max-height:84px;overflow:hidden;color:var(--muted);user-select:all;-webkit-user-select:all}
+.ws-clash{display:block;width:100%;text-align:left;border:0;cursor:pointer}
+
 /* ---------- Straßen-Sammler ---------- */
 .xh-tg{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:13px;border:1px solid var(--line);background:var(--solid);color:var(--muted);font-size:12px;font-weight:700;text-transform:none;letter-spacing:0}
 .xh-tg.on{background:linear-gradient(135deg,#21c4ff,#7dff6a 55%,#ffd60a);color:#0b1a10;border-color:transparent}
@@ -2907,7 +2934,13 @@ function handleHash(){
   const h = location.hash.slice(1); if(!h) return;
   const q = new URLSearchParams(h);
   try{
-    if(q.get('spot')){
+    if(q.get('link') && /^[a-z0-9]{10,64}$/i.test(q.get('link'))){
+      hashSpot = true;   // keine Einführung, das Gerät wird verknüpft
+      const jc = q.get('join');
+      const lo = {dev:q.get('link'), name:(q.get('n') || '').slice(0, 24), code:jc && jc.length >= 20 ? jc : null, g:q.get('g') || 'Gruppe'};
+      const tryOpen = () => document.querySelector('#splash') ? setTimeout(tryOpen, 250) : openLinkAccept(lo);   // erst wenn der Startbildschirm weg ist
+      setTimeout(tryOpen, 300);
+    } else if(q.get('spot')){
       hashSpot = true;
       const o = JSON.parse(b64d(q.get('spot')));
       if(typeof o.a === 'number' && typeof o.o === 'number') showIncoming(o);
@@ -2919,7 +2952,7 @@ function handleHash(){
   try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
 }
 /* ================= Einführung für neue Freunde ================= */
-let hashSpot = false, onbInvite = null, onbStep = 0, onbInstall = null, onbErr = '';
+let hashSpot = false, onbInvite = null, onbStep = 0, onbInstall = null, onbErr = '', onbNameFix = false;
 const isStandalone = () => navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
 const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); onbInstall = e; if(!$('#onb').hidden) renderOnb(); });
@@ -2977,8 +3010,15 @@ function renderOnb(){
   $('#onbBody').innerHTML = dots + `<div class="onb-card">${body}</div>`;
   if(k === 'me') setTimeout(() => { const i = $('#onb-name'); if(i && !i.value) i.focus(); }, 80);
 }
-function onbJoin(code, gname){
-  prefs.group = {code, name:gname || 'Gruppe'}; delete prefs.wsSeen; delete prefs.feedSeen; savePrefs();
+async function onbJoinChecked(code, gname){
+  const msg = FB ? await joinCheck(code, gname, myName()) : '';
+  if(!msg){ onbJoin(code, gname); toast(`Willkommen in „${gname}“`); return true; }
+  onbInvite = {code, name:gname}; onbErr = msg;
+  if(/anderen Namen/.test(msg)){ onbNameFix = true; onbStep = onbSteps().indexOf('me'); }   // zurück zum Namen
+  renderOnb(); return false;
+}
+function onbJoin(code, gname, mk){
+  prefs.group = {code, name:gname || 'Gruppe', joined:Date.now(), ...(mk ? {mkAdmin:true} : {})}; delete prefs.wsSeen; delete prefs.feedSeen; savePrefs();
   WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.loaded = 0; wsSub = 'feed';
   syncSpotsHead(); wsSync(true);
 }
@@ -2991,17 +3031,19 @@ $('#onb').addEventListener('click', async e => {
   if(a === 'avatar'){ $('#avFile').click(); return; }
   if(a === 'name'){
     const v = ($('#onb-name').value || '').trim(); if(!v){ onbErr = 'Gib deinen Namen ein.'; return renderOnb(); }
-    prefs.myName = v; savePrefs(); return next();
+    prefs.myName = v; savePrefs();
+    if(onbInvite && onbNameFix){ onbNameFix = false; onbErr = ''; b.disabled = true; const ok = await onbJoinChecked(onbInvite.code, onbInvite.name); b.disabled = false; if(ok){ onbStep = onbSteps().indexOf('group'); renderOnb(); } return; }
+    return next();
   }
-  if(a === 'join' && onbInvite){ onbJoin(onbInvite.code, onbInvite.name); toast(`Willkommen in „${onbInvite.name}“`); return next(); }
+  if(a === 'join' && onbInvite){ b.disabled = true; const ok = await onbJoinChecked(onbInvite.code, onbInvite.name); b.disabled = false; if(ok) next(); return; }
   if(a === 'paste'){ try{ $('#onb-link').value = (await navigator.clipboard.readText()).trim(); }catch(_){ onbErr = 'Einfügen ging nicht – halt das Feld gedrückt und wähle „Einsetzen“.'; renderOnb(); } return; }
   if(a === 'link'){
     const raw = ($('#onb-link').value || '').trim(), m = raw.match(/join=([a-z0-9]{20,})/i), code = m ? m[1] : raw.replace(/[^a-z0-9]/gi, '');
     if(code.length < 20){ onbErr = 'Das sieht nicht nach einem Einladungslink aus. Kopier den ganzen Link.'; return renderOnb(); }
     const gm = raw.match(/[?&#]g=([^&]+)/), gname = gm ? decodeURIComponent(gm[1]) : 'Gruppe';
-    onbJoin(code, gname); toast(`Willkommen in „${gname}“`); return next();
+    b.disabled = true; const ok = await onbJoinChecked(code, gname); b.disabled = false; if(ok) next(); return;
   }
-  if(a === 'create'){ onbJoin(newCode(), `${myName() || 'Meine'}s Crew`); toast('Crew erstellt – lad deine Freunde unter „Crew“ ein'); return next(); }
+  if(a === 'create'){ onbJoin(newCode(), `${myName() || 'Meine'}s Crew`, true); toast('Crew erstellt – du bist der Admin. Lad deine Freunde unter „Crew“ ein.'); return next(); }
   if(a === 'gps'){ prefs.gps = true; savePrefs(); closeOnb(); startGPS(true); return; }
   if(a === 'close') closeOnb();
 });
@@ -3049,7 +3091,7 @@ window.addEventListener('hashchange', handleHash);
    Geschützt über einen langen Gruppen-Code im Pfad (groups/<code>/…) – ohne Code sieht niemand etwas. */
 const FB = {apiKey:'AIzaSyDPD8Bpe1WkswwwSThBUKjlKwDiCAKE4Tw', projectId:'jamsis-spots'};   // Firebase-Projekt der Gruppe (öffentlich, kein Geheimnis)
 const WSKEY = 'meine-spots-ws';
-const WS = {spots:[], runs:[], courses:[], efforts:[], members:[], drives:[], reacts:[], loaded:0, busy:false, err:null, rulesOld:false};
+const WS = {spots:[], runs:[], courses:[], efforts:[], members:[], drives:[], reacts:[], crew:null, loaded:0, busy:false, err:null, rulesOld:false, nameClash:null};
 const wsFull = new Map(), wsTrackObjs = new Map();
 const okImg = u => typeof u === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u) ? u : '';
 try{ Object.assign(WS, JSON.parse(localStorage.getItem(WSKEY) || '{}'), {busy:false, err:null}); }catch(e){}
@@ -3086,11 +3128,89 @@ async function fsDel(col, id){
   if(!r.ok && r.status !== 404) throw new Error('Firestore ' + r.status);
 }
 function wsCache(){
-  try{ localStorage.setItem(WSKEY, JSON.stringify({spots:WS.spots.map(s => ({...s, ph:[]})), runs:WS.runs, courses:WS.courses, efforts:WS.efforts, members:WS.members, drives:WS.drives, reacts:WS.reacts, loaded:WS.loaded})); }catch(e){}
+  try{ localStorage.setItem(WSKEY, JSON.stringify({spots:WS.spots.map(s => ({...s, ph:[]})), runs:WS.runs, courses:WS.courses, efforts:WS.efforts, members:WS.members, drives:WS.drives, reacts:WS.reacts, crew:WS.crew, loaded:WS.loaded})); }catch(e){}
 }
 const wsUpsert = (arr, obj) => { const i = arr.findIndex(x => x._id === obj._id); if(i >= 0) arr[i] = obj; else arr.push(obj); };
 function newCode(){ const a = new Uint8Array(18); crypto.getRandomValues(a); return Array.from(a, x => 'abcdefghijkmnpqrstuvwxyz23456789'[x % 32]).join('') + uid().slice(0, 6); }
 const inviteURL = () => `${appURL()}#join=${grp().code}&g=${encodeURIComponent(grp().name || 'Gruppe')}`;
+
+/* ================= Crew-Rechte: eindeutige Namen, Admin, Rauswerfen/Sperren, neuer Link =================
+   Liegt als Dokument „_crew“ in der Mitglieder-Sammlung (dafür braucht es keine neuen Firebase-Regeln).
+   Die Rechte gelten in der App – wer sich auskennt, könnte sie umgehen. */
+const CREW_DOC = '_crew';
+const normName = v => String(v || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9ß]+/g, '');
+const crewDoc = () => WS.crew || {};
+const isAdmin = (dev = myId()) => (crewDoc().admin || []).includes(dev);
+const crewBan = () => crewDoc().ban || {};
+const adminName = () => { const a = (crewDoc().admin || [])[0]; return a === myId() ? myName() : ((WS.members.find(m => m._id === a) || {}).name || 'der Admin'); };
+const mSince = m => m.since || m.at || 0;
+// Wem gehört dieser Name schon? (anderes Gerät, gesperrter Name zählt mit)
+function nameOwner(name, mems = WS.members, crew = WS.crew, me = myId()){
+  const n = normName(name); if(!n) return null;
+  const m = mems.find(x => x._id !== me && x._id !== CREW_DOC && normName(x.name) === n); if(m) return {name:m.name, dev:m._id, m};
+  const b = Object.entries((crew && crew.ban) || {}).find(([d, x]) => d !== me && normName(x.n) === n); return b ? {name:b[1].n, dev:b[0], banned:true} : null;
+}
+const fsBase = code => `https://firestore.googleapis.com/v1/projects/${FB.projectId}/databases/(default)/documents/groups/${code}`;
+async function fsRawList(code, col){
+  const out = []; let tok = '';
+  for(let i = 0; i < 50; i++){
+    const r = await fetch(`${fsBase(code)}/${col}?pageSize=300${tok ? '&pageToken=' + encodeURIComponent(tok) : ''}&key=${FB.apiKey}`);
+    if(r.status === 403 || r.status === 404) return out;
+    if(!r.ok) throw new Error('Firestore ' + r.status);
+    const j = await r.json();
+    (j.documents || []).forEach(d => out.push({id:d.name.split('/').pop(), fields:d.fields || {}}));
+    if(!j.nextPageToken) break; tok = j.nextPageToken;
+  }
+  return out;
+}
+async function fsRawPut(code, col, id, fields){
+  const r = await fetch(`${fsBase(code)}/${col}/${encodeURIComponent(id)}?key=${FB.apiKey}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({fields})});
+  if(!r.ok) throw new Error('Firestore ' + r.status);
+}
+async function fsRawDel(code, col, id){
+  const r = await fetch(`${fsBase(code)}/${col}/${encodeURIComponent(id)}?key=${FB.apiKey}`, {method:'DELETE'});
+  if(!r.ok && r.status !== 404) throw new Error('Firestore ' + r.status);
+}
+const docFields = obj => ({d:{stringValue:JSON.stringify(obj)}, t:{integerValue:String(Date.now())}});
+// Mitglieder + Crew-Dokument einer (noch fremden) Gruppe, z. B. vor dem Beitritt
+async function crewPeek(code){
+  const list = await fsRawList(code, 'members'), mems = []; let crew = null;
+  list.forEach(d => { try{ const v = JSON.parse(d.fields.d.stringValue); v._id = d.id; if(d.id === CREW_DOC) crew = v; else mems.push(v); }catch(e){} });
+  return {mems, crew};
+}
+// Darf ich mit diesem Namen in diese Gruppe? Liefert eine Fehlermeldung oder ''
+async function joinCheck(code, gname, name){
+  let pk; try{ pk = await crewPeek(code); }catch(e){ return ''; }   // offline: später beim Hochladen nochmal geprüft
+  const c = pk.crew || {};
+  if(c.moved) return 'Dieser Einladungslink ist abgelaufen. Frag nach dem neuen Link.';
+  if(c.ban && c.ban[myId()]) return `Du bist in „${gname}“ gesperrt.`;
+  const o = nameOwner(name, pk.mems, c);
+  return o ? `In „${gname}“ gibt es schon ${o.banned ? 'einen gesperrten Namen' : 'jemanden namens'} „${o.name}“. Nimm bitte einen anderen Namen.` : '';
+}
+async function crewSave(patch){
+  try{ const cur = await fsGet('members', CREW_DOC); delete cur._id; WS.crew = cur; }catch(e){}   // frischester Stand, falls das zweite Gerät auch etwas geändert hat
+  const doc = {...crewDoc(), ...patch, at:Date.now()};
+  await fsPut('members', CREW_DOC, doc); WS.crew = doc; wsCache();
+}
+function leaveGroupLocal(msg){
+  liveStop(true); delete prefs.group; delete prefs.wsSeen; delete prefs.rxSeen; savePrefs(); liveWatch();
+  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.crew = null; WS.loaded = 0; wsCache();
+  syncSpotsHead(); refreshAll(); renderWsMarkers();
+  if(msg){
+    $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Hinweis"><div class="pad" style="padding:20px 16px 16px;gap:12px"><h2>Nicht mehr in der Crew</h2><div class="muted">${esc(msg)}</div><button class="btn primary" data-gp-ok>OK</button></div></div>`;
+    $('#modal').hidden = false;
+  }
+}
+$('#modal').addEventListener('click', e => { if(e.target.closest('[data-gp-ok]')) $('#modal').hidden = true; });
+// Nach jedem Abgleich: gesperrt, rausgeworfen oder umgezogen?
+function crewEnforce(){
+  const g = grp(), c = WS.crew; if(!g || !c) return false;
+  if(c.moved){ leaveGroupLocal(`„${g.name}“ hat einen neuen Einladungslink. Frag ${c.by || 'den Admin'} danach.`); return true; }
+  if(c.ban && c.ban[myId()]){ leaveGroupLocal(`Du wurdest aus „${g.name}“ entfernt.`); return true; }
+  const k = c.kick && c.kick[myId()];
+  if(k && k > (g.joined || 0)){ leaveGroupLocal(`${adminName()} hat dich aus „${g.name}“ genommen. Mit dem Einladungslink kannst du wieder beitreten.`); return true; }
+  return false;
+}
 
 /* Profilbilder */
 const AV_COLS = ['#ff9f0a', '#30d158', '#0a84ff', '#bf5af2', '#ff375f', '#64d2ff', '#ffd60a', '#ac8e68'];
@@ -3141,7 +3261,7 @@ function openGroupDlg(kind, arg){
   $('#modal').hidden = false;
   setTimeout(() => { const i = $('#modal input'); if(i && !i.value) i.focus(); }, 60);
 }
-$('#modal').addEventListener('click', e => {
+$('#modal').addEventListener('click', async e => {
   const b = e.target.closest('[data-gp]'); if(!b || !gpPending) return;
   const a = b.dataset.gp, err = t => { $('#gp-err').textContent = t; };
   if(a === 'cancel'){ gpPending = null; $('#modal').hidden = true; return; }
@@ -3152,15 +3272,25 @@ $('#modal').addEventListener('click', e => {
   }
   const me_ = ($('#gp-me') && $('#gp-me').value.trim()) || '';
   if(!me_) return err('Gib deinen Namen ein.');
-  prefs.myName = me_;
-  if(a === 'join') prefs.group = {code:gpPending.arg.code, name:gpPending.arg.name};
-  if(a === 'create') prefs.group = {code:newCode(), name:($('#gp-name').value.trim() || 'Meine Gruppe')};
+  let target = null;
+  if(a === 'join') target = {code:gpPending.arg.code, name:gpPending.arg.name};
   if(a === 'code'){
     const raw = $('#gp-code').value.trim(), m = raw.match(/join=([a-z0-9]{20,})/i), code = m ? m[1] : raw.replace(/[^a-z0-9]/gi, '');
     if(code.length < 20) return err('Der Code ist zu kurz. Kopier den ganzen Link.');
     const gm = raw.match(/[?&#]g=([^&]+)/);
-    prefs.group = {code, name:gm ? decodeURIComponent(gm[1]) : 'Gruppe'};
+    target = {code, name:gm ? decodeURIComponent(gm[1]) : 'Gruppe'};
   }
+  if(a === 'name' && grp() && FB){ target = {code:grp().code, name:grp().name, same:true}; }
+  if(target && FB){
+    b.disabled = true; err('Prüfe den Namen …');
+    const msg = await joinCheck(target.code, target.name, me_);
+    b.disabled = false; err('');
+    if(msg) return err(msg);
+  }
+  prefs.myName = me_;
+  if(target && !target.same) prefs.group = {code:target.code, name:target.name, joined:Date.now()};
+  if(a === 'create') prefs.group = {code:newCode(), name:($('#gp-name').value.trim() || 'Meine Gruppe'), joined:Date.now(), mkAdmin:true};
+  WS.nameClash = null;
   savePrefs();
   const next = gpPending; gpPending = null; $('#modal').hidden = true;
   if(a === 'name' && next.arg && next.arg.then) return next.arg.then();
@@ -3188,8 +3318,17 @@ async function wsSync(force){
     const soft = c => e => { if(/403/.test(e.message)){ WS.rulesOld = true; return null; } throw e; };
     const [sp, ru, co, ef, mb, dr, rx] = await Promise.all([fsList('spots', true), fsList('runs'), fsList('courses'), fsList('efforts'), fsList('members').catch(soft('members')), fsList('drives', true).catch(soft('drives')), fsList('reactions').catch(() => null)]);
     Object.assign(WS, {spots:sp, runs:ru, courses:co, efforts:ef, loaded:Date.now()});
-    if(mb){ WS.members = mb; WS.drives = dr || []; WS.rulesOld = false; }
+    if(mb){ WS.crew = mb.find(m => m._id === CREW_DOC) || null; WS.members = mb.filter(m => m._id !== CREW_DOC); WS.drives = dr || []; WS.rulesOld = false; }
     if(rx) WS.reacts = rx;
+    if(mb && crewEnforce()){ WS.busy = false; return; }
+    if(mb && grp().mkAdmin && !(crewDoc().admin || []).length){ await crewSave({admin:[myId()], since:Date.now()}).catch(() => {}); }
+    if(grp() && grp().mkAdmin){ delete prefs.group.mkAdmin; savePrefs(); }
+    const meDoc = WS.members.find(m => m._id === myId());
+    if(meDoc && prefs.linkAdopt){   // frisch verknüpftes Gerät: Profilbild und Auto vom anderen Gerät übernehmen
+      if(!prefs.avatar && okImg(meDoc.av)) prefs.avatar = meDoc.av;
+      if(meDoc.car && !prefs.carType && CAR_TYPES[meDoc.car.t]){ prefs.carType = meDoc.car.t; prefs.carColor = meDoc.car.c; }
+      delete prefs.linkAdopt; savePrefs();
+    }
     await pushBests(); await pushMember();
     wsCache(); feedNotify();
   }catch(e){ WS.err = 'Workshop gerade nicht erreichbar. Prüfe dein Internet.'; }
@@ -3203,10 +3342,18 @@ function wsRefreshUI(){
 }
 async function pushMember(){
   if(!myName() || WS.rulesOld) return;
-  const st = onOff('shareStats') ? memberStats() : null;
+  const cur = WS.members.find(m => m._id === myId()), clash = nameOwner(myName());
+  if(clash && !(isAdmin() && !isAdmin(clash.dev)) && (clash.banned || isAdmin(clash.dev) || !cur || mSince(clash.m || {}) <= mSince(cur))){
+    if(WS.nameClash !== clash.name){ WS.nameClash = clash.name; toast(`Den Namen „${clash.name}“ gibt es in der Crew schon – bitte ändere deinen Namen.`); }
+    return;
+  }
+  WS.nameClash = null;
+  let st = onOff('shareStats') ? memberStats() : null;
+  if(st && !tracks.length && cur && cur.st) st = cur.st;   // zweites Gerät ohne Fahrten: Kilometer vom Handy behalten
   const sig = myName() + '|' + (prefs.avatar || '').length + '|' + (prefs.avatar || '').slice(-24) + '|' + JSON.stringify(st) + '|' + carType() + carColor();
   if(prefs.memberSig === sig && WS.members.some(m => m._id === myId())) return;
-  const obj = {name:myName(), av:okImg(prefs.avatar) || '', st, car:{t:carType(), c:carColor()}, at:Date.now()};
+  if(!grp().since){ prefs.group.since = (cur && cur.since) || Date.now(); savePrefs(); }
+  const obj = {name:myName(), av:okImg(prefs.avatar) || (cur && okImg(cur.av)) || '', st, car:{t:carType(), c:carColor()}, since:grp().since, at:Date.now()};
   try{ await fsPut('members', myId(), obj); prefs.memberSig = sig; savePrefs(); wsUpsert(WS.members, {...obj, _id:myId()}); }
   catch(e){ if(/403/.test(e.message)) WS.rulesOld = true; }
 }
@@ -3322,6 +3469,7 @@ function renderWorkshop(){
     </div>
     ${WS.err ? `<div class="ws-err">${esc(WS.err)}</div>` : ''}
     ${WS.rulesOld ? `<div class="ws-err">Für Profilbilder und Fahrten müssen die Firebase-Regeln noch aktualisiert werden.</div>` : ''}
+    ${WS.nameClash ? `<button class="ws-err ws-clash" data-wsa="rename">Den Namen „${esc(WS.nameClash)}“ gibt es in der Crew schon. Die anderen sehen dich erst, wenn du ihn änderst – hier tippen.</button>` : ''}
     <div class="seg2 ws-seg"><button data-wss="feed" class="${wsSub === 'feed' ? 'on' : ''}">News${wsSub === 'feed' ? '' : nwBadge('dr') || nwBadge('lb') || nwBadge('sp')}</button><button data-wss="drives" class="${wsSub === 'drives' ? 'on' : ''}">Fahrten${nwBadge('dr')}</button><button data-wss="lb" class="${wsSub === 'lb' ? 'on' : ''}">Zeiten${nwBadge('lb')}</button><button data-wss="crew" class="${wsSub === 'crew' ? 'on' : ''}">Leute</button></div>`;
   body.innerHTML = head + (wsSub === 'feed' ? wsFeedHTML() : wsSub === 'lb' ? wsBoardsHTML() : wsSub === 'drives' ? wsDrivesHTML() : wsCrewHTML());
 }
@@ -3406,9 +3554,11 @@ function memberStats(){
 function crewList(){
   const map = new Map();
   WS.members.forEach(m => map.set(m._id, {dev:m._id, name:m.name || '?', st:m.st || null}));
-  map.set(myId(), {dev:myId(), name:myName() || 'Ich', st:onOff('shareStats') ? memberStats() : (map.get(myId()) || {}).st || null});
+  const rem = (map.get(myId()) || {}).st || null;
+  map.set(myId(), {dev:myId(), name:myName() || 'Ich', st:onOff('shareStats') ? (!tracks.length && rem ? rem : memberStats()) : rem});
   [...WS.spots, ...WS.runs, ...WS.drives, ...WS.efforts].forEach(x => { if(x.dev && !map.has(x.dev)) map.set(x.dev, {dev:x.dev, name:x.by || '?', st:null}); });
-  return [...map.values()];
+  const ban = crewBan(), kick = crewDoc().kick || {};
+  return [...map.values()].filter(m => !ban[m.dev] && !(kick[m.dev] && !WS.members.some(x => x._id === m.dev)));
 }
 function weekKm(st, back){ if(!st || !st.wk) return null; const w = weekStart(Date.now() - back * 7 * 864e5); const hit = st.wk.find(x => x[0] === w); return hit ? hit[1] : 0; }
 function periodKm(st, p){
@@ -3438,7 +3588,7 @@ function wsCrewHTML(){
   if(noData.length) html += `<div class="muted crew-nd">Ohne Kilometer: ${noData.map(m => esc(m.name)).join(', ')} (ältere App-Version oder Teilen ausgeschaltet)</div>`;
   html += `<div class="sec">Mitglieder</div><div class="crew-grid">${list.sort((a, b) => (b.v || 0) - (a.v || 0)).map(m => `<button class="crew-card${m.dev === myId() ? ' is-me' : ''}${liveOf(m.dev) || (m.dev === myId() && live.on) ? ' live' : ''}" data-crew="${esc(m.dev)}">
       ${liveOf(m.dev) || (m.dev === myId() && live.on) ? '<span class="crew-livechip"><span class="lv-dot on"></span>LIVE</span>' : ''}<span class="crew-cav" data-crewav="${esc(m.dev)}">${avHTML(m.dev, m.name, 64)}</span>
-      <b>${esc(crewName(m.dev, m.name))}</b>
+      <b>${esc(crewName(m.dev, m.name))}${isAdmin(m.dev) ? '<i class="adm-tag sm" title="Admin">Admin</i>' : ''}</b>
       <span>${m.st ? `${(weekKm(m.st, 0) || 0).toFixed(0)} km diese Woche` : 'keine Fahrdaten'}</span>
       ${sparkSVG(m.st)}
       <small>${m.st ? `${Math.round(m.st.km).toLocaleString('de-DE')} km · ${m.st.n} Fahrt${m.st.n === 1 ? '' : 'en'}` : '&nbsp;'}</small></button>`).join('')}</div>
@@ -3465,7 +3615,7 @@ function openCrew(dev){
   $('#modal').innerHTML = `<div class="dlg crew-dlg" role="dialog" aria-modal="true" aria-label="Profil">
     <div class="top" style="padding:12px 14px"><span></span><button class="txtbtn bold" data-crewx>Fertig</button></div>
     <div class="pad" style="padding-top:0;gap:14px">
-      <div class="crew-hero"><button class="crew-big" data-crewav="${esc(dev)}" aria-label="Profilbild vergrößern">${avHTML(dev, m.name, 112)}</button><h2>${esc(crewName(dev, m.name))}</h2>
+      <div class="crew-hero"><button class="crew-big" data-crewav="${esc(dev)}" aria-label="Profilbild vergrößern">${avHTML(dev, m.name, 112)}</button><h2>${esc(crewName(dev, m.name))}${isAdmin(dev) ? ' <i class="adm-tag">Admin</i>' : ''}</h2>
         ${(() => { const mc = dev === myId() ? {t:carType(), c:carColor()} : (WS.members.find(x => x._id === dev) || {}).car; return mc && CAR_TYPES[mc.t] && CAR_COLORS[mc.c] ? `<div class="crew-car">${carSideSVG(mc.t, mc.c)}<span>${esc(CAR_TYPES[mc.t].name)} · ${esc(CAR_COLORS[mc.c].name)}</span></div>` : ''; })()}${dev === myId() ? '<button class="txtbtn" data-crewme>Profilbild ändern</button>' : ''}${liveOf(dev) ? `<button class="btn live" data-crewlive="${esc(dev)}"><span class="lv-dot"></span>Live${liveOf(dev).v >= 6 ? ` · ${Math.round(liveOf(dev).v)} km/h` : ''} · Live-Stats ansehen</button>` : ''}</div>
       ${st ? `<div class="tstats">
         <div><b>${(weekKm(st, 0) || 0).toFixed(1).replace('.', ',')} km</b><span>Diese Woche</span></div>
@@ -3509,6 +3659,7 @@ $('#listBody').addEventListener('click', e => {
     if(k === 'sync') wsSync(true);
     if(k === 'avatar') $('#avFile').click();
     if(k === 'head'){ wsHeadOpen = !wsHeadOpen; renderList(); }
+    if(k === 'rename') openGroupDlg('name', {then:() => { prefs.memberSig = ''; pushMember().then(() => { wsCache(); wsRefreshUI(); }).catch(() => {}); pushBests().catch(() => {}); }});
     if(k === 'invite') shareURL(inviteURL(), `Gruppe ${grp().name}`, `Komm in unsere Gruppe „${grp().name}“ bei Jamsis Spots:`);
     return;
   }
@@ -4033,7 +4184,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.05.21';
+const VERSION = '2026.10.05.22';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4085,6 +4236,9 @@ function renderSettings(){
         <button class="set-row" data-st="gname"><span>Dein Name</span><span class="ri">${esc(myName() || '–')}${svg('<path d="M15 5 8 12l7 7"/>', 14).replace('<svg', '<svg style="transform:scaleX(-1)"')}</span></button>
         <button class="set-row${onOff('shareStats') ? ' on' : ''}" data-st="tg" data-k="shareStats" role="switch" aria-checked="${onOff('shareStats')}"><span>Wochen-Kilometer teilen<small>Nur km pro Woche und Anzahl Fahrten, keine Strecken</small></span><i class="tg"></i></button>
         <button class="set-row" data-st="ginvite"><span>Freunde einladen</span><span class="ri">${svg(UI.share, 16)}</span></button>
+        ${isAdmin() ? `<button class="set-row adm-row" data-st="admin"><span>Crew verwalten<small>Rauswerfen, sperren, neuer Einladungslink</small></span><span class="ri"><i class="adm-tag">Admin</i>${chev}</span></button>`
+          : WS.loaded && !(crewDoc().admin || []).length && normName(myName()) === 'jamsi' ? `<button class="set-row" data-st="mkadmin"><span>Admin dieser Crew werden<small>Die Crew hat noch keinen Admin</small></span>${chev}</button>` : ''}
+        <button class="set-row" data-st="link"><span>Auf weiterem Gerät nutzen<small>Z. B. am PC – dort bist du dann auch ${esc(myName() || 'du')}${isAdmin() ? ', mit Admin-Rechten' : ''}</small></span>${chev}</button>
         <button class="set-row" data-st="gleave"><span style="color:var(--danger)">Gruppe verlassen</span></button>` : `
         <button class="set-row" data-st="gcreate"><span>Gruppe erstellen</span>${chev}</button>
         <button class="set-row" data-st="gjoin"><span>Mit Link beitreten</span>${chev}</button>`}</div>` : ''}
@@ -4119,11 +4273,13 @@ $('#modal').addEventListener('click', e => {
   if(a === 'gname') openGroupDlg('name', {then:() => { prefs.memberSig = ''; pushMember().catch(() => {}); pushBests().catch(() => {}); }});
   if(a === 'ginvite') shareURL(inviteURL(), `Gruppe ${grp().name}`, `Komm in unsere Gruppe „${grp().name}“ bei Jamsis Spots:`);
   if(a === 'gcreate') openGroupDlg('create', {});
+  if(a === 'admin'){ openAdmin(); return; }
+  if(a === 'link'){ openLinkDlg(); return; }
+  if(a === 'mkadmin'){ if((crewDoc().admin || []).length) return; crewSave({admin:[myId()], since:Date.now()}).then(() => { toast('Du bist jetzt Admin dieser Crew'); renderSettings(); wsRefreshUI(); }).catch(() => toast('Ging gerade nicht. Prüfe dein Internet.')); return; }
   if(a === 'gjoin') openGroupDlg('code', {});
   if(a === 'gleave'){
     if(!b.classList.contains('armed')){ b.classList.add('armed'); b.querySelector('span').textContent = 'Wirklich verlassen? Nochmal tippen'; return; }
-    liveStop(true); delete prefs.group; delete prefs.wsSeen; delete prefs.rxSeen; savePrefs(); liveWatch(); WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.loaded = 0; wsCache();
-    renderSettings(); syncSpotsHead(); refreshAll(); renderWsMarkers(); toast('Gruppe verlassen');
+    leaveGroupLocal(); renderSettings(); toast('Gruppe verlassen');
   }
   if(a === 'export') $('#exportBtn').click();
   if(a === 'import') $('#importBtn').click();
@@ -4131,6 +4287,137 @@ $('#modal').addEventListener('click', e => {
 });
 $('#setBtn').addEventListener('click', openSettings);
 $('#b-settings').addEventListener('click', e => { e.stopPropagation(); openSettings(); });
+
+/* Admin-Panel */
+let admArmed = null, admBusy = false;
+function openAdmin(){
+  if(!isAdmin()){ renderSettings(); return; }
+  const ban = crewBan(), mems = WS.members.filter(m => !ban[m._id]).sort((a, b) => (isAdmin(b._id) - isAdmin(a._id)) || String(a.name).localeCompare(String(b.name), 'de'));
+  const ago = t => { if(!t) return ''; const d = Math.floor((Date.now() - t) / 864e5); return d <= 0 ? 'heute aktiv' : d === 1 ? 'gestern aktiv' : `vor ${d} Tagen aktiv`; };
+  const row = m => {
+    const me_ = m._id === myId(), adm = isAdmin(m._id), arm = k => admArmed === k + m._id;
+    return `<div class="adm-m">${avHTML(m._id, m.name, 38)}<div class="adm-tx"><b>${esc(me_ ? myName() : m.name || '?')}${adm ? ' <i class="adm-tag sm">Admin</i>' : ''}${me_ ? ' <small>(du)</small>' : ''}</b><span>${ago(m.at)}</span></div>
+      ${me_ || adm ? '' : `<div class="adm-acts"><button class="btn sm${arm('k') ? ' armed' : ''}" data-adm="kick" data-dev="${esc(m._id)}">${arm('k') ? 'Sicher?' : 'Rauswerfen'}</button><button class="btn sm danger${arm('b') ? ' armed' : ''}" data-adm="ban" data-dev="${esc(m._id)}">${arm('b') ? 'Sicher?' : 'Sperren'}</button></div>`}</div>`;
+  };
+  const bans = Object.entries(ban).sort((a, b) => b[1].t - a[1].t);
+  $('#modal').innerHTML = `<div class="dlg adm-dlg" role="dialog" aria-modal="true" aria-label="Crew verwalten">
+    <div class="top" style="padding:12px 14px"><button class="txtbtn" data-adm="back">${svg(UI.back, 14)} Einstellungen</button><strong style="font-size:17px">Crew verwalten</strong><span style="width:60px"></span></div>
+    <div class="pad" style="padding-top:2px;gap:10px">
+      <div class="adm-head"><span class="adm-shield">${svg('<path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/>', 22, 2)}</span><div><b>${esc(grp().name)}</b><span>${mems.length} Mitglied${mems.length === 1 ? '' : 'er'} · du bist Admin</span></div></div>
+      <div class="set-sec">Mitglieder</div>
+      <div class="set-card adm-list">${mems.map(row).join('') || '<div class="muted" style="padding:12px 14px">Noch niemand außer dir.</div>'}</div>
+      <div class="adm-note"><b>Rauswerfen:</b> fliegt raus, kann mit dem Einladungslink aber wieder rein. <b>Sperren:</b> kommt mit diesem Gerät und Namen nicht mehr rein.</div>
+      ${bans.length ? `<div class="set-sec">Gesperrt</div><div class="set-card adm-list">${bans.map(([d, x]) => `<div class="adm-m">${avHTML(d, x.n, 38)}<div class="adm-tx"><b>${esc(x.n || '?')}</b><span>gesperrt am ${new Date(x.t).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}</span></div><div class="adm-acts"><button class="btn sm" data-adm="unban" data-dev="${esc(d)}">Entsperren</button></div></div>`).join('')}</div>` : ''}
+      <div class="set-sec">Einladungslink</div>
+      <div class="set-card adm-renew">
+        <div class="adm-tx"><b>Neuen Einladungslink erstellen</b><span>Der alte Link geht danach nicht mehr. Alle Spots, Fahrten und Zeiten ziehen mit um. Schick den neuen Link in eure Gruppe – wer ihn nicht bekommt, ist draußen.</span></div>
+        <button class="btn${admArmed === 'renew' ? ' armed danger' : ''}" data-adm="renew" ${admBusy ? 'disabled' : ''}>${admArmed === 'renew' ? 'Wirklich? Nochmal tippen' : 'Link erneuern'}</button>
+        <div class="adm-prog" id="admProg"></div>
+      </div>
+    </div></div>`;
+  $('#modal').hidden = false;
+}
+async function admKick(dev, ban){
+  const m = WS.members.find(x => x._id === dev), name = (m && m.name) || '?';
+  try{
+    if(ban) await crewSave({ban:{...crewBan(), [dev]:{n:name, t:Date.now()}}});
+    else await crewSave({kick:{...(crewDoc().kick || {}), [dev]:Date.now()}});
+    await fsDel('members', dev).catch(() => {}); await fsDel('live', dev).catch(() => {});
+    WS.members = WS.members.filter(x => x._id !== dev); wsCache();
+    toast(ban ? `${name} ist gesperrt` : `${name} ist raus – mit dem Einladungslink kann ${name} wieder beitreten`);
+  }catch(e){ toast('Ging gerade nicht. Prüfe dein Internet.'); }
+  admArmed = null; openAdmin(); wsRefreshUI();
+}
+async function pool(items, n, fn){ let i = 0; await Promise.all(Array.from({length:Math.min(n, items.length)}, async () => { while(i < items.length){ const x = items[i++]; await fn(x); } })); }
+async function crewRenew(){
+  const old = grp().code, neu = newCode(), cols = ['spots', 'runs', 'courses', 'efforts', 'drives', 'reactions', 'members'];
+  const prog = t => { const el = $('#admProg'); if(el) el.textContent = t; };
+  admBusy = true; prog('Sammle alles ein …');
+  try{
+    const all = {}; let total = 0, done = 0;
+    for(const c of cols){ all[c] = (await fsRawList(old, c)).filter(d => !(c === 'members' && (d.id === CREW_DOC || crewBan()[d.id]))); total += all[c].length; }
+    for(const c of cols) await pool(all[c], 6, async d => { await fsRawPut(neu, c, d.id, d.fields); done++; if(done % 5 === 0 || done === total) prog(`Ziehe um … ${done} von ${total}`); });
+    const crew = {...crewDoc(), kick:{}, moved:false, renewed:Date.now(), at:Date.now()};
+    await fsRawPut(neu, 'members', CREW_DOC, docFields(crew));
+    // ab hier gilt der neue Code; danach die alten Daten löschen und den alten Link schließen
+    liveStop(true);
+    prefs.group = {...grp(), code:neu}; savePrefs(); WS.crew = crew; wsCache(); liveWatch();
+    prog('Räume den alten Link auf …');
+    const live = await fsRawList(old, 'live').catch(() => []);
+    for(const c of cols) await pool(all[c], 6, d => fsRawDel(old, c, d.id).catch(() => {}));
+    await pool(live, 6, d => fsRawDel(old, 'live', d.id).catch(() => {}));
+    await fsRawPut(old, 'members', CREW_DOC, docFields({moved:true, by:myName(), at:Date.now()})).catch(() => {});
+    admBusy = false; admArmed = null; WS.loaded = 0; wsSync(true);
+    $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Neuer Link"><div class="pad" style="padding:20px 16px 16px;gap:12px">
+      <h2>Neuer Einladungslink ist da</h2><div class="muted">Der alte Link funktioniert nicht mehr. Schick den neuen jetzt in eure Gruppe. Auf deinem PC: dort einmal „Auf weiterem Gerät nutzen“ neu öffnen.</div>
+      <div class="lnk-box">${esc(inviteURL())}</div>
+      <div class="btns"><button class="btn" data-lk="copyinv">Kopieren</button><button class="btn primary" data-lk="shareinv">${svg(UI.share, 15)} Teilen</button></div>
+      <button class="txtbtn" data-gp-ok style="align-self:center">Fertig</button></div></div>`;
+  }catch(e){
+    admBusy = false; admArmed = null; prog('');
+    toast('Umzug hat nicht geklappt – der alte Link gilt weiter. Prüfe dein Internet.');
+    if(grp() && grp().code === old) openAdmin();
+  }
+}
+$('#modal').addEventListener('click', e => {
+  const b = e.target.closest('[data-adm]'); if(!b || !$('#modal .adm-dlg')) return;
+  const a = b.dataset.adm, dev = b.dataset.dev;
+  if(a === 'back'){ admArmed = null; renderSettings(); return; }
+  if(a === 'kick' || a === 'ban'){ const k = (a === 'kick' ? 'k' : 'b') + dev; if(admArmed !== k){ admArmed = k; openAdmin(); return; } admKick(dev, a === 'ban'); return; }
+  if(a === 'unban'){ const bn = {...crewBan()}; const n = (bn[dev] || {}).n; delete bn[dev]; crewSave({ban:bn}).then(() => { toast(`${n || 'Gerät'} ist entsperrt`); openAdmin(); }).catch(() => toast('Ging gerade nicht. Prüfe dein Internet.')); return; }
+  if(a === 'renew' && !admBusy){ if(admArmed !== 'renew'){ admArmed = 'renew'; openAdmin(); return; } crewRenew(); }
+});
+
+/* Gerät verknüpfen: derselbe Mensch auf Handy und PC */
+const linkURL = () => `${appURL()}#link=${myId()}&n=${encodeURIComponent(myName())}${grp() ? `&join=${grp().code}&g=${encodeURIComponent(grp().name || 'Gruppe')}` : ''}`;
+function openLinkDlg(){
+  $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Weiteres Gerät"><div class="pad" style="padding:18px 16px 16px;gap:12px">
+    <h2>Auf weiterem Gerät nutzen</h2>
+    <div class="muted">Öffne diesen Link auf deinem PC oder zweiten Handy. Dort bist du dann auch „${esc(myName())}“ in „${esc((grp() || {}).name || '')}“${isAdmin() ? ' – mit deinen Admin-Rechten' : ''}.</div>
+    <div class="lnk-box">${esc(linkURL())}</div>
+    <div class="btns"><button class="btn" data-lk="copy">Link kopieren</button><button class="btn primary" data-lk="share">${svg(UI.share, 15)} An mich senden</button></div>
+    <div class="onb-note"><b>Nur an dich selbst schicken.</b> Wer diesen Link öffnet, ist in der Crew du.</div>
+    <div class="muted" style="font-size:12.5px">Eigene Spots und Fahrten bleiben auf dem jeweiligen Gerät. Alles mitnehmen: Einstellungen → Backup speichern und dort laden.</div>
+    <button class="txtbtn" data-lk="back" style="align-self:center">Zurück</button></div></div>`;
+  $('#modal').hidden = false;
+}
+let linkPending = null;
+function openLinkAccept(o){
+  linkPending = o;
+  const other = myName() && prefs.dev && prefs.dev !== o.dev ? myName() : '';
+  $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Gerät verknüpfen"><div class="pad" style="padding:20px 16px 16px;gap:12px">
+    <h2>Dieses Gerät als „${esc(o.name || '?')}“ nutzen?</h2>
+    <div class="muted">Dann bist du hier dieselbe Person wie auf deinem anderen Gerät${o.code ? `, in „${esc(o.g)}“` : ''}. Nur bestätigen, wenn der Link von dir selbst kommt.</div>
+    ${other ? `<div class="onb-note">Auf diesem Gerät bist du gerade „${esc(other)}“. Das wird ersetzt.</div>` : ''}
+    <div class="btns"><button class="btn" data-lk="no">Abbrechen</button><button class="btn primary" data-lk="yes">Ja, verknüpfen</button></div></div></div>`;
+  $('#modal').hidden = false;
+}
+$('#modal').addEventListener('click', e => {
+  const b = e.target.closest('[data-lk]'); if(!b) return;
+  const a = b.dataset.lk;
+  if(a === 'copy') return copyText(linkURL(), 'Link kopiert – öffne ihn auf dem anderen Gerät');
+  if(a === 'share') return shareURL(linkURL(), 'Jamsis Spots', 'Mein Gerät verknüpfen:');
+  if(a === 'copyinv') return copyText(inviteURL(), 'Einladungslink kopiert');
+  if(a === 'shareinv') return shareURL(inviteURL(), `Gruppe ${grp().name}`, `Neuer Link für „${grp().name}“ bei Jamsis Spots:`);
+  if(a === 'back'){ renderSettings(); return; }
+  if(a === 'no'){ linkPending = null; $('#modal').hidden = true; return; }
+  if(a === 'yes' && linkPending){
+    const o = linkPending; linkPending = null;
+    liveStop(true);
+    prefs.dev = o.dev; if(o.name) prefs.myName = o.name; prefs.linkAdopt = true; prefs.memberSig = ''; prefs.onb = 1;
+    if(o.code) prefs.group = {code:o.code, name:o.g, joined:Date.now()};
+    delete prefs.wsSeen; delete prefs.rxSeen; savePrefs();
+    WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.crew = null; WS.loaded = 0; wsCache();
+    $('#modal').hidden = true; if(!$('#onb').hidden) $('#onb').hidden = true;
+    syncSpotsHead(); refreshAll(); liveWatch(); wsSync(true);
+    toast(`Verknüpft – du bist jetzt auch hier ${o.name || 'du'}`);
+  }
+});
+function copyText(t, okMsg){
+  const done = () => toast(okMsg);
+  if(navigator.clipboard?.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb();
+  function fb(){ const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){ toast(t); } ta.remove(); }
+}
 
 /* ================= Export / Import ================= */
 $('#exportBtn').addEventListener('click', () => {
