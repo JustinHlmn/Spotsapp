@@ -1,12 +1,12 @@
 {
-  "name": "Jamsis Spots",
+  "name": "Spots",
   "short_name": "Spots",
-  "description": "Eigene Spots auf Karte und Satellitenbild, mit Parkplatz-Funktion.",
+  "description": "Spots, Fahrten und Crew auf der Karte.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0b0d10",
-  "theme_color": "#0b0d10",
+  "background_color": "#06111d",
+  "theme_color": "#06111d",
   "lang": "de",
   "icons": [
     {
@@ -20,6 +20,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
