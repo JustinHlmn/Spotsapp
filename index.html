@@ -467,6 +467,23 @@ h2{font-size:23px}
 #splash .logo{background:linear-gradient(180deg,#5aaeff,#2f86ef);border-radius:26px;box-shadow:0 18px 44px rgba(77,163,255,.35)}
 #splash .name{font-weight:700;letter-spacing:-.03em}
 
+/* ---------- Ortssuche ---------- */
+.geo-it .tx{min-width:0}
+.geo-ic{--c:#8e8e93}
+.geo-ic.k-city,.pl-ic.k-city{--c:#5e5ce6}.geo-ic.k-street,.pl-ic.k-street{--c:#64748b}.geo-ic.k-house,.pl-ic.k-house{--c:#0a84ff}
+.geo-ic.k-fuel,.pl-ic.k-fuel{--c:#ff9f0a}.geo-ic.k-park,.pl-ic.k-park{--c:#1c7ed6}.geo-ic.k-poi,.pl-ic.k-poi{--c:#ff375f}.geo-ic.k-coord,.pl-ic.k-coord{--c:#30d158}
+.geo-d{flex:none;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;padding-left:6px}
+.sec .txtbtn.sm{float:right;font-size:12.5px;font-weight:600;text-transform:none;letter-spacing:0;padding:0}
+.geo-spin{display:inline-block;width:10px;height:10px;margin-left:8px;border-radius:50%;border:2px solid var(--muted);border-top-color:transparent;animation:spin .7s linear infinite;vertical-align:-1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pl-head{display:flex;align-items:center;gap:12px}
+.pl-head h2{margin:0;line-height:1.15}
+.pl-head .muted{font-size:13.5px}
+.pl-ic{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;flex:none;background:var(--c);color:#fff}
+.pl-dist{font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mk-place .pin{width:38px;height:38px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#ff375f;border:3px solid #fff;display:grid;place-items:center;box-shadow:0 6px 16px rgba(0,0,0,.4);animation:viewin .35s var(--ease)}
+.mk-place .pin svg{transform:rotate(45deg);color:#fff}
+
 /* ---------- Crew-Rechte ---------- */
 .adm-tag{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:10px;background:linear-gradient(135deg,#ffd60a,#ff9f0a);color:#3a2600;font-size:11px;font-weight:800;font-style:normal;letter-spacing:.02em;vertical-align:middle;margin-left:6px}
 .adm-tag.sm{height:16px;padding:0 5px;font-size:9.5px;border-radius:8px;margin-left:5px}
@@ -1477,7 +1494,7 @@ body.nav #ckLive,body.replay #ckLive{display:none!important}
         </div>
       </div>
       <div class="row" id="searchRow" hidden>
-        <div class="search"><span id="searchIc"></span><input id="q" type="search" placeholder="Stadt, Ort oder Spot" autocomplete="off" enterkeyhint="search"></div>
+        <div class="search"><span id="searchIc"></span><input id="q" type="search" placeholder="Ort, Straße, Adresse oder Spot" autocomplete="off" enterkeyhint="search"></div>
         <button class="txtbtn" id="searchCancel">Abbrechen</button>
       </div>
       <div class="phbody" id="spotsHead"></div>
@@ -1493,6 +1510,7 @@ body.nav #ckLive,body.replay #ckLive{display:none!important}
     </div>
   </section>
   <section class="view" id="detailView" hidden></section>
+  <section class="view" id="placeView" hidden></section>
   <section class="view" id="editView" hidden></section>
   <section class="view" id="modeView" hidden></section>
   <section class="view" id="trackView" hidden></section>
@@ -2251,7 +2269,7 @@ function show(v, snapTo){
   const changed = v !== view;
   view = v;
   if(!mobile() && panelCollapsed && v !== 'list') setCollapsed(false);
-  for(const id of ['listView','detailView','editView','modeView','trackView','trackSaveView','courseView','drawView','wsView','sunView']){
+  for(const id of ['listView','detailView','placeView','editView','modeView','trackView','trackSaveView','courseView','drawView','wsView','sunView']){
     const el = $('#' + id), on = id === v + 'View';
     el.hidden = !on;
     if(on && changed){ el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter'); }
@@ -2291,6 +2309,11 @@ function renderList(){
   const q = $('#q').value.trim().toLowerCase();
   const body = $('#listBody');
   if(!q && !searching && spotView === 'ws') return renderWsSpots();
+  if(!q && searching && (prefs.recent || []).length){
+    body.innerHTML = `<div class="sec">Zuletzt gesucht<button class="txtbtn sm" data-geoclear>Löschen</button></div>` + prefs.recent.map((r, i) => geoRowHTML(r, 'r' + i)).join('')
+      + `<div class="sec">Deine Spots</div>` + visibleSpots().slice().sort(me ? (a,b) => dist(me, a) - dist(me, b) : (a,b) => (b.created||0) - (a.created||0)).slice(0, 8).map(itemHTML).join('');
+    return;
+  }
   if(!q){
     const list = visibleSpots().slice().sort(me ? (a,b) => dist(me, a) - dist(me, b) : (a,b) => (b.created||0) - (a.created||0));
     if(!data.spots.length) body.innerHTML = `<div class="empty"><b>Noch keine Spots</b>Tippe auf <strong>+</strong> und dann auf die Karte, um deinen ersten Spot zu setzen.</div>`;
@@ -2299,19 +2322,29 @@ function renderList(){
     return;
   }
   const own = data.spots.filter(s => (s.name + ' ' + (s.notes||'') + ' ' + catById(s.cat).name).toLowerCase().includes(q));
-  let html = `<div class="sec">Deine Spots</div>` + (own.length ? own.map(itemHTML).join('') : `<div class="empty" style="padding:8px">Kein eigener Spot passt.</div>`);
-  html += `<div class="sec">Orte</div>`;
-  if(geoState === 'loading') html += `<div class="empty" style="padding:8px">Suche läuft …</div>`;
-  else if(geoState === 'error') html += `<div class="empty" style="padding:8px">Ortssuche nicht erreichbar. Prüfe deine Internetverbindung.</div>`;
-  else if(geoState === 'done' && !geoResults.length) html += `<div class="empty" style="padding:8px">Kein Ort gefunden.</div>`;
-  else if(geoState === 'done') html += geoResults.map((r,i) => `<button class="item" data-geo="${i}"><span class="ic" style="--c:#8e8e93">${svg(UI.globe,16)}</span><span class="tx"><span class="t">${esc(r.name)}</span><span class="s">${esc(r.sub)}</span></span></button>`).join('');
-  else html += `<button class="item" data-geosearch="1"><span class="ic" style="--c:var(--accent)">${svg(UI.search,16)}</span><span class="tx"><span class="t">„${esc($('#q').value.trim())}“ als Ort suchen</span><span class="s">oder Enter drücken</span></span></button>`;
+  let html = own.length ? `<div class="sec">Deine Spots</div>` + own.slice(0, 5).map(itemHTML).join('') : '';
+  html += `<div class="sec">Orte${geoState === 'loading' ? '<i class="geo-spin"></i>' : ''}</div>`;
+  const co = geoCoord($('#q').value);
+  if(co) html += geoRowHTML(co, -1);
+  if(geoState === 'error') html += `<div class="empty" style="padding:8px">Ortssuche nicht erreichbar. Prüfe deine Internetverbindung.</div>`;
+  else if(geoState === 'done' && !geoResults.length && !co) html += `<div class="empty" style="padding:8px">Nichts gefunden. Probier es mit Ort und Straße, z. B. „Domstraße Würzburg“.</div>`;
+  else if(geoResults.length) html += geoResults.map(geoRowHTML).join('');
+  else if(geoState === 'fallback') html += `<button class="item" data-geosearch="1"><span class="ic" style="--c:var(--accent)">${svg(UI.search,16)}</span><span class="tx"><span class="t">„${esc($('#q').value.trim())}“ suchen</span><span class="s">oder Enter drücken</span></span></button>`;
+  else if(geoState === 'loading') html += `<div class="empty" style="padding:8px">Suche …</div>`;
   body.innerHTML = html;
 }
 let qTimer;
-$('#q').addEventListener('input', () => { geoState = 'idle'; geoResults = []; clearTimeout(qTimer); qTimer = setTimeout(renderList, 80); });
+$('#q').addEventListener('input', () => {
+  const v = $('#q').value.trim();
+  clearTimeout(qTimer); qTimer = setTimeout(renderList, 60);
+  clearTimeout(geoTimer);
+  if(v.length < 2){ if(geoCtl) geoCtl.abort(); geoState = 'idle'; geoResults = []; return; }
+  geoTimer = setTimeout(() => geoSuggest(v), 260);
+});
 $('#q').addEventListener('focus', () => setSnap('full'));
 function openSearch(){
+  if(view === 'place') closePlace(false);
+  if(view !== 'list' && view !== 'edit') show('list');
   if(tab !== 'spots') setTab('spots');
   if(!mobile() && panelCollapsed) setCollapsed(false);
   searching = true;
@@ -2329,32 +2362,155 @@ function closeSearch(){
 $('#searchBtn').addEventListener('click', openSearch);
 $('#searchCancel').addEventListener('click', closeSearch);
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && searching) closeSearch(); });
-$('#q').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); geoSearch(); } });
+$('#q').addEventListener('keydown', e => {
+  if(e.key !== 'Enter') return;
+  e.preventDefault();
+  const v = $('#q').value.trim(), co = geoCoord(v);
+  if(co) return openPlace(co);
+  if(geoResults.length && geoResultsQ === v){   // wie im Navi: Enter nimmt den besten Treffer (bei Hausnummer die passende Adresse)
+    const num = v.match(/\d+\s?[a-z]?\b/i);
+    return openPlace((num && geoResults.find(r => r.name.replace(/\s/g, '').toLowerCase().includes(num[0].replace(/\s/g, '').toLowerCase()))) || geoResults[0]);
+  }
+  clearTimeout(geoTimer); geoSuggest(v, true);
+});
+/* ================= Ortssuche wie im Navi =================
+   Vorschläge beim Tippen über Photon (OpenStreetMap, ohne Key), nach Nähe sortiert. Rückfall: Nominatim. */
+let geoCtl = null, geoTimer = 0, geoResultsQ = '', geoLastQ = '', placeCur = null, placeM = null;
+const GEO_ZOOM = {country:5, state:7, county:9.5, city:12.2, district:14, locality:14.5, street:16.5, house:17.6, other:17, coord:16.5};
+const GEO_IC = {
+  city:'<path d="M3 21h18M5 21V9l5-3v15M10 21V4l9 4v13M13 10h3M13 14h3M7 12h1M7 16h1"/>',
+  street:'<path d="M8 3 5 21M16 3l3 18M12 4v2.5M12 10.5v3M12 17.5V20"/>',
+  house:'<path d="M4 11 12 4l8 7M6 9.5V20h12V9.5M10 20v-6h4v6"/>',
+  fuel:'<path d="M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h14M7 9h6M15 8l3 2v7a1.5 1.5 0 0 0 3 0V9l-3-3"/>',
+  park:'<rect x="4" y="3.5" width="16" height="17" rx="3"/><path d="M10 16.5v-9h3a2.6 2.6 0 0 1 0 5.2h-3"/>',
+  coord:'<circle cx="12" cy="12" r="7"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/>',
+  poi:'<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>'
+};
+function geoKind(r){
+  if(r.type === 'coord') return 'coord';
+  if(r.key === 'amenity' && r.val === 'fuel') return 'fuel';
+  if(r.key === 'amenity' && /parking/.test(r.val || '')) return 'park';
+  if(['city', 'county', 'state', 'country', 'district', 'locality'].includes(r.type) || r.key === 'place' || r.key === 'boundary') return 'city';
+  if(r.type === 'street' || r.key === 'highway') return 'street';
+  if(r.type === 'house' && !r.poi) return 'house';
+  return 'poi';
+}
+function geoCoord(v){
+  const m = String(v || '').match(/^\s*(-?\d{1,2}(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:[.,]\d+)?)\s*$/);
+  if(!m) return null;
+  const lat = +m[1].replace(',', '.'), lng = +m[2].replace(',', '.');
+  if(Math.abs(lat) > 90 || Math.abs(lng) > 180 || !/[.,]/.test(m[1] + m[2])) return null;
+  return {name:'Koordinaten', sub:`${lat.toFixed(5)}, ${lng.toFixed(5)}`, lat, lng, type:'coord'};
+}
+function photonPlace(f){
+  const p = f.properties || {}, [lng, lat] = f.geometry.coordinates;
+  const street = p.street ? p.street + (p.housenumber ? ' ' + p.housenumber : '') : '';
+  const town = p.city || p.town || p.village || p.locality || p.district || p.county || '';
+  const isAddr = p.type === 'house' && (!p.name || p.osm_key === 'place' || p.osm_key === 'building');
+  const name = isAddr ? (street || p.name || town) : (p.name || street || town || '?');
+  const sub = [];
+  if(!isAddr && street && p.type !== 'street') sub.push(street);
+  if(town && town !== name) sub.push([p.postcode, town].filter(Boolean).join(' '));
+  else if(p.type === 'street' && p.postcode) sub.push(p.postcode);
+  if(sub.length < 2 && p.state && p.state !== name && p.type !== 'state') sub.push(p.state);
+  if(p.countrycode && p.countrycode !== 'DE' && p.country && p.country !== name) sub.push(p.country);
+  return {name, sub:sub.join(' · '), lat, lng, ext:p.extent || null, type:p.type || 'other', key:p.osm_key, val:p.osm_value, poi:!isAddr && p.type === 'house'};
+}
+async function geoSuggest(q, enter){
+  if(geoCtl) geoCtl.abort();
+  const ctl = geoCtl = new AbortController(), c = me || (mapReady ? map.getCenter() : null);
+  geoState = 'loading'; renderList();
+  try{
+    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lang=de&limit=10${c ? `&lat=${c.lat.toFixed(4)}&lon=${c.lng.toFixed(4)}` : ''}`, {signal:ctl.signal});
+    if(!r.ok) throw new Error('photon ' + r.status);
+    const j = await r.json(); if(ctl !== geoCtl) return;
+    const seen = new Set();
+    geoResults = (j.features || []).map(photonPlace).filter(x => { const k = normName(x.name) + '|' + normName(x.sub); if(seen.has(k)) return false; seen.add(k); return true; }).slice(0, 8);
+    geoState = 'done'; geoResultsQ = q;
+  }catch(e){
+    if(e.name === 'AbortError') return;
+    if(enter) return geoSearch();   // Photon weg: einmal Nominatim fragen
+    geoState = 'fallback'; geoResults = [];
+  }
+  if($('#q').value.trim() === q){ renderList(); if(enter && geoResults.length) openPlace(geoResults[0]); }
+}
 async function geoSearch(){
   const q = $('#q').value.trim(); if(!q) return;
   geoState = 'loading'; renderList();
   try{
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=de&q=${encodeURIComponent(q)}`);
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&accept-language=de&q=${encodeURIComponent(q)}`);
     if(!r.ok) throw 0;
     geoResults = (await r.json()).map(x => {
-      const parts = x.display_name.split(', ');
-      return {name: x.name || parts[0], sub: parts.slice(1, 4).join(', '), lat:+x.lat, lng:+x.lon, bb:x.boundingbox};
+      const parts = x.display_name.split(', '), bb = x.boundingbox;
+      return {name:x.name || parts[0], sub:parts.slice(1, 4).join(' · '), lat:+x.lat, lng:+x.lon, ext:bb ? [+bb[2], +bb[1], +bb[3], +bb[0]] : null,
+        type:x.addresstype === 'road' ? 'street' : ['city', 'town', 'village', 'municipality'].includes(x.addresstype) ? 'city' : x.addresstype === 'house' || x.addresstype === 'building' ? 'house' : x.addresstype || 'other', key:x.category, val:x.type};
     });
-    geoState = 'done';
+    geoState = 'done'; geoResultsQ = q;
   }catch(e){ geoState = 'error'; }
   renderList();
 }
+function geoRowHTML(r, i){
+  const k = geoKind(r), d = me ? dist(me, r) : null;
+  return `<button class="item geo-it" data-geo="${i}"><span class="ic geo-ic k-${k}">${svg(GEO_IC[k], 16, 2)}</span><span class="tx"><span class="t">${esc(r.name)}</span><span class="s">${esc(r.sub || '')}</span></span>${d != null ? `<span class="geo-d">${fmtDist(d)}</span>` : ''}</button>`;
+}
+function rememberPlace(r){
+  const keep = {name:r.name, sub:r.sub, lat:r.lat, lng:r.lng, ext:r.ext || null, type:r.type, key:r.key, val:r.val, poi:r.poi};
+  prefs.recent = [keep, ...(prefs.recent || []).filter(x => !(Math.abs(x.lat - r.lat) < 1e-5 && Math.abs(x.lng - r.lng) < 1e-5))].slice(0, 8); savePrefs();
+}
+function openPlace(r){
+  if(!r) return;
+  geoLastQ = $('#q').value.trim();
+  if(r.type !== 'coord') rememberPlace(r);
+  placeCur = r;
+  if(searching) closeSearch();
+  if(placeM) placeM.remove();
+  const el = document.createElement('div'); el.className = 'mk-place'; el.innerHTML = `<div class="pin">${svg(GEO_IC[geoKind(r)], 16, 2.2)}</div>`;
+  placeM = new maplibregl.Marker({element:el, anchor:'bottom'}).setLngLat([r.lng, r.lat]).addTo(map);
+  renderPlace(); show('place', 'half');
+  setTimeout(() => {
+    const z = GEO_ZOOM[r.type] || GEO_ZOOM.other, big = ['city', 'county', 'state', 'country', 'district', 'locality'].includes(r.type);
+    if(big && r.ext && r.ext.length === 4) map.fitBounds([[r.ext[0], r.ext[3]], [r.ext[2], r.ext[1]]], {padding:camPad(), maxZoom:z + 1, duration:1400});
+    else map.flyTo({center:[r.lng, r.lat], zoom:z, padding:camPad(), duration:1400});
+  }, 60);
+}
+function renderPlace(){
+  const r = placeCur; if(!r) return;
+  const k = geoKind(r), d = me ? dist(me, r) : null, co = `${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}`;
+  $('#placeView').innerHTML = `
+    <div class="top"><button class="txtbtn" data-pl="back">${svg(UI.back, 14)} Suche</button><button class="icon-btn press" data-pl="close" aria-label="Schließen">${svg(UI.close, 14)}</button></div>
+    <div class="pad">
+      <div class="pl-head"><span class="pl-ic k-${k}">${svg(GEO_IC[k], 22, 2)}</span><div><h2>${esc(r.name)}</h2>${r.sub ? `<span class="muted">${esc(r.sub)}</span>` : ''}</div></div>
+      ${d != null ? `<div class="pl-dist">${fmtDist(d)} Luftlinie von dir</div>` : ''}
+      <button class="btn primary wide" data-pl="route">${svg(UI.nav, 16)} Route starten</button>
+      <div class="btns"><button class="btn" data-pl="spot">${svg(UI.plus, 15)} Als Spot speichern</button><button class="btn" data-pl="copy">Koordinaten kopieren</button></div>
+      <div class="coords"><span>${co}</span></div>
+    </div>`;
+}
+function closePlace(toList = true){
+  placeCur = null; if(placeM){ placeM.remove(); placeM = null; }
+  if(toList && view === 'place') show('list', mobile() ? 'peek' : undefined);
+}
+$('#placeView').addEventListener('click', e => {
+  const b = e.target.closest('[data-pl]'); if(!b || !placeCur) return;
+  const a = b.dataset.pl, r = placeCur;
+  if(a === 'close') return closePlace();
+  if(a === 'back'){ openSearch(); if(geoLastQ){ $('#q').value = geoLastQ; renderList(); } return; }
+  if(a === 'copy') return copy(`${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}`);
+  if(a === 'route'){ closePlace(); planNav({lat:r.lat, lng:r.lng}, r.name, null); return; }
+  if(a === 'spot'){
+    closePlace(false); newDraft(); draft.lat = r.lat; draft.lng = r.lng; draft.name = r.type === 'coord' ? '' : r.name;
+    if(r.sub) draft.notes = r.sub;
+    showEdit();
+  }
+});
 $('#listBody').addEventListener('click', e => {
   const it = e.target.closest('button'); if(!it) return;
   if(it.dataset.id){ if(searching) closeSearch(); return openDetail(it.dataset.id, true); }
   if(it.dataset.geosearch) return geoSearch();
+  if(it.hasAttribute('data-geoclear')){ prefs.recent = []; savePrefs(); renderList(); return; }
   if(it.dataset.geo != null){
-    const r = geoResults[+it.dataset.geo];
-    closeSearch(); setSnap('peek');
-    setTimeout(() => {
-      if(r.bb) map.fitBounds([[+r.bb[2], +r.bb[0]], [+r.bb[3], +r.bb[1]]], {padding:camPad(), maxZoom:16, duration:1400});
-      else map.flyTo({center:[r.lng, r.lat], zoom:15, padding:camPad(), duration:1400});
-    }, 60);
+    const g = it.dataset.geo, r = g === '-1' ? geoCoord($('#q').value) : g[0] === 'r' ? (prefs.recent || [])[+g.slice(1)] : geoResults[+g];
+    openPlace(r);
   }
 });
 
@@ -2748,6 +2904,7 @@ map.on('click', e => {
   }
   if(view === 'track'){ closeTrack(); return; }
   if(view === 'course'){ closeCourse(); return; }
+  if(view === 'place'){ closePlace(); return; }
   if(view === 'detail') closeDetail();
   else if(mobile() && view === 'list' && !searching){ setSnap(snap === 'peek' ? 'mini' : 'peek'); }
 });
@@ -4184,7 +4341,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.05.23';
+const VERSION = '2026.10.05.24';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4827,6 +4984,7 @@ document.addEventListener('click', e => {
 document.addEventListener('click', e => {
   if(e.target.closest('[data-ck-open]')) return enterCockpit();
   if(e.target.closest('[data-ck="close"]')) return exitCockpit();
+  if(e.target.closest('[data-ck="dest"]')){ exitCockpit(); openSearch(); return; }
 });
 
 /* Speichern */
@@ -5658,12 +5816,13 @@ function renderCkTop(){
   h.classList.toggle('paused', !!(active && !rec.runFrom));
   h.innerHTML = active
     ? `<span class="dot"></span><div class="tx"><b data-rt></b><span data-rd></span></div>
-       <button class="rb txt" data-pf-open aria-label="Beschleunigung messen">0–100</button>
+       <button class="rb" data-ck="dest" aria-label="Ziel suchen">${svg(UI.search, 17)}</button>
        <button class="rb" data-rec="toggle"></button>
        <button class="rb stop" data-rec="stop" aria-label="Aufzeichnung beenden">${svg(UI.stop, 16)}</button>
        <button class="rb" data-ck="close" aria-label="Cockpit schließen">${svg(UI.close, 15)}</button>`
     : `<div class="tx"><b>Cockpit</b><span>Ohne Aufnahme</span></div>
        <button class="rb txt" data-pf-open aria-label="Beschleunigung messen">0–100</button>
+       <button class="rb" data-ck="dest" aria-label="Ziel suchen">${svg(UI.search, 17)}</button>
        <button class="rb rec" data-rec="start" aria-label="Aufzeichnung starten"><span class="rdot"></span></button>
        <button class="rb" data-ck="close" aria-label="Cockpit schließen">${svg(UI.close, 15)}</button>`;
 }
