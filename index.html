@@ -467,6 +467,36 @@ h2{font-size:23px}
 #splash .logo{background:linear-gradient(180deg,#5aaeff,#2f86ef);border-radius:26px;box-shadow:0 18px 44px rgba(77,163,255,.35)}
 #splash .name{font-weight:700;letter-spacing:-.03em}
 
+/* ---------- Garage ---------- */
+.gar-dlg .top{display:flex;justify-content:space-between;align-items:center}
+.gcar{display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;border:1px solid var(--line);background:var(--solid);color:var(--fg);text-align:left;width:100%}
+.gcar.on{box-shadow:inset 0 0 0 2px var(--accent)}
+.gpic{width:96px;height:64px;border-radius:12px;background:var(--fill);display:grid;place-items:center;overflow:hidden;flex:none}
+.gpic img{width:100%;height:100%;object-fit:cover}
+.gpic .car-side{width:86px;height:40px}
+.gtx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.gtx b{font-size:16px;display:flex;align-items:center;gap:6px}
+.gtx>span{font-size:12.5px;color:var(--muted)}
+.gtx .gkm{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+.gact{font-style:normal;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:8px;background:var(--accent);color:var(--accent-fg,#fff)}
+.gdues{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.gdue{font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;background:var(--fill);color:var(--muted)}
+.gdue.l1{background:color-mix(in srgb,#ff9f0a 18%,transparent);color:#ff9f0a}
+.gdue.l2{background:color-mix(in srgb,var(--danger) 18%,transparent);color:var(--danger)}
+.gdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff9f0a;margin-left:6px;vertical-align:2px}
+.gphoto{height:150px;border-radius:18px;border:1px dashed var(--line);background:var(--fill);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-weight:600;overflow:hidden;padding:0}
+.gphoto img{width:100%;height:100%;object-fit:cover}
+.gphoto .car-side{width:180px;height:70px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g2 .f{min-width:0}
+.gtypes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.gtype{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 3px;border-radius:12px;border:1px solid var(--line);background:var(--solid);color:var(--fg);font-size:11px;font-weight:600;min-width:0}
+.gtype .car-side{width:100%;height:24px}
+.gtype span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.gtype.on{box-shadow:inset 0 0 0 2px var(--accent);background:var(--accent-soft)}
+.crew-rc{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-top:2px}
+.ts-cars{flex-wrap:wrap}
+
 /* ---------- Routenwahl & Zwischenstopps ---------- */
 #navPrev{max-height:calc(100% - 90px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain}
 .nopts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -1556,6 +1586,7 @@ body.nav #ckLive,body.replay #ckLive{display:none!important}
 <div id="modal" hidden></div>
 <div id="lightbox" hidden></div>
 <input type="file" id="photoFile" accept="image/*" multiple hidden>
+<input type="file" id="gFile" accept="image/*" hidden>
 <input type="file" id="avFile" accept="image/*" hidden>
 <div id="toast" class="glass" hidden></div>
 
@@ -3543,10 +3574,11 @@ async function pushMember(){
   WS.nameClash = null;
   let st = onOff('shareStats') ? memberStats() : null;
   if(st && !tracks.length && cur && cur.st) st = cur.st;   // zweites Gerät ohne Fahrten: Kilometer vom Handy behalten
-  const sig = myName() + '|' + (prefs.avatar || '').length + '|' + (prefs.avatar || '').slice(-24) + '|' + JSON.stringify(st) + '|' + carType() + carColor();
+  const sig = myName() + '|' + (prefs.avatar || '').length + '|' + (prefs.avatar || '').slice(-24) + '|' + JSON.stringify(st) + '|' + carType() + carColor() + '|' + (gActive() && prefs.gShare !== false ? gModel(gActive()) + gActive().year : '');
   if(prefs.memberSig === sig && WS.members.some(m => m._id === myId())) return;
   if(!grp().since){ prefs.group.since = (cur && cur.since) || Date.now(); savePrefs(); }
-  const obj = {name:myName(), av:okImg(prefs.avatar) || (cur && okImg(cur.av)) || '', st, car:{t:carType(), c:carColor()}, since:grp().since, at:Date.now()};
+  const ga = gActive(), rc = ga && prefs.gShare !== false && gModel(ga) ? {n:gModel(ga).slice(0, 40), y:ga.year || null} : (cur && !garage.cars.length ? cur.rc || null : null);
+  const obj = {name:myName(), av:okImg(prefs.avatar) || (cur && okImg(cur.av)) || '', st, car:{t:carType(), c:carColor()}, rc, since:grp().since, at:Date.now()};
   try{ await fsPut('members', myId(), obj); prefs.memberSig = sig; savePrefs(); wsUpsert(WS.members, {...obj, _id:myId()}); }
   catch(e){ if(/403/.test(e.message)) WS.rulesOld = true; }
 }
@@ -3809,7 +3841,8 @@ function openCrew(dev){
     <div class="top" style="padding:12px 14px"><span></span><button class="txtbtn bold" data-crewx>Fertig</button></div>
     <div class="pad" style="padding-top:0;gap:14px">
       <div class="crew-hero"><button class="crew-big" data-crewav="${esc(dev)}" aria-label="Profilbild vergrößern">${avHTML(dev, m.name, 112)}</button><h2>${esc(crewName(dev, m.name))}${isAdmin(dev) ? ' <i class="adm-tag">Admin</i>' : ''}</h2>
-        ${(() => { const mc = dev === myId() ? {t:carType(), c:carColor()} : (WS.members.find(x => x._id === dev) || {}).car; return mc && CAR_TYPES[mc.t] && CAR_COLORS[mc.c] ? `<div class="crew-car">${carSideSVG(mc.t, mc.c)}<span>${esc(CAR_TYPES[mc.t].name)} · ${esc(CAR_COLORS[mc.c].name)}</span></div>` : ''; })()}${dev === myId() ? '<button class="txtbtn" data-crewme>Profilbild ändern</button>' : ''}${liveOf(dev) ? `<button class="btn live" data-crewlive="${esc(dev)}"><span class="lv-dot"></span>Live${liveOf(dev).v >= 6 ? ` · ${Math.round(liveOf(dev).v)} km/h` : ''} · Live-Stats ansehen</button>` : ''}</div>
+        ${(() => { const mc = dev === myId() ? {t:carType(), c:carColor()} : (WS.members.find(x => x._id === dev) || {}).car; const rc = dev === myId() ? (gActive() && prefs.gShare !== false && gModel(gActive()) ? {n:gModel(gActive()), y:gActive().year} : null) : (WS.members.find(x => x._id === dev) || {}).rc;
+          return (mc && CAR_TYPES[mc.t] && CAR_COLORS[mc.c] ? `<div class="crew-car">${carSideSVG(mc.t, mc.c)}<span>${esc(CAR_TYPES[mc.t].name)} · ${esc(CAR_COLORS[mc.c].name)}</span></div>` : '') + (rc && rc.n ? `<div class="crew-rc">${svg(UI.car, 14)} Fährt ${esc(String(rc.n).slice(0, 40))}${rc.y ? ` · ${esc(String(rc.y).slice(0, 4))}` : ''}</div>` : ''); })()}${dev === myId() ? '<button class="txtbtn" data-crewme>Profilbild ändern</button>' : ''}${liveOf(dev) ? `<button class="btn live" data-crewlive="${esc(dev)}"><span class="lv-dot"></span>Live${liveOf(dev).v >= 6 ? ` · ${Math.round(liveOf(dev).v)} km/h` : ''} · Live-Stats ansehen</button>` : ''}</div>
       ${st ? `<div class="tstats">
         <div><b>${(weekKm(st, 0) || 0).toFixed(1).replace('.', ',')} km</b><span>Diese Woche</span></div>
         <div><b>${Math.round(st.km).toLocaleString('de-DE')} km</b><span>Gesamt</span></div>
@@ -4377,7 +4410,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.05.28';
+const VERSION = '2026.10.05.29';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4414,6 +4447,7 @@ function renderSettings(){
       <div class="set-card">
         ${tg('recCockpit', 'Aufzeichnen öffnet Cockpit', 'Ein Tipp, direkt losfahren')}
         <div class="set-row"><span>Kamera<small>im Cockpit</small></span><div class="set-seg">${[['near','Nah'],['normal','Normal'],['far','Weit']].map(([k, n]) => `<button data-st="cam" data-v="${k}" class="${cam === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+        <button class="set-row" data-st="garage"><span>Garage${garage.cars.some(c => gDue(c).some(d => d.lvl >= 1)) ? '<i class="gdot"></i>' : ''}<small>${gActive() ? `${esc(gTitle(gActive()))} · ${fmtNum(gKm(gActive()))} km` : 'Deine echten Autos, TÜV und Service'}</small></span>${chev}</button>
         <button class="set-row car-row" data-st="car"><span>Dein Auto<small>${esc(CAR_TYPES[carType()].name)} · ${esc(CAR_COLORS[carColor()].name)}</small></span><span class="ri">${carSideSVG(carType(), carColor(), 'mini')}</span></button>
         ${tg('car3d', '3D-Auto', 'Aus: flaches Symbol, spart Akku')}
         ${tg('gforce', 'G-Kraft-Anzeige', 'Bewegungssensor, richtet sich beim Fahren selbst aus')}
@@ -4463,6 +4497,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'tg'){ const k = b.dataset.k; prefs[k] = !onOff(k); savePrefs(); b.classList.toggle('on', prefs[k]); b.setAttribute('aria-checked', prefs[k]); if(k === 'gforce' && prefs[k]) gStart(); if(k === 'shareStats' && grp()) pushMember().then(wsCache).catch(() => {}); }
   if(a === 'avatar'){ $('#avFile').click(); return; }
   if(a === 'car'){ openCarPicker(); return; }
+  if(a === 'garage'){ openGarage(); return; }
   if(a === 'gname') openGroupDlg('name', {then:() => { prefs.memberSig = ''; pushMember().catch(() => {}); pushBests().catch(() => {}); }});
   if(a === 'ginvite') shareURL(inviteURL(), `Gruppe ${grp().name}`, `Komm in unsere Gruppe „${grp().name}“ bei Jamsis Spots:`);
   if(a === 'gcreate') openGroupDlg('create', {});
@@ -4647,9 +4682,141 @@ function copyText(t, okMsg){
   function fb(){ const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){ toast(t); } ta.remove(); }
 }
 
+/* ================= Garage: deine echten Autos =================
+   Bleibt auf diesem Gerät. Kilometerstand = eingetragener Stand + aufgezeichnete Fahrten danach. */
+const GKEY = 'meine-spots-garage';
+let garage = {cars:[], active:null};
+try{ const g = JSON.parse(localStorage.getItem(GKEY) || 'null'); if(g && Array.isArray(g.cars)) garage = g; }catch(e){}
+function saveGarage(){ try{ localStorage.setItem(GKEY, JSON.stringify(garage)); return true; }catch(e){ toast('Speicher ist voll.'); return false; } }
+const gCar = id => garage.cars.find(c => c.id === id) || null;
+const gActive = () => gCar(garage.active);
+const gModel = c => [c.make, c.model].filter(Boolean).join(' ');
+const gTitle = c => c.nick || gModel(c) || 'Auto';
+const fmtNum = n => Math.round(n).toLocaleString('de-DE');
+const gTracks = c => tracks.filter(t => t.car === c.id);
+function gKm(c){ return Math.round((+c.km || 0) + gTracks(c).filter(t => (t.created || 0) > (c.kmAt || 0)).reduce((a, t) => a + (t.dist || 0), 0) / 1000); }
+function gDue(c){
+  const out = [], now = new Date(), mo = now.getMonth() + 1;
+  if(c.tuv && /^\d{4}-\d{2}$/.test(c.tuv)){
+    const [y, m] = c.tuv.split('-').map(Number), end = new Date(y, m, 0, 23, 59), days = Math.round((end - now) / 864e5), lbl = new Date(y, m - 1).toLocaleDateString('de-DE', {month:'short', year:'numeric'});
+    out.push({k:'tuv', lvl:days < 0 ? 2 : days <= 45 ? 1 : 0, txt:days < 0 ? `TÜV überfällig (${lbl})` : `TÜV ${lbl}`});
+  }
+  if(+c.svcKm){ const left = +c.svcKm - gKm(c); out.push({k:'svc', lvl:left <= 0 ? 2 : left <= 1000 ? 1 : 0, txt:left <= 0 ? `Service fällig (${fmtNum(-left)} km drüber)` : `Service in ${fmtNum(left)} km`}); }
+  if(c.svcDate){ const d = new Date(c.svcDate), days = Math.round((d - now) / 864e5); out.push({k:'svcd', lvl:days < 0 ? 2 : days <= 30 ? 1 : 0, txt:days < 0 ? 'Service-Termin überfällig' : `Service bis ${d.toLocaleDateString('de-DE', {day:'numeric', month:'short', year:'numeric'})}`}); }
+  if(c.tires === 'summer' && (mo >= 10 || mo <= 3)) out.push({k:'tires', lvl:1, txt:'Zeit für Winterreifen'});
+  if(c.tires === 'winter' && mo >= 5 && mo <= 9) out.push({k:'tires', lvl:0, txt:'Sommerreifen drauf?'});
+  return out;
+}
+const gDueHTML = c => gDue(c).map(d => `<span class="gdue l${d.lvl}">${esc(d.txt)}</span>`).join('');
+function gUse(id){
+  const c = gCar(id); if(!c) return;
+  garage.active = id; saveGarage();
+  if(CAR_TYPES[c.type] && CAR_COLORS[c.color]){ prefs.carType = c.type; prefs.carColor = c.color; savePrefs(); carApplyAll(); }
+  if(grp()) pushMember().then(wsCache).catch(() => {});
+}
+function gCheck(){   // einmal am Tag an fällige Sachen erinnern
+  const day = new Date().toDateString(); if(prefs.gChk === day || !garage.cars.length) return;
+  prefs.gChk = day; savePrefs();
+  for(const c of garage.cars){ const d = gDue(c).find(x => x.lvl >= 1 && x.k !== 'tires') || gDue(c).find(x => x.lvl >= 1); if(d){ toast(`${gTitle(c)}: ${d.txt}`); break; } }
+}
+setTimeout(gCheck, 5000);
+let gEdit = null, gDelArmed = false;
+function openGarage(){
+  gEdit = null;
+  const cars = garage.cars.slice().sort((a, b) => (b.id === garage.active) - (a.id === garage.active) || (a.created || 0) - (b.created || 0));
+  $('#modal').innerHTML = `<div class="dlg gar-dlg" role="dialog" aria-modal="true" aria-label="Garage">
+    <div class="top" style="padding:12px 14px"><button class="txtbtn" data-g="settings">${svg(UI.back, 14)} Einstellungen</button><strong style="font-size:17px">Garage</strong><button class="txtbtn bold" data-g="new">${svg(UI.plus, 14)} Auto</button></div>
+    <div class="pad" style="padding-top:2px;gap:10px">
+      ${cars.length ? cars.map(c => `<button class="gcar${c.id === garage.active ? ' on' : ''}" data-g="open" data-id="${c.id}">
+        <span class="gpic">${c.photo ? `<img data-ph="${esc(c.photo)}" alt="">` : carSideSVG(CAR_TYPES[c.type] ? c.type : 'limo', CAR_COLORS[c.color] ? c.color : 'carbon')}</span>
+        <span class="gtx"><b>${esc(gTitle(c))}${c.id === garage.active ? '<i class="gact">Aktiv</i>' : ''}</b><span>${esc([c.nick ? gModel(c) : '', c.year].filter(Boolean).join(' · ') || 'Tippen zum Bearbeiten')}</span>
+          <span class="gkm">${fmtNum(gKm(c))} km${gTracks(c).length ? ` · ${gTracks(c).length} Fahrt${gTracks(c).length === 1 ? '' : 'en'} aufgezeichnet` : ''}</span><span class="gdues">${gDueHTML(c)}</span></span></button>`).join('')
+      : `<div class="empty"><b>Noch kein Auto in der Garage</b>Leg dein Auto an – mit Kilometerstand, TÜV und Service-Erinnerung. Aufgezeichnete Fahrten zählen automatisch dazu.</div>`}
+      <button class="btn primary" data-g="new">${svg(UI.plus, 15)} Auto hinzufügen</button>
+      ${garage.cars.length ? `<button class="set-row${prefs.gShare !== false ? ' on' : ''}" data-g="share" role="switch" aria-checked="${prefs.gShare !== false}" style="border-radius:14px;background:var(--solid);border:1px solid var(--line)"><span>Marke und Modell in der Crew zeigen<small>Vom aktiven Auto, z. B. im Profil</small></span><i class="tg"></i></button>` : ''}
+    </div></div>`;
+  $('#modal').hidden = false; fillPhotos($('#modal'));
+}
+function openGarageCar(id){
+  const c = id ? gCar(id) : null;
+  if(!gEdit || gEdit.id !== (id || gEdit.id)) gEdit = c ? {...c} : {id:uid(), isNew:true, type:carType(), color:carColor(), tires:'', created:Date.now()};
+  const e = gEdit, isNew = !c, tr = c ? gTracks(c) : [];
+  const fld = (k, label, attrs = '') => `<label class="f">${label}<input class="inp" data-gf="${k}" value="${esc(e[k] == null ? '' : e[k])}" ${attrs}></label>`;
+  $('#modal').innerHTML = `<div class="dlg gar-dlg" role="dialog" aria-modal="true" aria-label="Auto">
+    <div class="top" style="padding:12px 14px"><button class="txtbtn" data-g="back">${svg(UI.back, 14)} Garage</button><strong style="font-size:17px">${isNew ? 'Neues Auto' : esc(gTitle(e))}</strong><button class="txtbtn bold" data-g="save">Sichern</button></div>
+    <div class="pad" style="padding-top:2px;gap:12px">
+      <button class="gphoto" data-g="photo">${e.photo ? `<img data-ph="${esc(e.photo)}" alt="">` : `${carSideSVG(CAR_TYPES[e.type] ? e.type : 'limo', CAR_COLORS[e.color] ? e.color : 'carbon')}<span>Foto hinzufügen</span>`}</button>
+      ${fld('nick', 'Spitzname', 'placeholder="z. B. Golfi" maxlength="24"')}
+      <div class="g2">${fld('make', 'Marke', 'placeholder="z. B. VW" maxlength="24"')}${fld('model', 'Modell', 'placeholder="z. B. Golf 7 GTI" maxlength="30"')}</div>
+      <div class="g2">${fld('year', 'Baujahr', 'inputmode="numeric" maxlength="4" placeholder="2016"')}${fld('km', 'Kilometerstand', 'inputmode="numeric" maxlength="7" placeholder="z. B. 84500"')}</div>
+      <div class="set-sec">Termine</div>
+      <div class="g2">${fld('tuv', 'TÜV fällig', 'type="month"')}${fld('svcKm', 'Service bei km', 'inputmode="numeric" maxlength="7" placeholder="z. B. 90000"')}</div>
+      ${fld('svcDate', 'oder Service bis', 'type="date"')}
+      <div class="f">Reifen gerade<div class="seg2">${[['summer', 'Sommer'], ['winter', 'Winter'], ['all', 'Ganzjahr']].map(([k, n]) => `<button class="${e.tires === k ? 'on' : ''}" data-g="tires" data-v="${k}">${n}</button>`).join('')}</div></div>
+      <div class="set-sec">In der App</div>
+      <div class="gtypes">${Object.entries(CAR_TYPES).map(([k, x]) => `<button class="gtype${e.type === k ? ' on' : ''}" data-g="type" data-v="${k}">${carSideSVG(k, e.color)}<span>${esc(x.short || x.name)}</span></button>`).join('')}</div>
+      <div class="cp-colors">${Object.entries(CAR_COLORS).map(([k, x]) => `<button class="cp-col${k === e.color ? ' on' : ''}" data-g="color" data-v="${k}" style="--c:${x.hex}" aria-label="${esc(x.name)}" title="${esc(x.name)}"></button>`).join('')}</div>
+      <label class="f">Notizen<textarea class="inp" data-gf="notes" rows="2" maxlength="400" placeholder="z. B. Reifendruck 2,4 bar, Ölsorte 5W-30">${esc(e.notes || '')}</textarea></label>
+      ${tr.length ? `<div class="muted">Aufgezeichnet: ${fmtKmS(tr.reduce((a, t) => a + (t.dist || 0), 0))} in ${tr.length} Fahrt${tr.length === 1 ? '' : 'en'}</div>` : ''}
+      <div class="err" id="g-err"></div>
+      ${!isNew && garage.active !== e.id ? `<button class="btn primary" data-g="use">Als aktives Auto nutzen</button>` : ''}
+      ${!isNew ? `<button class="btn danger${gDelArmed ? ' armed' : ''}" data-g="del">${gDelArmed ? 'Wirklich löschen? Nochmal tippen' : 'Auto löschen'}</button>` : ''}
+    </div></div>`;
+  $('#modal').hidden = false; fillPhotos($('#modal'));
+}
+function gSync(){ $('#modal').querySelectorAll('[data-gf]').forEach(i => { gEdit[i.dataset.gf] = i.value.trim(); }); }
+$('#modal').addEventListener('click', async e => {
+  const b = e.target.closest('[data-g]'); if(!b || !$('#modal .gar-dlg')) return;
+  const a = b.dataset.g;
+  if(a === 'settings'){ renderSettings(); return; }
+  if(a === 'new'){ gEdit = null; gDelArmed = false; openGarageCar(null); return; }
+  if(a === 'open'){ gEdit = null; gDelArmed = false; openGarageCar(b.dataset.id); return; }
+  if(a === 'back'){ gEdit = null; openGarage(); return; }
+  if(a === 'share'){ prefs.gShare = prefs.gShare === false; savePrefs(); openGarage(); if(grp()) pushMember().then(wsCache).catch(() => {}); return; }
+  if(!gEdit) return;
+  gSync();
+  if(a === 'tires' || a === 'type' || a === 'color'){ gEdit[a] = b.dataset.v; openGarageCar(gEdit.isNew ? null : gEdit.id); return; }
+  if(a === 'photo'){ $('#gFile').click(); return; }
+  if(a === 'use'){ gUse(gEdit.id); toast(`${gTitle(gEdit)} ist jetzt dein aktives Auto`); openGarage(); return; }
+  if(a === 'del'){
+    if(!gDelArmed){ gDelArmed = true; openGarageCar(gEdit.id); return; }
+    const c = gCar(gEdit.id); if(c && c.photo) PDB.del(c.photo).catch(() => {});
+    garage.cars = garage.cars.filter(x => x.id !== gEdit.id); if(garage.active === gEdit.id) garage.active = garage.cars[0] ? garage.cars[0].id : null;
+    saveGarage(); gDelArmed = false; gEdit = null; toast('Auto gelöscht'); openGarage(); return;
+  }
+  if(a === 'save'){
+    const x = gEdit, err = t => { $('#g-err').textContent = t; };
+    if(!x.nick && !x.make && !x.model) return err('Gib wenigstens einen Spitznamen oder Marke/Modell ein.');
+    for(const k of ['year', 'km', 'svcKm']){ x[k] = String(x[k] || '').replace(/[^\d]/g, ''); if(x[k] === '') delete x[k]; else x[k] = +x[k]; }
+    if(x.year && (x.year < 1900 || x.year > new Date().getFullYear() + 1)) return err('Das Baujahr passt nicht.');
+    const old = gCar(x.id);
+    if(!old || +old.km !== +x.km) x.kmAt = Date.now();   // neuer Stand: Fahrten ab jetzt zählen dazu
+    const isNew = x.isNew; delete x.isNew;
+    if(old) Object.assign(old, x); else garage.cars.push(x);
+    if(isNew && !garage.active) garage.active = x.id;
+    saveGarage();
+    if(garage.active === x.id) gUse(x.id);
+    toast(isNew ? `${gTitle(x)} steht in der Garage` : 'Gespeichert');
+    gEdit = null; openGarage();
+  }
+});
+$('#gFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if(!f || !gEdit) return;
+  try{ const bl = await shrinkImage(f, 1200, .82), id = 'g_' + gEdit.id + '_' + uid(); await PDB.put(id, bl); if(gEdit.photo && gEdit.photo !== (gCar(gEdit.id) || {}).photo) PDB.del(gEdit.photo).catch(() => {}); gEdit.photo = id; openGarageCar(gEdit.isNew ? null : gEdit.id); }
+  catch(_){ toast('Das Bild konnte nicht gelesen werden.'); }
+});
+// Beim Speichern einer Fahrt: mit welchem Auto?
+let tsCar = null;
+function tsCarHTML(){
+  if(!garage.cars.length) return '';
+  if(tsCar == null) tsCar = garage.active;
+  return `<div class="f">Gefahren mit<div class="chips ts-cars">${garage.cars.map(c => `<button class="chip${c.id === tsCar ? ' on' : ''}" data-tscar="${c.id}">${esc(gTitle(c))}</button>`).join('')}</div></div>`;
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-tscar]'); if(!b) return; tsCar = b.dataset.tscar; document.querySelectorAll('[data-tscar]').forEach(x => x.classList.toggle('on', x === b)); });
+
 /* ================= Export / Import ================= */
 $('#exportBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify({app:'meine-spots', version:1, exported:new Date().toISOString(), ...data, tracks, runs, courses, efforts}, null, 2)], {type:'application/json'});
+  const blob = new Blob([JSON.stringify({app:'meine-spots', version:1, exported:new Date().toISOString(), ...data, tracks, runs, courses, efforts, garage:{cars:garage.cars.map(c => ({...c, photo:undefined})), active:garage.active}}, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = `meine-spots-${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -4671,6 +4838,10 @@ $('#importFile').addEventListener('change', async e => {
         if(i >= 0) data.spots[i] = s; else data.spots.push({...s, id: s.id || uid()});
         n++;
       });
+    }
+    if(j.garage && Array.isArray(j.garage.cars)){
+      j.garage.cars.forEach(c => { if(!c || !c.id) return; const i = garage.cars.findIndex(x => x.id === c.id); if(i >= 0) garage.cars[i] = {...garage.cars[i], ...c, photo:garage.cars[i].photo}; else garage.cars.push(c); });
+      if(!garage.active && j.garage.active) garage.active = j.garage.active; saveGarage();
     }
     if(Array.isArray(j.tracks)){
       j.tracks.forEach(t => {
@@ -5040,6 +5211,7 @@ function openTrackSave(){
         <div><b>${fmtSpd(avg)}</b><span>Ø Tempo</span></div>
         <div><b>${fmtSpd(rec.maxSpd)}</b><span>Max. Tempo</span></div>
       </div>
+      ${tsCarHTML()}
       <div class="muted">Die Strecke wird nur auf diesem Gerät gespeichert.</div>
     </div>`;
   show('trackSave', 'full');
@@ -5052,6 +5224,8 @@ $('#trackSaveView').addEventListener('click', e => {
     const t = {id:rec.id, name:($('#t-name').value.trim() || 'Strecke'), created:rec.start, dist:Math.round(rec.dist), dur:rec.active, maxSpd:rec.maxSpd,
                segs:rec.segs.filter(sg => sg.length)};
     if(rec.g && (rec.g.lat || rec.g.brake || rec.g.acc)) t.g = rec.g;
+    if(garage.cars.length && gCar(tsCar || garage.active)) t.car = tsCar || garage.active;
+    tsCar = null;
     tracks.unshift(t);
     if(!saveTracks()){ tracks.shift(); return; }
     rec = null; persistRec(true); drawLive(); renderTracksHead();
