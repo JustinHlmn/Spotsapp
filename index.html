@@ -467,6 +467,14 @@ h2{font-size:23px}
 #splash .logo{background:linear-gradient(180deg,#5aaeff,#2f86ef);border-radius:26px;box-shadow:0 18px 44px rgba(77,163,255,.35)}
 #splash .name{font-weight:700;letter-spacing:-.03em}
 
+/* ---------- Freunde im eigenen Auto ---------- */
+.ghost-car{display:block;width:100%;height:100%}
+.live-mk .lm-car{position:absolute;left:50%;top:50%;width:24px;height:48px;margin:-24px 0 0 -12px;display:none;pointer-events:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.55))}
+.live-mk .lm-car svg{width:24px;height:48px;display:block}
+.live-mk.drive .lm-car{display:block}
+.live-mk.drive .lm-arr,.live-mk.drive::before{display:none}
+.live-mk.drive .uav{width:20px!important;height:20px!important;font-size:9.5px!important;position:absolute!important;left:30px;top:-2px;box-shadow:0 0 0 2px #30d158,0 3px 8px rgba(0,0,0,.5)!important}
+
 /* ---------- Ortssuche ---------- */
 .geo-it .tx{min-width:0}
 .geo-ic{--c:#8e8e93}
@@ -4341,7 +4349,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.05.25';
+const VERSION = '2026.10.05.26';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -6003,14 +6011,15 @@ function liveRender(){
     let m = live.mk.get(id);
     if(!m){
       const el = document.createElement('div'); el.className = 'live-mk';
-      el.innerHTML = `<i class="lm-arr"></i>${avHTML(id, p.by, 36)}<span class="lm-tag"></span>`;
+      el.innerHTML = `<i class="lm-arr"></i><span class="lm-car"></span>${avHTML(id, p.by, 36)}<span class="lm-tag"></span>`;
       el.addEventListener('click', e => { e.stopPropagation(); openLiveCard(id); });
       m = new maplibregl.Marker({element:el, anchor:'center'}).setLngLat(LL(p)).addTo(map);
-      m._el = el; m._arr = el.querySelector('.lm-arr'); m._tag = el.querySelector('.lm-tag');
+      m._el = el; m._arr = el.querySelector('.lm-arr'); m._tag = el.querySelector('.lm-tag'); m._car = el.querySelector('.lm-car');
       live.mk.set(id, m);
     }
-    const old = age >= LIVE_OLD, still = old || p.v < 6 || p.h == null;
-    m._el.classList.toggle('old', old); m._el.classList.toggle('still', still);
+    const old = age >= LIVE_OLD, still = old || p.v < 6 || p.h == null, mc = memberCar(id), sig = mc ? mc.t + mc.c : '';
+    if(m._carSig !== sig){ m._carSig = sig; m._car.innerHTML = mc ? carSVG('friend', {c:mc.c, t:mc.t}) : ''; }
+    m._el.classList.toggle('old', old); m._el.classList.toggle('still', still); m._el.classList.toggle('drive', !still && !!mc);
     const nm = (WS.members.find(x => x._id === id) || {}).name || p.by;
     m._tag.textContent = old ? `${nm} · vor ${Math.max(1, Math.round(age / 60000))} Min` : p.v >= 6 ? `${nm} · ${Math.round(p.v)} km/h` : nm;
   }
@@ -6021,7 +6030,7 @@ function liveRender(){
 function liveArrows(){
   if(!live.mk.size) return;
   const b = map.getBearing();
-  for(const [id, m] of live.mk){ const p = live.peers.get(id); if(p && p.h != null) m._arr.style.transform = `rotate(${(p.h - b).toFixed(1)}deg)`; }
+  for(const [id, m] of live.mk){ const p = live.peers.get(id); if(p && p.h != null){ const r = `rotate(${(p.h - b).toFixed(1)}deg)`; m._arr.style.transform = r; m._car.style.transform = r; } }
 }
 map.on('rotate', liveArrows);
 // weich gleiten und zwischen den Updates in Fahrtrichtung weiterrollen
@@ -6512,15 +6521,18 @@ map.on('zoomend', () => { if(rp && rp.gest){ rp.gest = false; rp.userZoom = map.
 document.addEventListener('keydown', e => { if(rp && e.key === 'Escape') exitReplay(); if(rp && e.key === ' '){ e.preventDefault(); $('#rpBar [data-rp="play"]').click(); } });
 
 /* ================= Auto-Symbol ================= */
-function carSVG(kind){
-  const ghost = kind === 'ghost';
+// Auto von oben; o.c / o.t = Lack und Karosserie (Standard: dein eigenes), Geister ohne Farbe sind lila
+const memberCar = dev => { const mc = (WS.members.find(x => x._id === dev) || {}).car; return mc && CAR_TYPES[mc.t] && CAR_COLORS[mc.c] ? mc : null; };
+function carSVG(kind, o = {}){
+  const ghost = kind === 'ghost' && !o.c, cKey = o.c || carColor(), tKey = o.t || carType(), T = CAR_TYPES[tKey] || CAR_TYPES.limo;
+  const sx = (T.W / 1.84).toFixed(3), sy = ((T.F - T.Rr) / 4.72).toFixed(3);
   const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = v => Math.max(0, Math.min(255, Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k))); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; };
-  const ch = CAR_COLORS[carColor()].hex;
+  const ch = (CAR_COLORS[cKey] || CAR_COLORS.carbon).hex;
   const paint = ghost ? '<stop offset="0" stop-color="#7a2fb0"/><stop offset=".5" stop-color="#c67cf5"/><stop offset="1" stop-color="#7a2fb0"/>'
-                      : carColor() === 'carbon' ? '<stop offset="0" stop-color="#04060b"/><stop offset=".22" stop-color="#0b1426"/><stop offset=".5" stop-color="#1b3263"/><stop offset=".78" stop-color="#0b1426"/><stop offset="1" stop-color="#04060b"/>'
+                      : cKey === 'carbon' ? '<stop offset="0" stop-color="#04060b"/><stop offset=".22" stop-color="#0b1426"/><stop offset=".5" stop-color="#1b3263"/><stop offset=".78" stop-color="#0b1426"/><stop offset="1" stop-color="#04060b"/>'
                       : `<stop offset="0" stop-color="${shade(ch, -.55)}"/><stop offset=".22" stop-color="${shade(ch, -.2)}"/><stop offset=".5" stop-color="${shade(ch, .18)}"/><stop offset=".78" stop-color="${shade(ch, -.2)}"/><stop offset="1" stop-color="${shade(ch, -.55)}"/>`;
-  const id = ghost ? 'g' : 'c';
-  return `<svg class="${ghost ? '' : 'car'}" viewBox="0 0 48 96" aria-hidden="true">
+  const id = ghost ? 'g' : 'c' + cKey;
+  return `<svg class="${kind === 'car' ? 'car' : ''}" viewBox="0 0 48 96" aria-hidden="true"><g transform="translate(24 48) scale(${sx} ${sy}) translate(-24 -48)">
     <defs><linearGradient id="${id}p" x1="0" x2="1" y1="0" y2="0">${paint}</linearGradient>
       <linearGradient id="${id}w" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3a4d6e"/><stop offset="1" stop-color="#0a0f18"/></linearGradient></defs>
     <path d="M24 3C33 3 39 6 40.5 13L42 24C42.6 28 42 32 41.4 36L41 58C41.6 62 42.4 67 42 72L41 84C40 90 34 93 24 93S8 90 7 84L6 72C5.6 67 6.4 62 7 58L6.6 36C6 32 5.4 28 6 24L7.5 13C9 6 15 3 24 3Z" fill="url(#${id}p)" stroke="${ghost ? '#e3b8ff' : '#24396a'}" stroke-width=".8"/>
@@ -6534,7 +6546,7 @@ function carSVG(kind){
     <path d="M13.5 4.6h21" stroke="#05070b" stroke-width="1.2" stroke-linecap="round" opacity="${ghost ? 0 : .8}"/>
     <path d="M8.6 83.5Q9.2 89 15.2 90.6L15.7 88.6Q11.2 87.6 10.6 83.5ZM39.4 83.5Q38.8 89 32.8 90.6L32.3 88.6Q36.8 87.6 37.4 83.5Z" fill="${ghost ? '#f3e1ff' : '#ff2b2b'}"/>
     <path d="M15.5 85.5Q24 87.6 32.5 85.5" stroke="rgba(255,255,255,.14)" stroke-width=".8" fill="none"/>
-  </svg>`;
+  </g></svg>`;
 }
 
 /* ================= Autos zur Auswahl =================
@@ -6845,10 +6857,11 @@ function updateGhost(){
   const brg = (Math.atan2(b[0] - a[0], b[1] - a[1]) * 180 / Math.PI + 360) % 360;
   if(!ghostM){
     const e = document.createElement('div'); e.className = 'ghost';
-    e.innerHTML = carSVG('ghost') + '<span class="ghost-tag"></span>';
+    e.innerHTML = '<span class="ghost-car"></span><span class="ghost-tag"></span>';
     ghostM = new maplibregl.Marker({element:e, anchor:'center', rotationAlignment:'map', pitchAlignment:'map'}).setLngLat(LL(pos)).addTo(map);
   }
-  const ge = ghostM.getElement(), gl = best.rival ? best.name : 'Bestzeit';
+  const ge = ghostM.getElement(), gl = best.rival ? best.name : 'Bestzeit', rc = best.rival ? memberCar(best.dev) : null, ck = rc ? rc.t + rc.c : 'ghost';
+  if(ge._ck !== ck){ ge._ck = ck; ge.querySelector('.ghost-car').innerHTML = rc ? carSVG('ghost', {c:rc.c, t:rc.t}) : carSVG('ghost'); }
   if(ge._gl !== gl){ ge._gl = gl; ge.querySelector('.ghost-tag').textContent = gl; ge.classList.toggle('rival', !!best.rival); }
   ghostM.setLngLat(LL(pos)); ghostM.setRotation(brg);
 }
