@@ -467,6 +467,26 @@ h2{font-size:23px}
 #splash .logo{background:linear-gradient(180deg,#5aaeff,#2f86ef);border-radius:26px;box-shadow:0 18px 44px rgba(77,163,255,.35)}
 #splash .name{font-weight:700;letter-spacing:-.03em}
 
+/* ---------- Routenwahl & Zwischenstopps ---------- */
+#navPrev{max-height:calc(100% - 90px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain}
+.nopts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.nopt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--solid);color:var(--fg);text-align:left;font-variant-numeric:tabular-nums}
+.nopt b{font-size:14px}
+.nopt .nt{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.nopt small{font-size:12px;color:var(--muted)}
+.nopt.on{box-shadow:inset 0 0 0 2px var(--accent);background:var(--accent-soft)}
+.nopt-note{font-size:13px;color:var(--muted);padding:2px 2px}
+.nstops{display:flex;flex-direction:column;gap:6px}
+.nstop{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 8px;border-radius:12px;background:var(--fill)}
+.nsi{width:20px;height:20px;border-radius:50%;background:#ff9f0a;color:#1d1200;font-size:11.5px;font-weight:800;display:grid;place-items:center;flex:none}
+.nsic{color:var(--muted);display:grid;place-items:center}
+.nsn{flex:1;min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nsx{width:28px;height:28px;border-radius:50%;border:0;background:none;color:var(--muted);display:grid;place-items:center}
+.nadd{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:17px;border:1px dashed var(--line);background:none;color:var(--accent);font-weight:650;font-size:13.5px}
+.npick{display:flex;flex-direction:column;max-height:44vh;overflow-y:auto;margin:0 -6px}
+.mk-stop{width:26px;height:26px;border-radius:50%;background:#ff9f0a;border:3px solid #fff;display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.45)}
+.mk-stop b{font:800 12px/1 var(--font);color:#1d1200}
+
 /* ---------- Freunde im eigenen Auto ---------- */
 .ghost-car{display:block;width:100%;height:100%}
 .live-mk .lm-car{position:absolute;left:50%;top:50%;width:24px;height:48px;margin:-24px 0 0 -12px;display:none;pointer-events:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.55))}
@@ -1724,6 +1744,10 @@ function onMapStyle(){
   map.addLayer({id:'track-live-case', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ffffff', 'line-width':8, 'line-opacity':.9}});
   map.addLayer({id:'track-live-line', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ff3b30', 'line-width':5}});
   map.addSource('nav-route', {type:'geojson', data:FC([])});
+  map.addSource('nav-alt', {type:'geojson', data:FC([])});
+  map.addLayer({id:'nav-alt-case', type:'line', source:'nav-alt', layout:rl, paint:{'line-color':'#0b2f57', 'line-width':9, 'line-opacity':.55}});
+  map.addLayer({id:'nav-alt-line', type:'line', source:'nav-alt', layout:rl, paint:{'line-color':'#8fa3bf', 'line-width':5.5, 'line-opacity':.85}});
+  map.addLayer({id:'nav-alt-hit', type:'line', source:'nav-alt', layout:rl, paint:{'line-color':'#000', 'line-width':24, 'line-opacity':0}});
   map.addLayer({id:'nav-route-case', type:'line', source:'nav-route', layout:rl, paint:{'line-color':'#0b2f57', 'line-width':12, 'line-opacity':.9}});
   map.addLayer({id:'nav-route-line', type:'line', source:'nav-route', layout:rl, paint:{'line-color':'#4da3ff', 'line-width':7.5}});
   map.addSource('nav-wx', {type:'geojson', data:FC([])});
@@ -2901,6 +2925,10 @@ $('#modeView').addEventListener('click', e => {
   if(a === 'here') getHere().then(p => { if(p && mode) place(p); });
 });
 map.on('click', e => {
+  if(navPrevOn && nav && nav.opts && nav.opts.land && mapReady && !nav.busy){
+    const h = map.queryRenderedFeatures(e.point, {layers:['nav-alt-hit']}); if(h.length) navPick(nav.mode === 'fast' ? 'land' : 'fast');
+    return;
+  }
   if(ckOn || navPrevOn) return;
   if(drawing){ addDrawPoint(e.lngLat); return; }
   if(mode) return place(e.lngLat);
@@ -4349,7 +4377,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.05.26';
+const VERSION = '2026.10.05.27';
 const ACCENTS = {blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -7071,31 +7099,50 @@ $('#modal').addEventListener('click', e => {
 /* ================= Navigation ================= */
 let nav = null, navPrevOn = false;
 const ROUTERS = ['https://router.project-osrm.org/route/v1/driving/', 'https://routing.openstreetmap.de/routed-car/route/v1/driving/'];
-async function fetchRoute(a, b){
+async function osrm(pts, q = ''){
+  const co = pts.map(p => `${p.lng.toFixed(6)},${p.lat.toFixed(6)}`).join(';');
   for(const base of ROUTERS){
     try{
-      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 10000);
-      const r = await fetch(`${base}${a.lng.toFixed(6)},${a.lat.toFixed(6)};${b.lng.toFixed(6)},${b.lat.toFixed(6)}?overview=full&geometries=geojson&steps=true`, {signal:ctl.signal});
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 12000);
+      const r = await fetch(`${base}${co}?overview=full&geometries=geojson&steps=true${q}`, {signal:ctl.signal});
       clearTimeout(to);
       const j = await r.json();
-      if(j.code === 'Ok' && j.routes && j.routes[0] && j.routes[0].geometry.coordinates.length > 1) return j.routes[0];
+      if(j.code === 'Ok' && j.routes && j.routes[0] && j.routes[0].geometry.coordinates.length > 1) return j.routes;
     }catch(e){}
   }
   return null;
 }
-function prepRoute(r){
+async function fetchRoute(a, b){ const rs = await osrm([a, b]); return rs ? rs[0] : null; }
+// Wie viele Meter laufen über Autobahn?
+const mwM = r => { let m = 0; (r.legs || []).forEach(l => (l.steps || []).forEach(x => { if((x.intersections || []).some(i => (i.classes || []).includes('motorway')) || /^A\s?\d/.test(x.ref || '')) m += x.distance; })); return m; };
+// Schnellste Route und eine ohne Autobahn (falls der Server das nicht kann: die Alternative mit am wenigsten Autobahn)
+async function navRoutes(pts){
+  const [fr, lr] = await Promise.all([osrm(pts, pts.length === 2 ? '&alternatives=true' : ''), osrm(pts, '&exclude=motorway')]);
+  if(!fr) return null;
+  const fast = fr[0]; let land = lr ? lr[0] : null;
+  if(land && mwM(land) > mwM(fast) * .5) land = null;   // Ausschluss hat nicht gegriffen
+  if(!land && fr.length > 1){ const alt = fr.slice(1).sort((x, y) => mwM(x) - mwM(y))[0]; if(mwM(alt) < mwM(fast) * .5) land = alt; }
+  if(land && mwM(fast) < 800) land = null;   // die schnellste fährt eh keine Autobahn
+  return {fast, land};
+}
+function prepRoute(r, viaNames = []){
   const coords = r.geometry.coordinates;
   const lat0 = coords[0][1], lng0 = coords[0][0], kx = Math.cos(lat0 * Math.PI / 180) * 111320, ky = 110540;
   const xy = coords.map(q => [(q[0] - lng0) * kx, (q[1] - lat0) * ky]), cum = [0];
   for(let i = 1; i < xy.length; i++) cum.push(cum[i-1] + Math.hypot(xy[i][0] - xy[i-1][0], xy[i][1] - xy[i-1][1]));
   const L = cum[cum.length - 1] || 1;
-  const raw = (r.legs && r.legs[0] && r.legs[0].steps) || [], total = raw.reduce((t, x) => t + x.distance, 0) || 1, sc = L / total;
-  let acc = 0;
-  const steps = raw.map(x => {
-    const st = {type:x.maneuver.type, mod:x.maneuver.modifier, exit:x.maneuver.exit, name:x.name || '', ref:x.ref || '', dest:x.destinations || '', exits:x.exits || '', dur:x.duration, start:acc * sc};
-    acc += x.distance; st.end = acc * sc; return st;
+  const legs = r.legs || [], total = legs.reduce((t, l) => t + (l.steps || []).reduce((a, x) => a + x.distance, 0), 0) || 1, sc = L / total;
+  let acc = 0; const steps = [], viaAt = [];
+  legs.forEach((l, li) => {
+    (l.steps || []).forEach(x => {
+      const st = {type:x.maneuver.type, mod:x.maneuver.modifier, exit:x.maneuver.exit, name:x.name || '', ref:x.ref || '', dest:x.destinations || '', exits:x.exits || '', dur:x.duration, start:acc * sc};
+      if(st.type === 'arrive' && li < legs.length - 1){ st.via = viaNames[li] || 'Zwischenstopp'; }
+      if(st.type === 'depart' && li > 0) st.cont = true;
+      acc += x.distance; st.end = acc * sc; steps.push(st);
+    });
+    if(li < legs.length - 1) viaAt.push(acc * sc);
   });
-  return {coords, xy, cum, L, steps, dur:r.duration,
+  return {coords, xy, cum, L, steps, viaAt, dur:r.duration, dist:r.distance, mw:mwM(r),
     toXY:(lng, lat) => [(lng - lng0) * kx, (lat - lat0) * ky], toLL:(x, y) => ({lng:x / kx + lng0, lat:y / ky + lat0})};
 }
 function routeProject(R, p, near, back, ahead){
@@ -7135,8 +7182,8 @@ function instr(st){
   const road = st.name || st.ref, onto = road ? ` auf ${road}` : '', d = DIRW[st.mod] || '';
   const toward = st.dest ? ` Richtung ${st.dest.split(',')[0].split(':').pop().trim()}` : onto;
   switch(st.type){
-    case 'depart': return road ? `Losfahren auf ${road}` : 'Losfahren';
-    case 'arrive': return st.mod === 'left' ? 'Ziel liegt links' : st.mod === 'right' ? 'Ziel liegt rechts' : 'Ziel erreicht';
+    case 'depart': return st.cont ? (road ? `Weiterfahren auf ${road}` : 'Weiterfahren') : road ? `Losfahren auf ${road}` : 'Losfahren';
+    case 'arrive': if(st.via) return `Zwischenstopp: ${st.via}`; return st.mod === 'left' ? 'Ziel liegt links' : st.mod === 'right' ? 'Ziel liegt rechts' : 'Ziel erreicht';
     case 'end of road': return `Am Ende der Straße ${d.replace('leicht ', '').replace('scharf ', '') || 'abbiegen'} abbiegen${onto}`.replace('abbiegen abbiegen', 'abbiegen');
     case 'turn': return st.mod === 'uturn' ? 'Wenden' : st.mod === 'straight' ? `Geradeaus weiter${onto}` : `${cap(d)} abbiegen${onto}`;
     case 'continue': case 'new name': return st.mod === 'uturn' ? 'Wenden' : /left|right/.test(st.mod || '') ? `${cap(d)} halten${onto}` : `Weiter${onto || ' geradeaus'}`;
@@ -7251,31 +7298,111 @@ function rwCkRender(){
 }
 
 /* Vorschau & Start */
+const navLeft = () => nav.stops.filter(x => !x.done);
+const navPts = from => [from, ...navLeft(), nav.dest];
 async function planNav(target, name, walkTo){
   if(ckOn) exitCockpit();
   if(nav) endNav();
   const here = await getHere(); if(!here) return;
   toast('Route wird berechnet …');
-  const r = await fetchRoute(here, target);
-  if(!r){ toast('Route konnte nicht berechnet werden. Prüfe deine Internetverbindung.'); return; }
+  nav = {active:false, start:{lat:here.lat, lng:here.lng}, dest:{lat:target.lat, lng:target.lng}, name, walkTo, stops:[], mode:prefs.navMode === 'land' ? 'land' : 'fast', opts:null, route:null, prog:0, off:0, lastReroute:0, arrived:false, pick:null};
+  if(!(await navReplan(true))){ nav = null; toast('Route konnte nicht berechnet werden. Prüfe deine Internetverbindung.'); return; }
   hideToast();
-  nav = {active:false, dest:{lat:target.lat, lng:target.lng}, name, walkTo, route:prepRoute(r), prog:0, off:0, lastReroute:0, arrived:false};
   navPrevOn = true; document.body.classList.add('navprev');
-  setSrc('nav-route', routeFC(nav.route.coords));
-  renderNavPrev(); rwNav();
-  const c = nav.route.coords, b = c.reduce((bb, q) => bb.extend(q), new maplibregl.LngLatBounds(c[0], c[0]));
-  map.fitBounds(b, {padding:{top:80, bottom:mobile() ? 270 : 250, left:50, right:mobile() ? 50 : 80}, maxZoom:16, duration:1200});
+  navFit();
 }
+// Routen neu holen (z. B. nach neuem Zwischenstopp) und anzeigen
+async function navReplan(first){
+  const n = nav; if(!n) return false;
+  n.busy = true; if(!first && navPrevOn) renderNavPrev();
+  const o = await navRoutes(navPts(n.start));
+  if(nav !== n) return false;
+  n.busy = false;
+  if(!o){ if(!first){ toast('Route mit Zwischenstopp ging gerade nicht.'); renderNavPrev(); } return false; }
+  const vs = navLeft(), names = vs.map(x => x.name);
+  n.opts = {fast:prepRoute(o.fast, names), land:o.land ? prepRoute(o.land, names) : null};
+  n.opts.fast.viaStops = vs; if(n.opts.land) n.opts.land.viaStops = vs;
+  navPick(n.mode, true);
+  return true;
+}
+function navPick(mode, quiet){
+  const o = nav.opts; if(!o) return;
+  nav.mode = mode === 'land' && o.land ? 'land' : 'fast';
+  if(!quiet){ prefs.navMode = mode; savePrefs(); }
+  nav.route = o[nav.mode]; nav.prog = 0;
+  const alt = nav.mode === 'fast' ? o.land : o.fast;
+  setSrc('nav-route', routeFC(nav.route.coords));
+  setSrc('nav-alt', alt ? routeFC(alt.coords) : FC([]));
+  navStopMarks();
+  nav.rw = null; renderNavPrev(); rwNav();
+}
+function navFit(){
+  const c = [...nav.route.coords, ...((nav.opts.land && nav.opts.land.coords) || [])], b = c.reduce((bb, q) => bb.extend(q), new maplibregl.LngLatBounds(c[0], c[0]));
+  map.fitBounds(b, {padding:{top:80, bottom:mobile() ? Math.min(innerHeight * .55, 420) : 250, left:50, right:mobile() ? 50 : 80}, maxZoom:16, duration:1200});
+}
+let navStopMk = [];
+function navStopMarks(){
+  navStopMk.forEach(m => m.remove()); navStopMk = [];
+  if(!nav) return;
+  navLeft().forEach((x, k) => {
+    const el = document.createElement('div'); el.className = 'mk-stop'; el.innerHTML = `<b>${k + 1}</b>`;
+    navStopMk.push(new maplibregl.Marker({element:el, anchor:'center'}).setLngLat([x.lng, x.lat]).addTo(map));
+  });
+}
+const STOP_IC = {fuel:GEO_IC.fuel, spot:GEO_IC.poi, friend:'<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>', place:GEO_IC.poi};
 function renderNavPrev(){
-  const R = nav.route, walk = nav.walkTo ? dist(nav.dest, nav.walkTo) : 0;
+  if(nav.pick) return renderStopPick();
+  const R = nav.route, o = nav.opts, walk = nav.walkTo ? dist(nav.dest, nav.walkTo) : 0;
+  const mwTxt = r => r.mw >= 800 ? `${fmtKmS(r.mw)} Autobahn` : 'ohne Autobahn';
+  const card = (k, r) => {
+    const f = o.fast, dd = k === 'land' ? Math.round((r.dur - f.dur) / 60) : 0, dk = k === 'land' ? r.L - f.L : 0;
+    return `<button class="nopt${nav.mode === k ? ' on' : ''}" data-nav="mode" data-m="${k}"><b>${k === 'fast' ? 'Schnellste' : 'Landstraße'}</b><span class="nt">${fmtDurNav(r.dur)} · ${fmtKmS(r.L)}</span>
+      <small>${k === 'land' ? [`${dd >= 0 ? '+' : ''}${dd} Min`, Math.abs(dk) >= 100 ? `${dk >= 0 ? '+' : '−'}${fmtKmS(Math.abs(dk))}` : ''].filter(Boolean).join(' · ') + ' · ohne Autobahn' : mwTxt(r)}</small></button>`;
+  };
+  const opts = o.land ? `<div class="nopts">${card('fast', o.fast)}${card('land', o.land)}</div>`
+    : `<div class="nopt-note">${o.fast.mw >= 800 ? 'Keine sinnvolle Strecke ohne Autobahn gefunden.' : 'Die schnellste Route fährt schon ohne Autobahn.'}</div>`;
+  const stops = navLeft();
   $('#navPrev').innerHTML = `
     <div class="nh"><span class="ni">${svg(UI.nav, 20)}</span><div><b>${esc(nav.name)}</b><span>${nav.walkTo ? `Zum Parkplatz · danach ca. ${fmtMin(walkMin(walk))} zu Fuß` : 'Mit dem Auto'}</span></div></div>
+    ${nav.busy ? '<div class="nopt-note">Route wird neu berechnet …</div>' : opts}
     <div class="nsum"><div><b>${fmtDurNav(R.dur)}</b><span>Fahrzeit</span></div><div><b>${fmtNav(R.L).replace('Jetzt', '0 m')}</b><span>Strecke</span></div><div><b>${clock(R.dur)}</b><span>Ankunft</span></div></div>
+    <div class="nstops">${stops.map((x, k) => `<div class="nstop"><span class="nsi">${k + 1}</span><span class="nsic">${svg(STOP_IC[x.kind] || STOP_IC.place, 14, 2.2)}</span><span class="nsn">${esc(x.name)}</span><button class="nsx" data-nav="rmstop" data-i="${k}" aria-label="Zwischenstopp entfernen">${svg(UI.close, 12)}</button></div>`).join('')}
+      ${stops.length < 3 ? `<button class="nadd" data-nav="addstop">${svg(UI.plus, 14)} Zwischenstopp</button>` : ''}</div>
     ${rwNavHTML()}
-    <div class="btns"><button class="btn" data-nav="cancel">Abbrechen</button><button class="btn primary" data-nav="go">${svg(UI.nav, 16)} Los</button></div>`;
+    <div class="btns"><button class="btn" data-nav="cancel">Abbrechen</button><button class="btn primary" data-nav="go" ${nav.busy ? 'disabled' : ''}>${svg(UI.nav, 16)} Los</button></div>`;
+}
+/* Zwischenstopp wählen: Tankstelle an der Strecke, eigener Spot oder ein Freund, der gerade live ist */
+async function stopPickLoad(kind){
+  const P = nav.pick = {kind, list:null, err:''}; renderNavPrev();
+  const R = nav.opts.fast, near = x => { const pr = routeProject(R, R.toXY(x.lng, x.lat)); return {...x, along:pr.along, off:pr.off}; };
+  try{
+    if(kind === 'fuel'){
+      const pts = []; for(let a = 0; a <= R.L; a += Math.max(1500, R.L / 120)){ const q = routeAt(R, a); pts.push(`${q.lat.toFixed(5)},${q.lng.toFixed(5)}`); }
+      const q = `[out:json][timeout:20];node["amenity"="fuel"](around:1200,${pts.join(',')});out 120;`;
+      let j = null;
+      for(const base of OVERPASS){ try{ const r = await fetch(base, {method:'POST', body:'data=' + encodeURIComponent(q)}); if(r.ok){ j = await r.json(); break; } }catch(e){} }
+      if(!j) throw 0;
+      P.list = (j.elements || []).map(e => near({lat:e.lat, lng:e.lon, name:(e.tags && (e.tags.name || e.tags.brand)) || 'Tankstelle', sub:e.tags && e.tags.brand && e.tags.name && e.tags.brand !== e.tags.name ? e.tags.brand : ''}))
+        .filter(x => x.off <= 1300 && x.along > 300).sort((a, b) => a.along - b.along).slice(0, 25);
+    }
+    if(kind === 'spot') P.list = data.spots.filter(x => dist(x, nav.dest) > 60 && !nav.stops.some(y => dist(x, y) < 30)).map(x => near({lat:x.lat, lng:x.lng, name:x.name, sub:catById(x.cat).name})).sort((a, b) => (a.off > 5000) - (b.off > 5000) || (a.off <= 5000 ? a.along - b.along : a.off - b.off)).slice(0, 20);
+    if(kind === 'friend') P.list = liveFresh().map(x => near({lat:x.lat, lng:x.lng, name:(WS.members.find(m => m._id === x.id) || {}).name || x.by, sub:x.v >= 6 ? `fährt gerade · ${Math.round(x.v)} km/h` : 'steht gerade'}));
+  }catch(e){ P.err = 'Ging gerade nicht. Prüfe dein Internet.'; P.list = []; }
+  if(nav && nav.pick === P) renderNavPrev();
+}
+function renderStopPick(){
+  const P = nav.pick, k = P.kind, tabs = [['fuel', 'Tankstelle'], ['spot', 'Spot'], ['friend', 'Freund']];
+  const row = (x, i) => `<button class="item geo-it" data-nav="setstop" data-i="${i}"><span class="ic geo-ic k-${k === 'fuel' ? 'fuel' : k === 'friend' ? 'coord' : 'poi'}">${svg(STOP_IC[k], 16, 2)}</span><span class="tx"><span class="t">${esc(x.name)}</span><span class="s">${esc([x.sub, x.off <= 5000 ? `nach ${fmtKmS(x.along)}${x.off > 150 ? ` · ${fmtDist(x.off)} neben der Strecke` : ''}` : `${fmtKmS(x.off)} von der Strecke weg`].filter(Boolean).join(' · '))}</span></span></button>`;
+  const empty = {fuel:'Keine Tankstelle direkt an der Strecke gefunden.', spot:'Du hast noch keine Spots.', friend:'Gerade ist niemand aus der Crew live.'}[k];
+  $('#navPrev').innerHTML = `
+    <div class="nh"><span class="ni">${svg(UI.plus, 20)}</span><div><b>Zwischenstopp</b><span>Wird in die Route eingebaut</span></div></div>
+    <div class="seg2">${tabs.map(([t, n]) => `<button class="${t === k ? 'on' : ''}" data-nav="picktab" data-k="${t}">${n}</button>`).join('')}</div>
+    <div class="npick">${!P.list ? '<div class="nopt-note">Suche …</div>' : P.err ? `<div class="nopt-note">${esc(P.err)}</div>` : P.list.length ? P.list.map(row).join('') : `<div class="nopt-note">${empty}</div>`}</div>
+    <div class="btns"><button class="btn" data-nav="pickback">Zurück</button></div>`;
 }
 function startNav(){
-  if(!nav) return;
+  if(!nav || nav.busy) return;
+  nav.pick = null; setSrc('nav-alt', FC([]));
   navPrevOn = false; document.body.classList.remove('navprev');
   nav.active = true; document.body.classList.add('nav');
   enterCockpit();
@@ -7285,9 +7412,9 @@ function startNav(){
 function endNav(fromExit){
   if(!nav) return;
   const wasActive = nav.active;
-  nav = null; navPrevOn = false;
+  nav = null; navPrevOn = false; navStopMarks();
   document.body.classList.remove('nav', 'navprev');
-  setSrc('nav-route', FC([])); setSrc('nav-wx', FC([]));
+  setSrc('nav-route', FC([])); setSrc('nav-wx', FC([])); setSrc('nav-alt', FC([]));
   if(wasActive && !fromExit && ckOn) exitCockpit();
   if(mobile()) setSnap(snap, false);
 }
@@ -7299,6 +7426,9 @@ function onNavFix(pt, acc){
   if(pr.off > 45 && acc <= 40) nav.off++; else nav.off = 0;
   if(pr.off <= 45 && pr.along > nav.prog) nav.prog = pr.along;
   if(nav.off >= 3 && Date.now() - nav.lastReroute > 10000){ reroute(pt); return; }
+  let hit = false;
+  (R.viaAt || []).forEach((a, k) => { const x = (R.viaStops || [])[k]; if(x && !x.done && (nav.prog > a - 30 || dist(pt, x) < 40)){ x.done = true; hit = true; toast(`Zwischenstopp „${x.name}“ erreicht`); } });
+  if(hit) navStopMarks();
   if(R.L - nav.prog < 30 || dist(pt, nav.dest) < 25){ arrive(); return; }
   setSrc('nav-route', routeFC(remainingCoords(R, nav.prog)));
   if(nav.rw) rwNavDraw();
@@ -7307,10 +7437,12 @@ function onNavFix(pt, acc){
 async function reroute(pt){
   nav.lastReroute = Date.now(); nav.off = 0;
   toast('Neue Route wird berechnet …');
-  const r = await fetchRoute(pt, nav.dest);
+  const pts = navPts({lat:pt.lat, lng:pt.lng}), names = navLeft().map(x => x.name);
+  const rs = await osrm(pts, nav.mode === 'land' ? '&exclude=motorway' : '');
+  const r = rs ? rs[0] : (nav.mode === 'land' ? await osrm(pts).then(x => x && x[0]) : null);
   if(!nav || !nav.active) return;
   if(!r){ toast('Neue Route gerade nicht verfügbar.'); return; }
-  nav.route = prepRoute(r); nav.prog = 0;
+  nav.route = prepRoute(r, names); nav.route.viaStops = navLeft(); nav.prog = 0; navStopMarks();
   setSrc('nav-route', routeFC(nav.route.coords)); renderNav(); rwNav();
 }
 function arrive(){
@@ -7341,6 +7473,18 @@ document.addEventListener('click', e => {
   const a = b.dataset.nav;
   if(a === 'go') startNav();
   if(a === 'cancel') endNav();
+  if(!nav) return;
+  if(a === 'mode' && !nav.busy) navPick(b.dataset.m);
+  if(a === 'addstop') stopPickLoad(nav.pick ? nav.pick.kind : 'fuel');
+  if(a === 'picktab') stopPickLoad(b.dataset.k);
+  if(a === 'pickback'){ nav.pick = null; renderNavPrev(); }
+  if(a === 'rmstop'){ const x = navLeft()[+b.dataset.i]; nav.stops = nav.stops.filter(y => y !== x); navReplan(); }
+  if(a === 'setstop' && nav.pick && nav.pick.list){
+    const x = nav.pick.list[+b.dataset.i]; if(!x) return;
+    nav.stops.push({lat:x.lat, lng:x.lng, name:x.name, kind:nav.pick.kind, along:x.along});
+    nav.stops.sort((p, q) => (p.along || 0) - (q.along || 0));
+    nav.pick = null; navReplan().then(ok => { if(ok) navFit(); });
+  }
   if(a === 'end') endNav();
 });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && navPrevOn) endNav(); });
