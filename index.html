@@ -3356,19 +3356,31 @@ function catFor(name, color, icon){
   return c;
 }
 let incoming = null, incomingM = null;
+// Geräte-Link („Auf weiterem Gerät nutzen“) oder Wiederherstellungscode erkennen – egal ob geöffnet oder eingefügt
+function accountFromText(raw){
+  raw = String(raw || '').trim(); if(!raw) return null;
+  const q = new URLSearchParams(raw.includes('#') ? raw.slice(raw.indexOf('#') + 1) : raw.replace(/^\?/, ''));
+  if(q.get('link') && /^[a-z0-9]{10,64}$/i.test(q.get('link'))){
+    const jc = q.get('join');
+    return {type:'link', lo:{dev:q.get('link'), name:(q.get('n') || '').slice(0, 24), code:jc && jc.length >= 20 ? jc : null, g:q.get('g') || 'Gruppe', bk:/^[A-Za-z0-9_-]{43}$/.test(q.get('bk') || '') ? q.get('bk') : null}};
+  }
+  const m = raw.match(/SPOTS-[A-Za-z0-9_-]{40,}/);
+  if(m) return {type:'restore', code:m[0]};
+  if(q.get('restore') && /^[A-Za-z0-9_-]{40,}$/.test(q.get('restore'))) return {type:'restore', code:'SPOTS-' + q.get('restore')};
+  return null;
+}
+function openAccount(acc){
+  if(acc.type === 'link') return openLinkAccept(acc.lo);
+  if(acc.type === 'restore') return openBackup('restore', acc.code);
+}
 function handleHash(){
   const h = location.hash.slice(1); if(!h) return;
   const q = new URLSearchParams(h);
   try{
-    if(q.get('link') && /^[a-z0-9]{10,64}$/i.test(q.get('link'))){
+    const acc = accountFromText(location.hash);
+    if(acc){
       hashSpot = true;   // keine Einführung, das Gerät wird verknüpft
-      const jc = q.get('join');
-      const lo = {dev:q.get('link'), name:(q.get('n') || '').slice(0, 24), code:jc && jc.length >= 20 ? jc : null, g:q.get('g') || 'Gruppe', bk:/^[A-Za-z0-9_-]{43}$/.test(q.get('bk') || '') ? q.get('bk') : null};
-      const tryOpen = () => document.querySelector('#splash') ? setTimeout(tryOpen, 250) : openLinkAccept(lo);   // erst wenn der Startbildschirm weg ist
-      setTimeout(tryOpen, 300);
-    } else if(q.get('restore')){
-      hashSpot = true;
-      const rc = q.get('restore'), tryOpen = () => document.querySelector('#splash') ? setTimeout(tryOpen, 250) : openBackup('restore', 'SPOTS-' + rc);
+      const tryOpen = () => document.querySelector('#splash') ? setTimeout(tryOpen, 250) : openAccount(acc);   // erst wenn der Startbildschirm weg ist
       setTimeout(tryOpen, 300);
     } else if(q.get('spot')){
       hashSpot = true;
@@ -3407,7 +3419,7 @@ function renderOnb(){
       <li><b>🛣️ Fahrten aufzeichnen</b><span>Cockpit, Tempo-Verlauf, Rennstrecken und Geister-Rennen</span></li>
       <li><b>👥 Mit der Crew teilen</b><span>News, Bestzeiten, Live-Standort und Wochenrückblick</span></li></ul>
     <button class="btn primary wide" data-onb="next">Los geht's</button>
-    ${window.crypto?.subtle ? '<button class="txtbtn" data-onb="restore" style="align-self:center">Backup wiederherstellen</button>' : ''}`;
+    <button class="txtbtn" data-onb="restore" style="align-self:center">Ich habe schon ein Konto</button>`;
   if(k === 'install'){
     const ios = isIOS();
     body = `<div class="onb-head"><span class="onb-ic">📲</span><h2>Zum Home-Bildschirm</h2><p>Dann startet Spots wie eine normale App, im Vollbild und auch ohne Netz.</p></div>
@@ -3470,6 +3482,8 @@ $('#onb').addEventListener('click', async e => {
   if(a === 'join' && onbInvite){ b.disabled = true; const ok = await onbJoinChecked(onbInvite.code, onbInvite.name); b.disabled = false; if(ok) next(); return; }
   if(a === 'paste'){ try{ $('#onb-link').value = (await navigator.clipboard.readText()).trim(); }catch(_){ onbErr = 'Einfügen ging nicht – halt das Feld gedrückt und wähle „Einsetzen“.'; renderOnb(); } return; }
   if(a === 'link'){
+    const acc = accountFromText($('#onb-link').value);
+    if(acc){ $('#onb').hidden = true; return openAccount(acc); }
     const raw = ($('#onb-link').value || '').trim(), m = raw.match(/join=([a-z0-9]{20,})/i), code = m ? m[1] : raw.replace(/[^a-z0-9]/gi, '');
     if(code.length < 20){ onbErr = 'Das sieht nicht nach einem Einladungslink aus. Kopier den ganzen Link.'; return renderOnb(); }
     const gm = raw.match(/[?&#]g=([^&]+)/), gname = gm ? decodeURIComponent(gm[1]) : 'Gruppe';
@@ -3617,7 +3631,7 @@ async function joinCheck(code, gname, name){
   if(c.moved) return 'Dieser Einladungslink ist abgelaufen. Frag nach dem neuen Link.';
   if(c.ban && c.ban[myId()]) return `Du bist in „${gname}“ gesperrt.`;
   const o = nameOwner(name, pk.mems, c);
-  return o ? `In „${gname}“ gibt es schon ${o.banned ? 'einen gesperrten Namen' : 'jemanden namens'} „${o.name}“. Nimm bitte einen anderen Namen.` : '';
+  return o ? `In „${gname}“ gibt es schon ${o.banned ? 'einen gesperrten Namen' : 'jemanden namens'} „${o.name}“. ${o.banned ? 'Nimm bitte einen anderen Namen.' : 'Bist du das auf einem anderen Gerät? Dann melde dich mit dem Geräte-Link oder deinem Wiederherstellungscode an. Sonst nimm einen anderen Namen.'}` : '';
 }
 async function crewSave(patch){
   try{ const cur = await fsGet('members', CREW_DOC); delete cur._id; WS.crew = cur; }catch(e){}   // frischester Stand, falls das zweite Gerät auch etwas geändert hat
@@ -3679,12 +3693,13 @@ function openGroupDlg(kind, arg){
   const nameField = `<label class="f">Dein Name in der Gruppe<input class="inp" id="gp-me" value="${nm}" maxlength="24" placeholder="z. B. Alex"></label>`;
   let body = '';
   if(kind === 'join') body = `<h2>Gruppe „${esc(arg.name)}“ beitreten?</h2><div class="muted">Danach siehst du die Spots und Bestenlisten der Gruppe und kannst selbst Spots teilen.</div>${nameField}
-      <div class="btns"><button class="btn" data-gp="cancel">Abbrechen</button><button class="btn primary" data-gp="join">Beitreten</button></div>`;
+      <div class="btns"><button class="btn" data-gp="cancel">Abbrechen</button><button class="btn primary" data-gp="join">Beitreten</button></div>
+      <button class="txtbtn" data-gp="tocode" style="align-self:center">Schon in der Gruppe? Mit Geräte-Link anmelden</button>`;
   if(kind === 'create') body = `<h2>Gruppe erstellen</h2><div class="muted">Du bekommst einen Einladungslink für deine Freunde. Nur wer den Link hat, kommt rein.</div>
       <label class="f">Name der Gruppe<input class="inp" id="gp-name" value="${esc((prefs.group && prefs.group.name) || '')}" maxlength="30" placeholder="z. B. Freitagsrunde"></label>${nameField}
       <div class="btns"><button class="btn" data-gp="cancel">Abbrechen</button><button class="btn primary" data-gp="create">Erstellen</button></div>
       <button class="txtbtn" data-gp="tocode" style="align-self:center">Schon eingeladen? Link einfügen</button>`;
-  if(kind === 'code') body = `<h2>Link einfügen</h2><div class="muted">Füg einen Einladungslink oder einen geteilten Spot-Link ein. Praktisch, wenn du die App vom Home-Bildschirm öffnest und Links sonst im Browser landen.</div>
+  if(kind === 'code') body = `<h2>Link einfügen</h2><div class="muted">Einladungslink, Spot-Link, Geräte-Link oder Wiederherstellungscode. Mit Geräte-Link oder Code bist du hier derselbe wie auf deinem Handy.</div>
       <label class="f">Link oder Code<input class="inp" id="gp-code" maxlength="300" autocomplete="off"></label>${nameField}
       <div class="btns"><button class="btn" data-gp="cancel">Abbrechen</button><button class="btn primary" data-gp="code">Beitreten</button></div>`;
   if(kind === 'name') body = `<h2>Wie heißt du?</h2><div class="muted">So sehen die anderen, von wem ein Spot oder eine Zeit kommt.</div>${nameField}
@@ -3699,6 +3714,8 @@ $('#modal').addEventListener('click', async e => {
   if(a === 'cancel'){ gpPending = null; $('#modal').hidden = true; return; }
   if(a === 'tocode'){ openGroupDlg('code', gpPending.arg); return; }
   if(a === 'code'){   // eingefügter Spot-Link (z. B. aus WhatsApp, wenn die App vom Home-Bildschirm läuft)
+    const acc = accountFromText($('#gp-code').value);
+    if(acc){ gpPending = null; $('#modal').hidden = true; return openAccount(acc); }   // eigenes Konto vom anderen Gerät
     const sm = $('#gp-code').value.match(/#spot=([A-Za-z0-9_-]+)/);
     if(sm){ try{ const o = JSON.parse(b64d(sm[1])); gpPending = null; showIncoming(o); }catch(_){ err('Der Spot-Link ist kaputt.'); } return; }
   }
@@ -4822,7 +4839,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.03';
+const VERSION = '2026.10.06.04';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -5053,7 +5070,7 @@ const linkURL = () => `${appURL()}#link=${myId()}&n=${encodeURIComponent(myName(
 function openLinkDlg(){
   $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Weiteres Gerät"><div class="pad" style="padding:18px 16px 16px;gap:12px">
     <h2>Auf weiterem Gerät nutzen</h2>
-    <div class="muted">Öffne diesen Link auf deinem PC oder zweiten Handy. Dort bist du dann auch „${esc(myName())}“ in „${esc((grp() || {}).name || '')}“${isAdmin() ? ' – mit deinen Admin-Rechten' : ''}.</div>
+    <div class="muted">Öffne diesen Link auf deinem PC oder zweiten Handy – oder füg ihn dort in Spots unter Crew › Link einfügen ein. Dort bist du dann auch „${esc(myName())}“ in „${esc((grp() || {}).name || '')}“${isAdmin() ? ' – mit deinen Admin-Rechten' : ''}. Nicht der Einladungslink verwenden, der macht ein neues Konto.</div>
     <div class="lnk-box">${esc(linkURL())}</div>
     <div class="btns"><button class="btn" data-lk="copy">Link kopieren</button><button class="btn primary" data-lk="share">${svg(UI.share, 15)} An mich senden</button></div>
     <div class="onb-note"><b>Nur an dich selbst schicken.</b> Wer diesen Link öffnet, ist in der Crew du.</div>
@@ -5080,10 +5097,14 @@ $('#modal').addEventListener('click', e => {
   if(a === 'copyinv') return copyText(inviteURL(), 'Einladungslink kopiert');
   if(a === 'shareinv') return shareURL(inviteURL(), `Gruppe ${grp().name}`, `Neuer Link für „${grp().name}“ bei Spots:`);
   if(a === 'back'){ renderSettings(); return; }
-  if(a === 'no'){ linkPending = null; $('#modal').hidden = true; return; }
+  if(a === 'no'){ linkPending = null; $('#modal').hidden = true; if(onbNeeded() && $('#onb').hidden){ $('#onb').hidden = false; renderOnb(); } return; }
   if(a === 'yes' && linkPending){
     const o = linkPending; linkPending = null;
     liveStop(true);
+    const oldDev = prefs.dev, oldGrp = grp();
+    if(oldDev && oldDev !== o.dev && oldGrp && FB && (!o.code || o.code === oldGrp.code)){   // das zweite Konto, das dieses Gerät aus Versehen angelegt hat, wieder entfernen
+      fsDel('members', oldDev).catch(() => {}); fsDel('live', oldDev).catch(() => {});
+    }
     prefs.dev = o.dev; if(o.name) prefs.myName = o.name; prefs.linkAdopt = true; prefs.memberSig = ''; prefs.onb = 1;
     if(o.code) prefs.group = {code:o.code, name:o.g, joined:Date.now()};
     if(o.bk && o.bk !== prefs.bkKey){ prefs.bkKey = o.bk; bk.sent = {}; bkSave(); }   // gleicher Schlüssel wie das andere Gerät, eigenes Backup neu verschlüsseln
@@ -5307,14 +5328,14 @@ function bkUI(){
 function renderBackup(){
   const ti = $('#bk-in'); if(ti) bkCodeIn = ti.value;
   const has = window.crypto && crypto.subtle, n = bk.n;
-  const head = `<div class="top"><strong>${bkMode === 'restore' ? 'Backup wiederherstellen' : 'Backup'}</strong><button class="icon-btn press" data-bk="close" aria-label="Schließen">${svg(UI.close, 14)}</button></div>`;
-  const restore = `<label class="f">Wiederherstellungscode<textarea class="inp bk-code-in" id="bk-in" rows="3" placeholder="SPOTS-…" autocomplete="off" spellcheck="false">${esc(bkCodeIn)}</textarea></label>
+  const head = `<div class="top"><strong>${bkMode === 'restore' ? 'Mit deinem Konto anmelden' : 'Backup'}</strong><button class="icon-btn press" data-bk="close" aria-label="Schließen">${svg(UI.close, 14)}</button></div>`;
+  const restore = `<label class="f">Code oder Geräte-Link<textarea class="inp bk-code-in" id="bk-in" rows="3" placeholder="SPOTS-… oder https://…#link=…" autocomplete="off" spellcheck="false">${esc(bkCodeIn)}</textarea></label>
     ${navigator.clipboard && navigator.clipboard.readText ? '<button class="txtbtn" data-bk="paste" style="align-self:flex-start">Aus der Zwischenablage einfügen</button>' : ''}
     <div class="err">${esc(bkErr)}</div>
     <button class="btn primary" data-bk="restore">Wiederherstellen</button>`;
   let body;
   if(!has) body = `<div class="muted">Dieser Browser kann nicht verschlüsseln. Nutze „Backup-Datei speichern“.</div>`;
-  else if(bkMode === 'restore') body = `<div class="muted">Füg den Code ein, den du dir beim Backup gespeichert hast. Spots, Fahrten und Fotos kommen dazu – nichts auf diesem Gerät wird gelöscht.</div>${restore}`;
+  else if(bkMode === 'restore') body = `<div class="muted">Füg deinen Wiederherstellungscode ein – oder den Link aus „Auf weiterem Gerät nutzen“ von deinem Handy. Danach bist du hier derselbe, deine Spots und Fahrten kommen dazu.</div>${restore}`;
   else if(!grp()) body = `<div class="muted">Das Backup liegt verschlüsselt bei deiner Gruppe. Erstell eine Gruppe – auch nur für dich – oder tritt einer bei.</div>
     <div class="btns"><button class="btn" data-bk="gjoin">Beitreten</button><button class="btn primary" data-bk="gcreate">Gruppe erstellen</button></div>
     <div class="set-sec">Backup wiederherstellen</div>${restore}`;
@@ -5404,6 +5425,7 @@ $('#modal').addEventListener('click', async e => {
   if(a === 'gjoin'){ $('#modal').hidden = true; openGroupDlg('code', {}); return; }
   if(a === 'paste'){ try{ bkCodeIn = (await navigator.clipboard.readText()).trim(); bkErr = ''; }catch(_){ bkErr = 'Einfügen ging nicht – halt das Feld gedrückt und wähle „Einsetzen“.'; } return renderBackup(); }
   if(a === 'restore'){
+    const acc = accountFromText(bkCodeIn); if(acc && acc.type === 'link'){ bkCodeIn = ''; return openLinkAccept(acc.lo); }
     const o = bkParse(bkCodeIn); if(!o){ bkErr = 'Das ist kein gültiger Wiederherstellungscode. Kopier ihn komplett (beginnt mit SPOTS-).'; return renderBackup(); }
     const same = grp() && grp().code === o.g && myId() === o.d;   // gleiche Person: nur Daten zusammenführen
     return bkRestore(o, !same && (!grp() || !myName() || (!tracks.length && !data.spots.some(s => !String(s.id).startsWith('bsp')))));
