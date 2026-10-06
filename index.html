@@ -1929,10 +1929,26 @@ const SAMPLE = [
   {id:'bsp2', name:'Eibsee Nordufer', cat:'baden', notes:'Beispiel-Spot (Koordinaten ungefähr) – kannst du löschen.\nRuhige Bucht, früh morgens kommen.', lat:47.4603, lng:10.9745, walk:true, parking:{lat:47.4569, lng:10.9921, note:'Großer Parkplatz am Eibsee'}, created:Date.now()-1}
 ];
 
+/* Fremddaten säubern: Farben und IDs landen in HTML-Attributen – nur harmlose Zeichen zulassen */
+const okColor = c => typeof c === 'string' && /^#[0-9a-f]{3,8}$/i.test(c) ? c : '#868e96';
+const SAFE_ID = new Set(['id', '_id', 'cat', 'dev', 'car', 'docId', 'icon', 'fromDrive', 'fromTrack', 'ws', 'by_dev', 'sid', 'tid', 'cid', 'rid']);
+function sanitize(o, depth = 0){
+  if(!o || typeof o !== 'object' || depth > 12) return o;
+  if(Array.isArray(o)){ for(let i = 0; i < o.length; i++) if(o[i] && typeof o[i] === 'object') sanitize(o[i], depth + 1); return o; }
+  for(const k of Object.keys(o)){
+    const v = o[k];
+    if(k === '__proto__' || k === 'constructor'){ delete o[k]; continue; }
+    if(k === 'color' || k === 'col') o[k] = okColor(v);
+    else if(typeof v === 'string' && SAFE_ID.has(k)) o[k] = v.replace(/[^\w.:-]/g, '').slice(0, 80);
+    else if(v && typeof v === 'object') sanitize(v, depth + 1);
+  }
+  return o;
+}
+const sjson = t => sanitize(JSON.parse(t));
 function load(){
   try{
     const raw = localStorage.getItem(KEY);
-    if(raw){ const d = JSON.parse(raw); if(d && Array.isArray(d.spots) && Array.isArray(d.cats)) return d; }
+    if(raw){ const d = sjson(raw); if(d && Array.isArray(d.spots) && Array.isArray(d.cats)) return d; }
   }catch(e){}
   return {cats: structuredClone(DEFAULT_CATS), spots: structuredClone(SAMPLE)};
 }
@@ -3561,7 +3577,7 @@ function shareURL(url, title, text){
 }
 function catFor(name, color, icon){
   let c = data.cats.find(x => x.name.toLowerCase() === String(name || '').toLowerCase());
-  if(!c){ c = {id:uid(), name:name || 'Geteilt', color:color || '#868e96', icon:ICONS[icon] ? icon : 'pin'}; data.cats.push(c); }
+  if(!c){ c = {id:uid(), name:String(name || 'Geteilt').slice(0, 40), color:okColor(color), icon:ICONS[icon] ? icon : 'pin'}; data.cats.push(c); }
   return c;
 }
 let incoming = null, incomingM = null;
@@ -3593,7 +3609,7 @@ function handleHash(){
       setTimeout(tryOpen, 300);
     } else if(q.get('spot')){
       hashSpot = true;
-      const o = JSON.parse(b64d(q.get('spot')));
+      const o = sjson(b64d(q.get('spot')));
       if(typeof o.a === 'number' && typeof o.o === 'number') showIncoming(o);
     } else if(q.get('join')){
       if(onbNeeded()) onbInvite = {code:q.get('join'), name:q.get('g') || 'Gruppe'};
@@ -3762,7 +3778,7 @@ async function fsList(col, meta){
     const r = await fetch(`${fsURL(col)}?pageSize=300${meta ? '&mask.fieldPaths=m&mask.fieldPaths=t' : ''}${tok ? '&pageToken=' + encodeURIComponent(tok) : ''}&key=${FB.apiKey}`);
     if(!r.ok) throw new Error('Firestore ' + r.status);
     const j = await r.json();
-    (j.documents || []).forEach(d => { try{ const f = d.fields || {}, v = JSON.parse((meta && f.m ? f.m : f.d).stringValue); v._id = d.name.split('/').pop(); v._t = +((f.t && (f.t.integerValue || f.t.doubleValue)) || 0); out.push(v); }catch(e){} });
+    (j.documents || []).forEach(d => { try{ const f = d.fields || {}, v = sjson((meta && f.m ? f.m : f.d).stringValue); v._id = d.name.split('/').pop(); v._t = +((f.t && (f.t.integerValue || f.t.doubleValue)) || 0); out.push(v); }catch(e){} });
     if(!j.nextPageToken) break; tok = j.nextPageToken;
   }
   return out;
@@ -3770,7 +3786,7 @@ async function fsList(col, meta){
 async function fsGet(col, id){
   const r = await fetch(`${fsURL(col, id)}?key=${FB.apiKey}`);
   if(!r.ok) throw new Error('Firestore ' + r.status);
-  const d = await r.json(), v = JSON.parse(d.fields.d.stringValue); v._id = id; return v;
+  const d = await r.json(), v = sjson(d.fields.d.stringValue); v._id = id; return v;
 }
 async function fsPut(col, id, obj, meta){
   const fields = {d:{stringValue:JSON.stringify(obj)}, t:{integerValue:String(Date.now())}};
@@ -3830,7 +3846,7 @@ const docFields = obj => ({d:{stringValue:JSON.stringify(obj)}, t:{integerValue:
 // Mitglieder + Crew-Dokument einer (noch fremden) Gruppe, z. B. vor dem Beitritt
 async function crewPeek(code){
   const list = await fsRawList(code, 'members'), mems = []; let crew = null;
-  list.forEach(d => { try{ const v = JSON.parse(d.fields.d.stringValue); v._id = d.id; if(d.id === CREW_DOC) crew = v; else mems.push(v); }catch(e){} });
+  list.forEach(d => { try{ const v = sjson(d.fields.d.stringValue); v._id = d.id; if(d.id === CREW_DOC) crew = v; else mems.push(v); }catch(e){} });
   return {mems, crew};
 }
 // Darf ich mit diesem Namen in diese Gruppe? Liefert eine Fehlermeldung oder ''
@@ -3926,7 +3942,7 @@ $('#modal').addEventListener('click', async e => {
     const acc = accountFromText($('#gp-code').value);
     if(acc){ gpPending = null; $('#modal').hidden = true; return openAccount(acc); }   // eigenes Konto vom anderen Gerät
     const sm = $('#gp-code').value.match(/#spot=([A-Za-z0-9_-]+)/);
-    if(sm){ try{ const o = JSON.parse(b64d(sm[1])); gpPending = null; showIncoming(o); }catch(_){ err('Der Spot-Link ist kaputt.'); } return; }
+    if(sm){ try{ const o = sjson(b64d(sm[1])); gpPending = null; showIncoming(o); }catch(_){ err('Der Spot-Link ist kaputt.'); } return; }
   }
   const me_ = ($('#gp-me') && $('#gp-me').value.trim()) || '';
   if(!me_) return err('Gib deinen Namen ein.');
@@ -5048,7 +5064,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.11';
+const VERSION = '2026.10.06.12';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -5443,7 +5459,7 @@ async function bkPut(name, str){
 async function bkGet1(code, docId){   // aus einer bestimmten Gruppe lesen (auch wenn dieses Gerät noch in keiner ist)
   const r = await fetch(`${fsBase(code)}/${BK_COL}/${encodeURIComponent(docId)}?key=${FB.apiKey}`);
   if(!r.ok) throw new Error('Firestore ' + r.status);
-  return JSON.parse((await r.json()).fields.d.stringValue);
+  return sjson((await r.json()).fields.d.stringValue);
 }
 async function bkGet(code, dev, bid, name, n){
   const first = await bkGet1(code, bkDoc(bid, name, 0, dev)); let s = first.x; n = first.n || n || 1;
@@ -5589,6 +5605,7 @@ async function bkRestore(src, adopt){
   }
   let ns = 0, nt = 0, np = 0;
   for(const {bid, c:core} of cores){
+    sanitize(core);
     (core.data && core.data.cats || []).forEach(c => { if(c && c.id && !data.cats.some(x => x.id === c.id)) data.cats.push(c); });
     const real = (core.data && core.data.spots || []).filter(s => !String(s.id).startsWith('bsp'));
     if(real.length) data.spots = data.spots.filter(s => !String(s.id).startsWith('bsp'));
@@ -5878,7 +5895,7 @@ $('#importBtn').addEventListener('click', () => $('#importFile').click());
 $('#importFile').addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = ''; if(!f) return;
   try{
-    const j = JSON.parse(await f.text());
+    const j = sjson(await f.text());
     if(!Array.isArray(j.spots) && !Array.isArray(j.tracks) && !Array.isArray(j.runs) && !Array.isArray(j.courses)) throw 0;
     (j.cats || []).forEach(c => { if(c && c.id && !data.cats.some(x => x.id === c.id)) data.cats.push(c); });
     let n = 0, nt = 0;
@@ -6049,19 +6066,57 @@ function fitAll(animate){
 /* ================= Strecken ================= */
 const TKEY = 'meine-spots-tracks', RKEY = 'meine-spots-rec';
 let tracks = [];
-try{ tracks = JSON.parse(localStorage.getItem(TKEY) || '[]'); if(!Array.isArray(tracks)) tracks = []; }catch(e){ tracks = []; }
+/* Fahrten liegen in IndexedDB (viel mehr Platz als localStorage). Alte Daten aus localStorage werden einmalig übernommen. */
+const KV = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('spots-kv', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result); r.onerror = () => { dbp = null; rej(r.error); };
+  }));
+  const run = async (mode, fn) => { const db = await open(); return new Promise((res, rej) => {
+    const t = db.transaction('kv', mode), rq = fn(t.objectStore('kv'));
+    t.oncomplete = () => res(rq.result); t.onerror = t.onabort = () => rej(t.error);
+  }); };
+  return {get:k => run('readonly', st => st.get(k)), put:(k, v) => run('readwrite', st => st.put(v, k))};
+})();
+let tracksReady = false, tracksLS = false, tracksSaveT = null, tracksSaving = Promise.resolve();
+try{ const raw = localStorage.getItem(TKEY); if(raw){ tracks = sjson(raw); tracksLS = true; } if(!Array.isArray(tracks)) tracks = []; }catch(e){ tracks = []; }
+(async () => {
+  let stored = null;
+  try{ stored = await KV.get('tracks'); }catch(e){}
+  if(Array.isArray(stored)){
+    sanitize(stored);
+    // was vor dem Laden schon neu dazukam (z. B. wiederhergestellte Aufzeichnung), behalten
+    const ids = new Set(stored.map(t => t.id));
+    tracks = [...tracks.filter(t => !ids.has(t.id)), ...stored].sort((a, b) => (b.created || 0) - (a.created || 0));
+  }
+  tracksReady = true;
+  if(tracksLS || !Array.isArray(stored)) await tracksWrite();
+  if(tracksLS){ try{ if(Array.isArray(await KV.get('tracks'))) localStorage.removeItem(TKEY); }catch(e){} }
+  riskCache = new WeakMap();
+  try{ if(stored && stored.length){ renderList(); if(tab === 'tracks') renderTracksHead(); updateTrackLayers(); } }catch(e){}
+})();
+async function tracksWrite(){
+  try{ await KV.put('tracks', tracks); return true; }
+  catch(e){
+    try{ localStorage.setItem(TKEY, JSON.stringify(tracks)); tracksLS = true; return true; }
+    catch(_){ toast('Fahrten konnten nicht gespeichert werden – Speicher voll. Exportiere deine Daten.'); return false; }
+  }
+}
 let rec = null, recWatch = null, recTick = null, wake = null, followMe = true, lastPersist = 0;
 let tab = 'spots', selTrack = null, trackRenaming = false, trackDelArmed = false, discardArmed = false;
 
 let riskCache = new WeakMap();
 function saveTracks(){
   riskCache = new WeakMap(); bkDirty();
-  try{ localStorage.setItem(TKEY, JSON.stringify(tracks)); return true; }
-  catch(e){ toast('Speicher voll. Exportiere deine Daten und lösche alte Strecken.'); return false; }
+  if(!tracksReady){ setTimeout(saveTracks, 300); return true; }
+  tracksSaving = tracksSaving.then(tracksWrite);
+  return true;
 }
 function persistRec(force){
   if(!rec) { try{ localStorage.removeItem(RKEY); }catch(e){} return; }
-  if(!force && Date.now() - lastPersist < 4000) return;
+  if(!force && Date.now() - lastPersist < 2000) return;
   lastPersist = Date.now(); rec.lastSeen = Date.now();
   try{ localStorage.setItem(RKEY, JSON.stringify(rec)); }catch(e){}
 }
@@ -6071,7 +6126,7 @@ const fmtDur = ms => { const t = Math.floor(ms/1000), h = Math.floor(t/3600), m 
   return h ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}` : `${m}:${String(sec).padStart(2,'0')}`; };
 const fmtDurLong = ms => { const m = Math.round(ms/60000); return m < 60 ? `${m} Min` : `${Math.floor(m/60)} h ${m%60} Min`; };
 const fmtSpd = v => `${(v*3.6).toFixed(1).replace('.', ',')} km/h`;
-const fmtDate = ts => new Date(ts).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+const fmtDate = ts => { const d = new Date(ts); return d.toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'short', ...(d.getFullYear() !== new Date().getFullYear() ? {year:'numeric'} : {}), hour:'2-digit', minute:'2-digit'}); };
 const segFeatures = (segs, props = {}) => segs.filter(sg => sg.length > 1).map(sg => ({type:'Feature', properties:props, geometry:{type:'LineString', coordinates:sg.map(q => [q[0], q[1]])}}));
 
 /* Tabs */
@@ -6124,7 +6179,10 @@ function startWatch(){
   }, {enableHighAccuracy:true, maximumAge:0, timeout:30000});
 }
 function stopWatch(){ if(recWatch != null){ navigator.geolocation.clearWatch(recWatch); recWatch = null; } }
-function startTick(){ clearInterval(recTick); recTick = setInterval(updateRecUI, 1000); }
+function startTick(){ clearInterval(recTick); recTick = setInterval(() => { updateRecUI(); persistRec(); }, 1000); }
+// beim Wegwischen oder Sperren sofort sichern, damit nichts von der Aufzeichnung verloren geht
+addEventListener('pagehide', () => { if(rec) persistRec(true); });
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden' && rec) persistRec(true); });
 
 function startRec(){
   if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
@@ -7767,7 +7825,7 @@ async function fbLoad(){
 }
 function liveParse(id, o){
   try{
-    const v = typeof o.d === 'string' ? JSON.parse(o.d) : o;
+    const v = sanitize(typeof o.d === 'string' ? JSON.parse(o.d) : o);
     if(!isFinite(v.lat) || !isFinite(v.lng) || Math.abs(v.lat) > 90 || Math.abs(v.lng) > 180) return null;
     const rc = v.rc && typeof v.rc === 'object' ? {n:String(v.rc.n || '').slice(0, 40), el:Math.max(0, +v.rc.el || 0), p:Math.max(0, Math.min(100, +v.rc.p || 0)), dl:v.rc.dl == null || !isFinite(v.rc.dl) ? null : +v.rc.dl, vs:v.rc.vs ? String(v.rc.vs).slice(0, 24) : null} : null;
     return {id, lat:+v.lat, lng:+v.lng, v:Math.max(0, +v.v || 0), h:v.h == null || !isFinite(v.h) ? null : +v.h, by:String(v.by || '?').slice(0, 24), at:+v.at || 0,
@@ -8169,7 +8227,7 @@ async function fetchPlace(t){
   if(dist(b.s, b.e) > 1500){ await sleep(1100); e = await reverseName(b.e); }
   if(!a && !e) return false;
   t.place = {a, b:e};
-  try{ localStorage.setItem(TKEY, JSON.stringify(tracks)); }catch(_){}
+  if(tracksReady) tracksSaving = tracksSaving.then(tracksWrite);
   return true;
 }
 let dlBusy = false;
@@ -9961,6 +10019,25 @@ document.addEventListener('click', e => {
   if(a === 'end') endNav();
 });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && navPrevOn) endNav(); });
+/* Zurück-Taste (Android, Browser-Geste) und Escape: erst Overlays schließen, dann eine Ansicht zurück, erst danach die App verlassen */
+const overlayOpen = () => !!(searching || lb || !$('#modal').hidden || incoming || (wrap && !$('#wrap').hidden) || ckOn || !$('#death').hidden || rp || navPrevOn || perfOn);
+window.addEventListener('keydown', e => { if(e.key === 'Escape') e.__ov = overlayOpen(); }, true);
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape' || e.__ov || e.defaultPrevented) return;
+  const tg = e.target; if(tg && /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName) && view !== 'edit' && view !== 'detail') return;
+  if(view !== 'list' && view !== 'mode' && view !== 'draw') viewBack();
+});
+(() => {
+  if(!history.pushState) return;
+  try{ history.replaceState({sp:0}, ''); history.pushState({sp:1}, ''); }catch(e){ return; }
+  addEventListener('popstate', () => {
+    if(!$('#onb') || $('#onb').hidden){
+      if(overlayOpen()){ document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})); try{ history.pushState({sp:1}, ''); }catch(e){} return; }
+      if(view !== 'list'){ viewBack(); try{ history.pushState({sp:1}, ''); }catch(e){} return; }
+    }
+    history.back();   // nichts mehr offen: App wirklich verlassen
+  });
+})();
 setInterval(() => { if(nav && nav.active && !nav.arrived) renderNav(); }, 15000);
 
 /* ================= Beschleunigung ================= */
@@ -10513,9 +10590,13 @@ function createCourse(name, pts){
   return {c, n};
 }
 function courseFromTrack(t){
-  const pts = simplify(t.segs.flat().map(q => [q[0], q[1]]), 4);
+  const ex = courses.find(x => x.fromTrack === t.id); if(ex){ openCourse(ex.id, true); return; }
+  const flat = t.segs.flat(); let D = 0; const cum = [0];
+  for(let i = 1; i < flat.length; i++) cum.push(D += dist({lat:flat[i-1][1], lng:flat[i-1][0]}, {lat:flat[i][1], lng:flat[i][0]}));
+  // wie beim Geister-Rennen: 40 m innen anfangen und aufhören, sonst überquert die eigene Fahrt die Startlinie nie
+  const pts = simplify(flat.filter((q, i) => cum[i] >= 40 && cum[i] <= D - 40).map(q => [q[0], q[1]]), 4);
   if(pts.length < 2 || lineLen(pts) < 100){ toast('Die Aufzeichnung ist zu kurz für eine Rennstrecke.'); return; }
-  const {c, n} = createCourse(t.name, pts);
+  const {c, n} = createCourse(t.name, pts); c.fromTrack = t.id; saveCourses();
   openCourse(c.id, true);
   toast(n ? `Rennstrecke erstellt · ${n} Zeit${n > 1 ? 'en' : ''} aus Aufzeichnungen` : 'Rennstrecke erstellt');
 }

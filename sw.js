@@ -1,5 +1,5 @@
 /* Spots – Service Worker: App offline starten + Kartenkacheln zwischenspeichern */
-const V = 'v49';
+const V = 'v50';
 const APP = 'app-' + V, RT = 'tiles-rt', SAVED = 'tiles-saved';
 const SHELL = ['./', './index.html', './lib/maplibre-gl.js', './lib/maplibre-gl.css', './lib/fonts/geist-latin-wght-normal.woff2', './lib/fonts/geist-latin-ext-wght-normal.woff2', './lib/fonts/grenze-gotisch-latin-800-normal.woff2', './lib/fonts/grenze-gotisch-latin-900-normal.woff2', './manifest.webmanifest', './icon-192.png', './apple-touch-icon.png', './favicon.png'];
 const isTile = u => /(^|\.)arcgisonline\.com$/.test(u.hostname) || /elevation-tiles-prod/.test(u.pathname);
