@@ -499,6 +499,25 @@ body.cockpit.cknight .glass{background:rgba(3,7,12,.88)}
 .mk-sight{width:26px;height:26px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;color:#111;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.45);cursor:pointer}
 .mk-sight.k-view{background:#ffd60a}.mk-sight.k-pass{background:#ff9f0a}.mk-sight.k-lake{background:#64d2ff}
 
+/* ---------- Rundtour ---------- */
+.tour-open{width:100%}
+.tour-dlg .top{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 0 18px}
+.tour-dlg .top strong{font-size:17px}
+.tour-dlg .pad{gap:12px}
+.tour-dlg .btn.primary{gap:8px}
+.tour-dlg .bk-spin{border-color:rgba(0,0,0,.2);border-top-color:var(--accent-fg)}
+.tour-list{display:flex;flex-direction:column;gap:8px}
+.tour-c{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;border:1px solid var(--line);background:var(--solid);color:var(--fg);text-align:left;width:100%}
+.tour-c:active{transform:scale(.98)}
+.tour-sk{width:58px;height:58px;flex:none;color:var(--accent);background:var(--fill);border-radius:12px}
+.tour-c .tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tour-c b{font-size:16px}
+.tour-d{font-size:12px;color:var(--accent);letter-spacing:1px}
+.tour-d i{font-style:normal;color:var(--muted);letter-spacing:0;margin-left:6px;font-size:12.5px}
+.tour-c small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tour-hint{font-size:12px}
+.tour-note{display:flex;align-items:center;gap:6px}
+
 /* ---------- Backup ---------- */
 .bk-dlg .top{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 0 18px}
 .bk-dlg .top strong{font-size:17px}
@@ -4839,7 +4858,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.04';
+const VERSION = '2026.10.06.05';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -6012,6 +6031,7 @@ function renderTracksHead(){
   if(!rec){
     h.innerHTML = segHTML + `<button class="btn rec-start" data-rec="start"><span class="rdot"></span>Aufzeichnung starten</button>
       <div class="btns"><button class="btn" data-ck-open>${svg(UI.gauge, 17)} Cockpit</button><button class="btn" data-pf-open>${svg(UI.timer, 17)} 0–100</button></div>
+      <button class="btn tour-open" data-tour-open>${svg(TOUR_IC, 17)} Kurvige Rundtour</button>
       ${tracks.length ? '' : '<div class="hint">Bildschirm anlassen – im Hintergrund pausiert das Handy die Ortung.</div>'}`;
   } else if(rec.stopped){
     h.innerHTML = segHTML + `<button class="btn primary" data-rec="opensave">Beendete Aufzeichnung speichern</button>`;
@@ -8922,7 +8942,7 @@ async function planNav(target, name, walkTo, o = {}){
 async function navReplan(first){
   const n = nav; if(!n) return false;
   n.busy = true; if(!first && navPrevOn) renderNavPrev();
-  const o = await navRoutes(navPts(n.start));
+  const o = n.tour ? await valhalla(navPts(n.start), true).then(r => r ? {fast:r[0], land:r[0]} : null) : await navRoutes(navPts(n.start));
   if(nav !== n) return false;
   n.busy = false;
   if(!o){ if(!first){ toast('Route mit Zwischenstopp ging gerade nicht.'); renderNavPrev(); } return false; }
@@ -8966,7 +8986,7 @@ function renderNavPrev(){
     return `<button class="nopt${nav.mode === k ? ' on' : ''}" data-nav="mode" data-m="${k}"><b>${k === 'fast' ? 'Schnellste' : 'Landstraße'}</b><span class="nt">${fmtDurNav(r.dur)} · ${fmtKmS(r.L)}</span>
       <small>${k === 'land' ? [`${dd >= 0 ? '+' : ''}${dd} Min`, Math.abs(dk) >= 100 ? `${dk >= 0 ? '+' : '−'}${fmtKmS(Math.abs(dk))}` : ''].filter(Boolean).join(' · ') + ' · ohne Autobahn' : mwTxt(r)}</small></button>`;
   };
-  const opts = o.land ? `<div class="nopts">${card('fast', o.fast)}${card('land', o.land)}</div>`
+  const opts = nav.tour ? `<div class="nopt-note tour-note">${svg(TOUR_IC, 15)} Rundtour · ${tourDots(nav.tour.curv)} · ${esc(nav.tour.via || 'Landstraßen')}</div>` : o.land ? `<div class="nopts">${card('fast', o.fast)}${card('land', o.land)}</div>`
     : `<div class="nopt-note">${o.fast.mw >= 800 ? 'Keine sinnvolle Strecke ohne Autobahn gefunden.' : 'Die schnellste Route fährt schon ohne Autobahn.'}</div>`;
   const stops = navLeft();
   $('#navPrev').innerHTML = `
@@ -8980,6 +9000,124 @@ function renderNavPrev(){
     <div class="btns"><button class="btn" data-nav="cancel">Abbrechen</button><button class="btn primary" data-nav="go" ${nav.busy ? 'disabled' : ''}>${svg(UI.nav, 16)} Los</button></div>`;
   navSightsLoad(); navSightMarks();
 }
+/* ================= Kurvige Rundtour =================
+   Sucht kurvige Landstraßen (OpenStreetMap über Overpass) in passender Entfernung, legt drei Wegpunkte darauf
+   und lässt Valhalla eine Runde ohne Autobahn zurück zum Start rechnen. Bewertet wird die Kurvigkeit der fertigen Route. */
+const TOUR_IC = '<path d="M5 20c0-4 4-4 4-8s-4-4-4-8"/><path d="M12 20c0-4 4-4 4-8s-4-4-4-8"/><circle cx="19" cy="5" r="1.6" fill="currentColor"/>';
+let tour = {min:60, dir:null, busy:false, msg:'', res:null, err:''};
+const tourDots = c => { const n = c < 50 ? 1 : c < 90 ? 2 : c < 140 ? 3 : c < 200 ? 4 : 5; return '●'.repeat(n) + '○'.repeat(5 - n); };
+function tourCurv(coords){   // Grad Richtungswechsel pro km, nur echte Kurven (nicht Kreuzungs-Ecken)
+  const pts = []; let last = null;
+  coords.forEach(c => { const p = {lng:c[0], lat:c[1]}; if(!last || dist(last, p) >= 25){ pts.push(p); last = p; } });
+  let ang = 0, L = 0;
+  const brg = (a, b) => Math.atan2((b.lng - a.lng) * Math.cos(a.lat * Math.PI / 180), b.lat - a.lat) * 180 / Math.PI;
+  for(let i = 1; i < pts.length; i++) L += dist(pts[i - 1], pts[i]);
+  for(let i = 2; i < pts.length; i++){ let d = Math.abs(brg(pts[i - 1], pts[i]) - brg(pts[i - 2], pts[i - 1])); if(d > 180) d = 360 - d; if(d >= 4 && d <= 100) ang += d; }
+  return L > 0 ? ang / (L / 1000) : 0;
+}
+function tourOverlap(coords){   // Anteil der Strecke, der doppelt gefahren wird (hin und zurück auf derselben Straße)
+  const seen = new Map(); let dup = 0, n = 0;
+  coords.forEach(c => { const k = Math.round(c[1] / .0006) + ':' + Math.round(c[0] / .0009); n++; seen.set(k, (seen.get(k) || 0) + 1); });
+  seen.forEach(v => { if(v > 1) dup += v - 1; });
+  return n ? dup / n : 0;
+}
+async function tourRoads(S, R){
+  const q = `[out:json][timeout:45];way["highway"~"^(secondary|tertiary)$"](around:${Math.round(R)},${S.lat.toFixed(5)},${S.lng.toFixed(5)});out geom qt;`;
+  let j = null;
+  for(const base of OVERPASS){ try{ const r = await fetch(base, {method:'POST', body:'data=' + encodeURIComponent(q)}); if(r.ok){ j = await r.json(); break; } }catch(e){} }
+  if(!j) return null;
+  return (j.elements || []).filter(e => e.geometry && e.geometry.length > 3).map(e => {
+    const c = e.geometry.map(g => [g.lon, g.lat]); let L = 0; for(let i = 1; i < c.length; i++) L += dist({lng:c[i - 1][0], lat:c[i - 1][1]}, {lng:c[i][0], lat:c[i][1]});
+    const mid = c[Math.floor(c.length / 2)], t = e.tags || {};
+    return {L, curv:tourCurv(c), mid:{lng:mid[0], lat:mid[1]}, name:t.ref || t.name || ''};
+  }).filter(w => w.L >= 500);
+}
+const tourBearPt = (S, deg, m) => { const r = deg * Math.PI / 180; return {lat:S.lat + Math.cos(r) * m / 111320, lng:S.lng + Math.sin(r) * m / (111320 * Math.cos(S.lat * Math.PI / 180))}; };
+async function tourPlan(){
+  if(tour.busy) return;
+  tour.busy = true; tour.err = ''; tour.res = null; tour.msg = 'Suche deinen Standort …'; renderTour();
+  try{
+    const S = await getHere(); if(!S){ tour.err = 'Ohne Standort geht keine Rundtour.'; return; }
+    const L = tour.min * 60 * 14.5, R = L / 6.8;
+    tour.msg = 'Suche kurvige Straßen …'; renderTour();
+    const roads = await tourRoads(S, R * 1.45);
+    if(!roads){ tour.err = 'Straßendaten gerade nicht erreichbar. Prüfe dein Internet.'; return; }
+    if(roads.length < 6){ tour.err = 'Hier gibt es zu wenig Landstraßen für eine Rundtour.'; return; }
+    const base = tour.dir != null ? tour.dir : Math.random() * 360;
+    const heads = tour.dir != null ? [base, base - 38, base + 38] : [base, base + 120, base + 240];
+    const cands = heads.map(h => {
+      const used = new Set();
+      return [-55, 0, 55].map((off, k) => {
+        const T = tourBearPt(S, h + off, R * (k === 1 ? 1.2 : 1));
+        let best = null, bs = -1;
+        roads.forEach((w, i) => { if(used.has(i)) return; const d = dist(w.mid, T); if(d > R * .6) return; const sc = (w.curv + 15) * Math.min(1, w.L / 2500) * (1 - d / (R * 1.2)); if(sc > bs){ bs = sc; best = i; } });
+        if(best == null) return null;
+        used.add(best); return roads[best];
+      });
+    }).filter(c => c.every(Boolean));
+    if(!cands.length){ tour.err = 'Keine passenden Straßen in dieser Richtung gefunden.'; return; }
+    tour.msg = 'Berechne Touren …'; renderTour();
+    const res = [];
+    for(const c of cands){
+      const r = await valhalla([S, ...c.map(w => w.mid), S], true); if(!r) continue;
+      const rt = r[0], co = rt.geometry.coordinates, curv = tourCurv(co), ov = tourOverlap(co), mins = rt.duration / 60;
+      const fit = Math.max(0, 1 - Math.abs(mins - tour.min) / tour.min);
+      res.push({S, way:c, route:rt, curv, ov, mins, km:rt.distance / 1000, via:[...new Set(c.map(w => w.name).filter(Boolean))].slice(0, 3).join(', '), score:curv * (.4 + fit) * (1 - Math.min(.8, ov * 1.5))});
+    }
+    if(!res.length){ tour.err = 'Route gerade nicht berechenbar. Versuch es gleich nochmal.'; return; }
+    tour.res = res.sort((a, b) => b.score - a.score);
+  }catch(e){ tour.err = 'Ging gerade nicht. Versuch es nochmal.'; }
+  finally{ tour.busy = false; tour.msg = ''; renderTour(); }
+}
+function tourSketch(co){
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  co.forEach(c => { x0 = Math.min(x0, c[0]); x1 = Math.max(x1, c[0]); y0 = Math.min(y0, c[1]); y1 = Math.max(y1, c[1]); });
+  const k = Math.cos(y0 * Math.PI / 180), w = (x1 - x0) * k || 1e-6, h = (y1 - y0) || 1e-6, sc = 52 / Math.max(w, h);
+  const P = c => `${(6 + ((c[0] - x0) * k) * sc + (52 - w * sc) / 2).toFixed(1)},${(6 + (y1 - c[1]) * sc + (52 - h * sc) / 2).toFixed(1)}`;
+  const step = Math.max(1, Math.floor(co.length / 160));
+  return `<svg viewBox="0 0 64 64" class="tour-sk"><polyline points="${co.filter((_, i) => i % step === 0).map(P).join(' ')}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${P(co[0]).split(',')[0]}" cy="${P(co[0]).split(',')[1]}" r="3.4" fill="#30d158"/></svg>`;
+}
+function openTour(){ tour.err = ''; $('#modal').hidden = false; renderTour(); }
+function renderTour(){
+  if(!$('#modal .tour-dlg') && $('#modal').hidden) return;
+  const dirs = [[null, 'Egal'], [0, 'N'], [90, 'O'], [180, 'S'], [270, 'W']];
+  const res = tour.res ? tour.res.map((t, i) => `<button class="tour-c" data-tour="go" data-i="${i}">${tourSketch(t.route.geometry.coordinates)}<span class="tx"><b>${fmtMn(t.mins)} · ${t.km.toFixed(0)} km</b><span class="tour-d">${tourDots(t.curv)}<i>${t.curv >= 140 ? 'sehr kurvig' : t.curv >= 90 ? 'kurvig' : t.curv >= 50 ? 'etwas kurvig' : 'eher gerade'}</i></span>${t.via ? `<small>über ${esc(t.via)}</small>` : ''}</span></button>`).join('') : '';
+  $('#modal').innerHTML = `<div class="dlg tour-dlg" role="dialog" aria-modal="true" aria-label="Kurvige Rundtour">
+    <div class="top"><strong>Kurvige Rundtour</strong><button class="icon-btn press" data-tour="close" aria-label="Schließen">${svg(UI.close, 14)}</button></div>
+    <div class="pad">
+      <div class="f">Dauer<div class="seg2">${[[30, '30 Min'], [60, '1 h'], [90, '1,5 h'], [120, '2 h']].map(([m, n]) => `<button class="${tour.min === m ? 'on' : ''}" data-tour="min" data-v="${m}">${n}</button>`).join('')}</div></div>
+      <div class="f">Richtung<div class="seg2">${dirs.map(([d, n]) => `<button class="${tour.dir === d ? 'on' : ''}" data-tour="dir" data-v="${d}">${n}</button>`).join('')}</div></div>
+      <button class="btn primary" data-tour="plan" ${tour.busy ? 'disabled' : ''}>${tour.busy ? `<i class="bk-spin"></i> ${esc(tour.msg)}` : tour.res ? 'Neue Touren suchen' : 'Touren suchen'}</button>
+      ${tour.err ? `<div class="err">${esc(tour.err)}</div>` : ''}
+      ${res ? `<div class="tour-list">${res}</div>` : ''}
+      <div class="muted tour-hint">Start und Ziel bei dir, ohne Autobahn. Kurvige Straßen aus OpenStreetMap.</div>
+    </div></div>`;
+}
+function tourGo(t){
+  if(ckOn) exitCockpit();
+  if(nav) endNav();
+  const names = t.way.map(w => w.name || 'Kurvenstück');
+  nav = {active:false, start:{lat:t.S.lat, lng:t.S.lng}, dest:{lat:t.S.lat, lng:t.S.lng}, name:'Kurvige Rundtour', walkTo:null,
+    stops:t.way.map((w, i) => ({lat:w.mid.lat, lng:w.mid.lng, name:names[i], kind:'place', along:i})), mode:'land', opts:null, route:null, prog:0, off:0, lastReroute:0, arrived:false, pick:null,
+    tour:{curv:t.curv, via:t.via}};
+  const R = prepRoute(t.route, names);
+  nav.opts = {fast:R, land:R}; R.viaStops = navLeft();
+  $('#modal').hidden = true;
+  navPick('land', true);
+  navPrevOn = true; document.body.classList.add('navprev');
+  navFit();
+}
+$('#modal').addEventListener('click', e => {
+  const b = e.target.closest('[data-tour]'); if(!b || !$('#modal .tour-dlg')) return;
+  const a = b.dataset.tour;
+  if(a === 'close'){ $('#modal').hidden = true; return; }
+  if(a === 'min'){ tour.min = +b.dataset.v; tour.res = null; return renderTour(); }
+  if(a === 'dir'){ tour.dir = b.dataset.v === 'null' ? null : +b.dataset.v; tour.res = null; return renderTour(); }
+  if(a === 'plan') return tourPlan();
+  if(a === 'go'){ const t = tour.res && tour.res[+b.dataset.i]; if(t) tourGo(t); }
+});
+document.addEventListener('click', e => { if(e.target.closest('[data-tour-open]')) openTour(); });
+
 /* Unterwegs sehenswert: Aussichtspunkte, Pässe und Seen nah an der Route (OpenStreetMap über Overpass) */
 let navSightMk = [];
 async function navSightsLoad(){
@@ -9094,7 +9232,7 @@ function onNavFix(pt, acc){
   let hit = false;
   (R.viaAt || []).forEach((a, k) => { const x = (R.viaStops || [])[k]; if(x && !x.done && (nav.prog > a - 30 || dist(pt, x) < 40)){ x.done = true; hit = true; toast(`Zwischenstopp „${x.name}“ erreicht`); } });
   if(hit) navStopMarks();
-  if(R.L - nav.prog < 30 || dist(pt, nav.dest) < 25){ arrive(); return; }
+  if(R.L - nav.prog < 30 || (dist(pt, nav.dest) < 25 && (!nav.tour || nav.prog > R.L * .8))){ arrive(); return; }
   setSrc('nav-route', routeFC(remainingCoords(R, nav.prog)));
   if(nav.rw) rwNavDraw();
   renderNav();
