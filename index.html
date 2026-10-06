@@ -472,6 +472,36 @@ h2{font-size:23px}
 .shimg-prev img{display:block;max-width:100%;max-height:56vh}
 .shimg-prev.square img{max-height:46vh}
 
+/* ---------- Backup ---------- */
+.bk-dlg .top{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 0 18px}
+.bk-dlg .top strong{font-size:17px}
+.bk-dlg .pad{gap:12px}
+.bk-stat{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--solid);border:1px solid var(--line)}
+.bk-stat div{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.bk-stat b{font-size:15.5px}.bk-stat span{font-size:12.5px;color:var(--muted)}
+.bk-ic{width:36px;height:36px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;background:var(--fill);color:var(--muted)}
+.bk-stat.ok .bk-ic{background:color-mix(in srgb,#30d158 18%,transparent);color:#30d158}
+.bk-stat.err .bk-ic{background:color-mix(in srgb,var(--danger) 18%,transparent);color:var(--danger)}
+.bk-spin{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--fill-2);border-top-color:var(--accent);animation:bkspin .8s linear infinite;display:inline-block}
+.bk-spin.big{width:34px;height:34px;border-width:3.5px}
+@keyframes bkspin{to{transform:rotate(360deg)}}
+.bk-tg{background:var(--solid);border:1px solid var(--line);border-radius:16px}
+.bk-tg.on .tg{background:var(--accent)}.bk-tg.on .tg::after{transform:translateX(18px)}
+.bk-first{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);line-height:1.4}
+.bk-first b{font-size:15px}.bk-first span{font-size:13px}
+.bk-txt{font-size:12.5px;line-height:1.4}
+.bk-code-in{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;resize:none;word-break:break-all}
+
+/* ---------- Fahrstil ---------- */
+.sty{background:var(--solid);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.sty .sty-chart{background:none;border:0;padding:0}
+.sty-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sty-t{display:flex;flex-direction:column;gap:2px;padding:9px 10px;border-radius:12px;background:var(--fill);min-width:0}
+.sty-t span{font-size:11.5px;color:var(--muted)}
+.sty-t b{font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sty-t i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--muted)}
+.sty-t i.good{color:#30d158}.sty-t i.bad{color:#ff9f0a}
+
 /* ---------- Deine Wege ---------- */
 .wy-list{background:var(--solid);border:1px solid var(--line);border-radius:16px;padding:2px 6px}
 .wy-row,.wy-t{display:flex;align-items:center;gap:12px;width:100%;padding:10px 8px;border:0;background:none;color:var(--fg);text-align:left;border-radius:12px;min-width:0}
@@ -1799,6 +1829,7 @@ function load(){
 let data = load();
 let storageOk = true;
 function save(){
+  bkDirty();
   try{ localStorage.setItem(KEY, JSON.stringify(data)); }
   catch(e){ if(storageOk){ storageOk = false; toast('Speichern im Browser nicht möglich – nutze „Exportieren“ als Sicherung.'); } }
 }
@@ -3304,8 +3335,12 @@ function handleHash(){
     if(q.get('link') && /^[a-z0-9]{10,64}$/i.test(q.get('link'))){
       hashSpot = true;   // keine Einführung, das Gerät wird verknüpft
       const jc = q.get('join');
-      const lo = {dev:q.get('link'), name:(q.get('n') || '').slice(0, 24), code:jc && jc.length >= 20 ? jc : null, g:q.get('g') || 'Gruppe'};
+      const lo = {dev:q.get('link'), name:(q.get('n') || '').slice(0, 24), code:jc && jc.length >= 20 ? jc : null, g:q.get('g') || 'Gruppe', bk:/^[A-Za-z0-9_-]{43}$/.test(q.get('bk') || '') ? q.get('bk') : null};
       const tryOpen = () => document.querySelector('#splash') ? setTimeout(tryOpen, 250) : openLinkAccept(lo);   // erst wenn der Startbildschirm weg ist
+      setTimeout(tryOpen, 300);
+    } else if(q.get('restore')){
+      hashSpot = true;
+      const rc = q.get('restore'), tryOpen = () => document.querySelector('#splash') ? setTimeout(tryOpen, 250) : openBackup('restore', 'SPOTS-' + rc);
       setTimeout(tryOpen, 300);
     } else if(q.get('spot')){
       hashSpot = true;
@@ -3343,7 +3378,8 @@ function renderOnb(){
     <ul class="onb-list"><li><b>📍 Spots merken</b><span>Aussichtspunkte, Parkplätze, Fotospots – mit Fotos und Navigation</span></li>
       <li><b>🛣️ Fahrten aufzeichnen</b><span>Cockpit, Tempo-Verlauf, Rennstrecken und Geister-Rennen</span></li>
       <li><b>👥 Mit der Crew teilen</b><span>News, Bestzeiten, Live-Standort und Wochenrückblick</span></li></ul>
-    <button class="btn primary wide" data-onb="next">Los geht's</button>`;
+    <button class="btn primary wide" data-onb="next">Los geht's</button>
+    ${window.crypto?.subtle ? '<button class="txtbtn" data-onb="restore" style="align-self:center">Backup wiederherstellen</button>' : ''}`;
   if(k === 'install'){
     const ios = isIOS();
     body = `<div class="onb-head"><span class="onb-ic">📲</span><h2>Zum Home-Bildschirm</h2><p>Dann startet Spots wie eine normale App, im Vollbild und auch ohne Netz.</p></div>
@@ -3393,6 +3429,7 @@ $('#onb').addEventListener('click', async e => {
   const b = e.target.closest('[data-onb]'); if(!b) return;
   const a = b.dataset.onb, next = () => { onbErr = ''; onbStep++; renderOnb(); };
   if(a === 'next') return next();
+  if(a === 'restore'){ $('#onb').hidden = true; openBackup('restore'); return; }
   if(a === 'install' && onbInstall){ onbInstall.prompt(); try{ await onbInstall.userChoice; }catch(_){} onbInstall = null; return next(); }
   if(a === 'copyinv'){ copy(onbInviteLink()); return; }
   if(a === 'avatar'){ $('#avFile').click(); return; }
@@ -4757,7 +4794,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.01';
+const VERSION = '2026.10.06.02';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4818,8 +4855,9 @@ function renderSettings(){
         <button class="set-row" data-st="gjoin"><span>Mit Link beitreten</span>${chev}</button>`}</div>` : ''}
       <div class="set-sec">Daten</div>
       <div class="set-card">
-        <button class="set-row" data-st="export"><span>Backup speichern<small>Spots, Kategorien, Strecken und Zeiten (ohne Fotos)</small></span><span class="ri">${svg(UI.share, 16)}</span></button>
-        <button class="set-row" data-st="import"><span>Backup laden</span>${chev}</button>
+        <button class="set-row" data-st="backup"><span>Automatisches Backup<small>${esc(bkStatusTxt())}</small></span>${chev}</button>
+        <button class="set-row" data-st="export"><span>Backup-Datei speichern<small>Spots, Kategorien, Strecken und Zeiten (ohne Fotos)</small></span><span class="ri">${svg(UI.share, 16)}</span></button>
+        <button class="set-row" data-st="import"><span>Backup-Datei laden</span>${chev}</button>
         <button class="set-row" data-st="offline"><span>Offline-Karten</span><span class="ri">${offAreas.length ? `${offAreas.length} ${offAreas.length > 1 ? 'Gebiete' : 'Gebiet'}` : ''}${svg('<path d="M15 5 8 12l7 7"/>', 14).replace('<svg', '<svg style="transform:scaleX(-1)"')}</span></button>
         <div class="set-row"><span>Speicher belegt</span><span class="ri" id="stStore">…</span></div>
       </div>
@@ -4856,6 +4894,7 @@ $('#modal').addEventListener('click', e => {
     if(!b.classList.contains('armed')){ b.classList.add('armed'); b.querySelector('span').textContent = 'Wirklich verlassen? Nochmal tippen'; return; }
     leaveGroupLocal(); renderSettings(); toast('Gruppe verlassen');
   }
+  if(a === 'backup') return openBackup();
   if(a === 'export') $('#exportBtn').click();
   if(a === 'import') $('#importBtn').click();
   if(a === 'offline') openOffline();
@@ -4979,7 +5018,7 @@ $('#modal').addEventListener('click', e => {
 $('#modal').addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.id === 'adm-pw'){ e.preventDefault(); adminLogin(); } });
 
 /* Gerät verknüpfen: derselbe Mensch auf Handy und PC */
-const linkURL = () => `${appURL()}#link=${myId()}&n=${encodeURIComponent(myName())}${grp() ? `&join=${grp().code}&g=${encodeURIComponent(grp().name || 'Gruppe')}` : ''}`;
+const linkURL = () => `${appURL()}#link=${myId()}&n=${encodeURIComponent(myName())}${grp() ? `&join=${grp().code}&g=${encodeURIComponent(grp().name || 'Gruppe')}` : ''}${grp() && window.crypto?.subtle ? `&bk=${bkKeyRaw()}` : ''}`;
 function openLinkDlg(){
   $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Weiteres Gerät"><div class="pad" style="padding:18px 16px 16px;gap:12px">
     <h2>Auf weiterem Gerät nutzen</h2>
@@ -4987,7 +5026,7 @@ function openLinkDlg(){
     <div class="lnk-box">${esc(linkURL())}</div>
     <div class="btns"><button class="btn" data-lk="copy">Link kopieren</button><button class="btn primary" data-lk="share">${svg(UI.share, 15)} An mich senden</button></div>
     <div class="onb-note"><b>Nur an dich selbst schicken.</b> Wer diesen Link öffnet, ist in der Crew du.</div>
-    <div class="muted" style="font-size:12.5px">Eigene Spots und Fahrten bleiben auf dem jeweiligen Gerät. Alles mitnehmen: Einstellungen → Backup speichern und dort laden.</div>
+    <div class="muted" style="font-size:12.5px">Dort kannst du danach deine Spots und Fahrten aus dem Backup übernehmen.</div>
     <button class="txtbtn" data-lk="back" style="align-self:center">Zurück</button></div></div>`;
   $('#modal').hidden = false;
 }
@@ -5016,11 +5055,13 @@ $('#modal').addEventListener('click', e => {
     liveStop(true);
     prefs.dev = o.dev; if(o.name) prefs.myName = o.name; prefs.linkAdopt = true; prefs.memberSig = ''; prefs.onb = 1;
     if(o.code) prefs.group = {code:o.code, name:o.g, joined:Date.now()};
+    if(o.bk && o.bk !== prefs.bkKey){ prefs.bkKey = o.bk; bk.sent = {}; bkSave(); }   // gleicher Schlüssel wie das andere Gerät, eigenes Backup neu verschlüsseln
     delete prefs.wsSeen; delete prefs.rxSeen; savePrefs();
     WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.crew = null; WS.loaded = 0; wsCache();
     $('#modal').hidden = true; if(!$('#onb').hidden) $('#onb').hidden = true;
     syncSpotsHead(); refreshAll(); liveWatch(); wsSync(true);
     toast(`Verknüpft – du bist jetzt auch hier ${o.name || 'du'}`);
+    if(o.bk && o.code) setTimeout(() => bkOffer({g:o.code, gn:o.g, d:o.dev, n:o.name, k:o.bk}, false), 900);
   }
 });
 function copyText(t, okMsg){
@@ -5029,12 +5070,251 @@ function copyText(t, okMsg){
   function fb(){ const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){ toast(t); } ta.remove(); }
 }
 
+/* ================= Automatisches Backup: verschlüsselt bei der eigenen Gruppe =================
+   AES-GCM (256 Bit) direkt im Browser, vorher gzip. Den Schlüssel haben nur deine Geräte und dein Wiederherstellungscode –
+   in der Datenbank liegt nur unlesbarer Datensalat. Dokumente „bk_<Person>_<Gerät>_…“ in der Fahrten-Sammlung; die normalen Listen überspringen sie.
+   Jedes Gerät sichert für sich; beim Wiederherstellen werden alle Backups der Person zusammengeführt. */
+var bk = {sent:{}, at:0, n:null, busy:false, err:null, prog:''};
+try{ Object.assign(bk, JSON.parse(localStorage.getItem('meine-spots-bk') || '{}'), {busy:false, err:null, prog:''}); }catch(e){}
+const BK_COL = 'drives', BK_CHUNK = 700000, BK_PREFS = ['myName', 'avatar', 'carType', 'carColor', 'accent', 'theme', 'labels', 'base', 'terrain', 'wayPlaces', 'wayGeo', 'navMode', 'cam', 'car3d', 'gforce', 'recCockpit', 'shareStats', 'gShare'];
+function bkSave(){ try{ localStorage.setItem('meine-spots-bk', JSON.stringify({sent:bk.sent, at:bk.at, n:bk.n, dev:bk.dev})); }catch(e){} }
+function bkDirty(){ try{ localStorage.setItem('meine-spots-bk-dirty', '1'); }catch(e){} clearTimeout(window.__bkT); window.__bkT = setTimeout(() => { try{ bkRun(); }catch(e){} }, 40000); }
+const bkOn = () => !!(FB && grp() && prefs.bk !== false && window.crypto && crypto.subtle);
+const u8b64 = u8 => { let s = ''; for(let i = 0; i < u8.length; i += 32768) s += String.fromCharCode.apply(null, u8.subarray(i, i + 32768)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const b64u8 = s => { s = s.replace(/-/g, '+').replace(/_/g, '/'); const b = atob(s + '==='.slice((s.length + 3) % 4)), u = new Uint8Array(b.length); for(let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
+const u8enc = x => new TextEncoder().encode(JSON.stringify(x)), u8dec = u => JSON.parse(new TextDecoder().decode(u));
+function bkKeyRaw(){ if(!prefs.bkKey){ const a = new Uint8Array(32); crypto.getRandomValues(a); prefs.bkKey = u8b64(a); savePrefs(); } return prefs.bkKey; }
+function bkId(){ if(!prefs.bkId){ prefs.bkId = uid() + uid(); savePrefs(); } return prefs.bkId; }
+let bkCK = null;
+async function bkCrypto(raw){ if(bkCK && bkCK.raw === raw) return bkCK.key; const key = await crypto.subtle.importKey('raw', b64u8(raw), 'AES-GCM', false, ['encrypt', 'decrypt']); bkCK = {raw, key}; return key; }
+const pipeZ = async (u8, T) => new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new T('gzip'))).arrayBuffer());
+async function bkSeal(u8, zip, raw = bkKeyRaw()){
+  let body = u8, z = 0;
+  if(zip && window.CompressionStream){ try{ body = await pipeZ(u8, CompressionStream); z = 1; }catch(e){ body = u8; } }
+  const iv = crypto.getRandomValues(new Uint8Array(12)), ct = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv}, await bkCrypto(raw), body));
+  const out = new Uint8Array(13 + ct.length); out[0] = z; out.set(iv, 1); out.set(ct, 13);
+  return u8b64(out);
+}
+async function bkUnseal(str, raw){
+  const a = b64u8(str), pt = new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM', iv:a.slice(1, 13)}, await bkCrypto(raw), a.slice(13)));
+  return a[0] ? pipeZ(pt, DecompressionStream) : pt;
+}
+const bkDoc = (bid, name, i, dev = myId()) => `bk_${dev}_${bid}_${name}${i ? '.' + i : ''}`;
+async function bkPut(name, str){
+  const n = Math.max(1, Math.ceil(str.length / BK_CHUNK));
+  for(let i = 0; i < n; i++) await fsPut(BK_COL, bkDoc(bkId(), name, i), {bk:1, n, x:str.slice(i * BK_CHUNK, (i + 1) * BK_CHUNK)});
+  return n;
+}
+async function bkGet1(code, docId){   // aus einer bestimmten Gruppe lesen (auch wenn dieses Gerät noch in keiner ist)
+  const r = await fetch(`${fsBase(code)}/${BK_COL}/${encodeURIComponent(docId)}?key=${FB.apiKey}`);
+  if(!r.ok) throw new Error('Firestore ' + r.status);
+  return JSON.parse((await r.json()).fields.d.stringValue);
+}
+async function bkGet(code, dev, bid, name, n){
+  const first = await bkGet1(code, bkDoc(bid, name, 0, dev)); let s = first.x; n = first.n || n || 1;
+  for(let i = 1; i < n; i++) s += (await bkGet1(code, bkDoc(bid, name, i, dev))).x;
+  return s;
+}
+// alle Backups einer Person finden (nur Namen und Zeit laden, nicht die Daten)
+async function bkFind(code, dev){
+  const out = []; let tok = '';
+  for(let i = 0; i < 30; i++){
+    const r = await fetch(`${fsBase(code)}/${BK_COL}?pageSize=300&mask.fieldPaths=t${tok ? '&pageToken=' + encodeURIComponent(tok) : ''}&key=${FB.apiKey}`);
+    if(!r.ok) throw new Error('Firestore ' + r.status);
+    const j = await r.json();
+    (j.documents || []).forEach(d => { const id = d.name.split('/').pop(), m = id.match(/^bk_([^_]+)_([^_]+)_c$/); if(m && m[1] === dev) out.push({bid:m[2], t:+((d.fields && d.fields.t && d.fields.t.integerValue) || 0)}); });
+    if(!j.nextPageToken) break; tok = j.nextPageToken;
+  }
+  return out.sort((a, b) => b.t - a.t);
+}
+const bkLabel = () => /iPhone/.test(navigator.userAgent) ? 'iPhone' : /iPad/.test(navigator.userAgent) ? 'iPad' : /Android/.test(navigator.userAgent) ? 'Android' : 'PC';
+const bkSig = t => (t.segs || []).length + ':' + (t.segs || []).reduce((a, s) => a + s.length, 0);
+const bkPhotoIds = () => { const s = new Set(); data.spots.forEach(x => (x.photos || []).forEach(p => s.add(p))); garage.cars.forEach(c => c.photo && s.add(c.photo)); return [...s]; };
+async function bkRun(force){
+  if(!bkOn() || bk.busy || !navigator.onLine || WS.rulesOld) return;
+  if(!force && localStorage.getItem('meine-spots-bk-dirty') !== '1' && Date.now() - (bk.at || 0) < 20 * 3600e3) return;
+  bk.busy = true; bk.err = null; bkUI();
+  if(bk.dev !== myId()){ bk.sent = {}; bk.dev = myId(); }   // andere Person auf diesem Gerät: alles neu sichern
+  try{
+    const id = bkId(), sent = bk.sent, own = myTracks().filter(t => !t._ws), parts = {t:{}, p:{}}, types = {};
+    let i = 0;
+    for(const t of own){
+      i++; const k = 't:' + t.id, sig = bkSig(t);
+      if(sent[k] && sent[k].s === sig){ parts.t[t.id] = sent[k].n; continue; }
+      bk.prog = `Fahrten ${i}/${own.length}`; bkUI();
+      sent[k] = {s:sig, n:await bkPut('t_' + t.id, await bkSeal(u8enc(t.segs || []), true))}; parts.t[t.id] = sent[k].n; bkSave();
+    }
+    const ph = bkPhotoIds(); i = 0;
+    for(const p of ph){
+      i++; const k = 'p:' + p;
+      if(sent[k]){ parts.p[p] = sent[k].n; types[p] = sent[k].ty; continue; }
+      const b = await PDB.get(p).catch(() => null); if(!b) continue;
+      bk.prog = `Fotos ${i}/${ph.length}`; bkUI();
+      sent[k] = {n:await bkPut('p_' + p, await bkSeal(new Uint8Array(await b.arrayBuffer()), false)), ty:b.type || 'image/jpeg'}; parts.p[p] = sent[k].n; types[p] = sent[k].ty; bkSave();
+    }
+    bk.prog = 'Spots und Einstellungen'; bkUI();
+    const prefsOut = {}; BK_PREFS.forEach(k => { if(prefs[k] != null) prefsOut[k] = prefs[k]; });
+    const core = {v:1, at:Date.now(), dev:myId(), name:myName(), label:bkLabel(), data, tracks:own.map(t => { const {segs, ...r} = t; return r; }), runs, courses, efforts, garage, roads:xRoads, prefs:prefsOut, parts, types};
+    const cn = await bkPut('c', await bkSeal(u8enc(core), true));
+    for(let j = cn; j < (sent.c || 0); j++) fsDel(BK_COL, bkDoc(id, 'c', j)).catch(() => {});
+    sent.c = cn;
+    Object.keys(sent).forEach(k => {   // gelöschte Fahrten und Fotos auch im Backup wegräumen
+      if(k === 'c') return; const ty = k[0], x = k.slice(2);
+      if((ty === 't' ? parts.t : parts.p)[x] != null) return;
+      for(let j = 0; j < (sent[k].n || 1); j++) fsDel(BK_COL, bkDoc(id, ty + '_' + x, j)).catch(() => {});
+      delete sent[k];
+    });
+    bk.at = Date.now(); bk.n = {s:data.spots.filter(x => !String(x.id).startsWith('bsp')).length, t:own.length, p:Object.keys(parts.p).length};
+    try{ localStorage.removeItem('meine-spots-bk-dirty'); }catch(e){}
+    bkSave();
+    if(!prefs.bkCodeSeen || (prefs.bkCodeG && prefs.bkCodeG !== grp().code)){   // erstes Backup oder neuer Einladungslink: Code (neu) sichern
+      prefs.bkCodeSeen = 1; delete prefs.bkCodeG; savePrefs();
+      setTimeout(() => { if($('#modal').hidden && $('#onb').hidden) openBackup('first'); }, 600);
+    }
+  }catch(e){ bk.err = /403/.test(e.message || '') ? 'Die Gruppen-Datenbank hat das Backup abgelehnt.' : 'Backup gerade nicht möglich. Es wird später nochmal versucht.'; }
+  bk.busy = false; bk.prog = ''; bkUI();
+}
+function bkAgo(ts){ if(!ts) return 'noch nie'; const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'gerade eben' : m < 60 ? `vor ${m} Min` : m < 1440 ? `vor ${Math.round(m / 60)} Std` : `am ${new Date(ts).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}`; }
+function bkStatusTxt(){
+  if(!(window.crypto && crypto.subtle)) return 'Geht in diesem Browser nicht';
+  if(!grp()) return 'Braucht eine Gruppe';
+  if(prefs.bk === false) return 'Aus';
+  if(bk.busy) return 'Sichert …';
+  return bk.at ? `Gesichert ${bkAgo(bk.at)}` : 'Noch nicht gesichert';
+}
+// Wiederherstellungscode: Gruppe, Person, Schlüssel und Backup-Nummer in einem
+const bkCode = () => 'SPOTS-' + u8b64(u8enc({g:grp().code, gn:grp().name || 'Gruppe', d:myId(), n:myName(), k:bkKeyRaw()}));
+function bkParse(raw){
+  const m = String(raw || '').match(/SPOTS-([A-Za-z0-9_-]{40,})/) || String(raw || '').match(/restore=([A-Za-z0-9_-]{40,})/);
+  if(!m) return null;
+  try{ const o = u8dec(b64u8(m[1])); return o && o.g && o.g.length >= 20 && /^[A-Za-z0-9_-]{43}$/.test(o.k) && /^[a-z0-9]{8,64}$/i.test(o.d || '') ? o : null; }catch(e){ return null; }
+}
+let bkMode = 'main', bkCodeIn = '', bkErr = '', bkRes = null, bkOfferSrc = null;
+function openBackup(mode = 'main', code = ''){
+  bkMode = mode; bkErr = ''; if(code) bkCodeIn = code;
+  $('#modal').hidden = false; renderBackup();
+  if(mode === 'main' && bkOn() && !bk.busy && Date.now() - (bk.at || 0) > 60000) bkRun();
+}
+function bkUI(){
+  if($('#modal .bk-dlg [data-bk="now"]') && !bkRes) renderBackup();
+  const r = document.querySelector('[data-st="backup"] small'); if(r) r.textContent = bkStatusTxt();
+}
+function renderBackup(){
+  const ti = $('#bk-in'); if(ti) bkCodeIn = ti.value;
+  const has = window.crypto && crypto.subtle, n = bk.n;
+  const head = `<div class="top"><strong>${bkMode === 'restore' ? 'Backup wiederherstellen' : 'Backup'}</strong><button class="icon-btn press" data-bk="close" aria-label="Schließen">${svg(UI.close, 14)}</button></div>`;
+  const restore = `<label class="f">Wiederherstellungscode<textarea class="inp bk-code-in" id="bk-in" rows="3" placeholder="SPOTS-…" autocomplete="off" spellcheck="false">${esc(bkCodeIn)}</textarea></label>
+    ${navigator.clipboard && navigator.clipboard.readText ? '<button class="txtbtn" data-bk="paste" style="align-self:flex-start">Aus der Zwischenablage einfügen</button>' : ''}
+    <div class="err">${esc(bkErr)}</div>
+    <button class="btn primary" data-bk="restore">Wiederherstellen</button>`;
+  let body;
+  if(!has) body = `<div class="muted">Dieser Browser kann nicht verschlüsseln. Nutze „Backup-Datei speichern“.</div>`;
+  else if(bkMode === 'restore') body = `<div class="muted">Füg den Code ein, den du dir beim Backup gespeichert hast. Spots, Fahrten und Fotos kommen dazu – nichts auf diesem Gerät wird gelöscht.</div>${restore}`;
+  else if(!grp()) body = `<div class="muted">Das Backup liegt verschlüsselt bei deiner Gruppe. Erstell eine Gruppe – auch nur für dich – oder tritt einer bei.</div>
+    <div class="btns"><button class="btn" data-bk="gjoin">Beitreten</button><button class="btn primary" data-bk="gcreate">Gruppe erstellen</button></div>
+    <div class="set-sec">Backup wiederherstellen</div>${restore}`;
+  else body = `
+    ${bkMode === 'first' ? `<div class="bk-first"><b>Backup ist an.</b><span>Speicher jetzt deinen Wiederherstellungscode, z. B. in den Notizen. Nur damit bekommst du alles auf ein neues Handy zurück.</span></div>` : ''}
+    <div class="bk-stat${bk.err ? ' err' : bk.at ? ' ok' : ''}"><span class="bk-ic">${bk.busy ? '<i class="bk-spin"></i>' : bk.err ? '!' : bk.at ? '✓' : '…'}</span><div><b>${bk.busy ? `Sichert … ${esc(bk.prog || '')}` : prefs.bk === false ? 'Automatisches Backup ist aus' : bk.at ? `Gesichert ${bkAgo(bk.at)}` : 'Noch nicht gesichert'}</b><span>${bk.err ? esc(bk.err) : n ? `${n.s} Spots · ${n.t} Fahrten · ${n.p} Fotos · verschlüsselt` : 'Spots, Fahrten, Fotos, Garage und Zeiten · verschlüsselt'}</span></div></div>
+    <button class="set-row bk-tg${prefs.bk !== false ? ' on' : ''}" data-bk="toggle"><span>Automatisch sichern<small>Kurz nach jeder Änderung</small></span><i class="tg"></i></button>
+    <button class="btn" data-bk="now" ${bk.busy ? 'disabled' : ''}>Jetzt sichern</button>
+    <div class="set-sec">Wiederherstellungscode</div>
+    <div class="muted bk-txt">Damit holst du alles auf ein neues Gerät zurück. Wer den Code hat, kann dein Backup öffnen und ist in der Crew du – nur für dich aufbewahren.</div>
+    <div class="btns"><button class="btn" data-bk="copy">Kopieren</button><button class="btn primary" data-bk="share">${svg(UI.share, 15)} Sichern</button></div>
+    <div class="set-sec">Anderes Backup laden</div>${restore}`;
+  const keep = $('#modal .bk-dlg .pad'), st = keep ? keep.scrollTop : 0;
+  $('#modal').innerHTML = `<div class="dlg bk-dlg" role="dialog" aria-modal="true" aria-label="Backup">${head}<div class="pad">${body}</div></div>`;
+  if(st) $('#modal .bk-dlg .pad').scrollTop = st;
+}
+function bkClose(){ $('#modal').hidden = true; bkRes = null; if(onbNeeded() && $('#onb').hidden){ $('#onb').hidden = false; renderOnb(); } }
+// Nach „Gerät verknüpfen“: Daten vom anderen Gerät anbieten
+function bkOffer(src, adopt){
+  bkRes = null; bkOfferSrc = {src, adopt};
+  $('#modal').innerHTML = `<div class="dlg bk-dlg" role="dialog" aria-modal="true" aria-label="Backup übernehmen"><div class="pad" style="padding:20px 16px 16px;gap:12px">
+    <h2>Spots und Fahrten übernehmen?</h2><div class="muted">Aus dem Backup deines anderen Geräts. Nichts auf diesem Gerät wird gelöscht.</div>
+    <div class="btns"><button class="btn" data-bk="close">Nicht jetzt</button><button class="btn primary" data-bk="offer">Übernehmen</button></div></div></div>`;
+  $('#modal').hidden = false;
+}
+async function bkRestore(src, adopt){
+  bkRes = {txt:'Suche Backup …'};
+  const prog = t => { bkRes.txt = t; const el = $('#bk-prog'); if(el) el.textContent = t; };
+  $('#modal').innerHTML = `<div class="dlg bk-dlg" role="dialog" aria-modal="true" aria-label="Wiederherstellen"><div class="pad" style="padding:24px 16px;gap:12px;align-items:center;text-align:center"><i class="bk-spin big"></i><b id="bk-prog">Suche Backup …</b><span class="muted">App bitte offen lassen.</span></div></div>`;
+  $('#modal').hidden = false;
+  const raw = src.k, fail = msg => { bkRes = null; bkMode = 'restore'; bkErr = msg; renderBackup(); };
+  let found, cores = [];
+  try{ found = await bkFind(src.g, src.d); }catch(e){ return fail('Backup gerade nicht erreichbar. Prüfe dein Internet.'); }
+  if(!found.length) return fail('Zu diesem Code gibt es (noch) kein Backup.');
+  for(const f of found){ try{ cores.push({bid:f.bid, c:u8dec(await bkUnseal(await bkGet(src.g, src.d, f.bid, 'c'), raw))}); }catch(e){} }
+  if(!cores.length) return fail('Der Code passt nicht zum Backup.');
+  if(adopt){   // neues Gerät oder App neu installiert: Gruppe und Person übernehmen, eigenes neues Backup
+    liveStop(true);
+    prefs.group = {code:src.g, name:src.gn || 'Gruppe', joined:Date.now()}; prefs.dev = src.d; if(src.n) prefs.myName = src.n;
+    if(prefs.bkKey !== raw){ prefs.bkKey = raw; bk.sent = {}; }
+    prefs.linkAdopt = true; prefs.memberSig = ''; prefs.onb = 1; prefs.bkCodeSeen = 1; prefs.bkCodeG = src.g; delete prefs.wsSeen; delete prefs.rxSeen; savePrefs();
+  }
+  let ns = 0, nt = 0, np = 0;
+  for(const {bid, c:core} of cores){
+    (core.data && core.data.cats || []).forEach(c => { if(c && c.id && !data.cats.some(x => x.id === c.id)) data.cats.push(c); });
+    const real = (core.data && core.data.spots || []).filter(s => !String(s.id).startsWith('bsp'));
+    if(real.length) data.spots = data.spots.filter(s => !String(s.id).startsWith('bsp'));
+    real.forEach(s => { if(s && typeof s.lat === 'number' && !data.spots.some(x => x.id === s.id)){ data.spots.push(s); ns++; } });
+    (core.runs || []).forEach(r => { if(r && r.id && !runs.some(x => x.id === r.id)) runs.push(r); });
+    (core.courses || []).forEach(c => { if(c && c.id && !courses.some(x => x.id === c.id)) courses.push(c); });
+    (core.efforts || []).forEach(f => { if(f && f.id && !efforts.some(x => x.id === f.id)) efforts.push(f); });
+    if(core.garage && Array.isArray(core.garage.cars)){ core.garage.cars.forEach(c => { if(c && c.id && !garage.cars.some(x => x.id === c.id)) garage.cars.push(c); }); if(!garage.active) garage.active = core.garage.active || null; }
+    if(core.roads) Object.entries(core.roads).forEach(([k, v]) => { if(!xRoads[k]) xRoads[k] = v; });
+    Object.entries(core.prefs || {}).forEach(([k, v]) => { if(k === 'wayPlaces'){ const have = new Set((prefs.wayPlaces || []).map(x => x.id)); prefs.wayPlaces = [...(prefs.wayPlaces || []), ...(v || []).filter(x => !have.has(x.id))]; } else if(prefs[k] == null) prefs[k] = v; });
+    save(); runs.sort((a, b) => b.date - a.date); saveRuns(); saveCourses(); saveEfforts(); saveGarage(); savePrefs();
+    try{ localStorage.setItem(XR_KEY, JSON.stringify(xRoads)); }catch(e){}
+    const parts = core.parts || {t:{}, p:{}}, todo = (core.tracks || []).filter(t => t && t.id && !tracks.some(x => x.id === t.id));
+    for(let i = 0; i < todo.length; i++){
+      const t = todo[i]; prog(`Fahrten ${i + 1} von ${todo.length}`);
+      try{ tracks.push({...t, segs:u8dec(await bkUnseal(await bkGet(src.g, src.d, bid, 't_' + t.id, parts.t[t.id]), raw))}); nt++; }catch(e){}
+      if(i % 10 === 9) saveTracks();
+    }
+    tracks.sort((a, b) => b.created - a.created); saveTracks();
+    const pids = Object.keys(parts.p || {});
+    for(let i = 0; i < pids.length; i++){
+      const p = pids[i]; prog(`Fotos ${i + 1} von ${pids.length}`);
+      try{ if(!(await PDB.get(p).catch(() => null))){ const u = await bkUnseal(await bkGet(src.g, src.d, bid, 'p_' + p, parts.p[p]), raw); await PDB.put(p, new Blob([u], {type:(core.types || {})[p] || 'image/jpeg'})); np++; } }catch(e){}
+    }
+  }
+  try{ syncMatchers(); }catch(e){}
+  bkDirty();
+  bkRes = null; $('#modal').hidden = true; $('#onb').hidden = true;
+  if(adopt){ WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.crew = null; WS.loaded = 0; }
+  applyTheme(); syncSpotsHead(); refreshAll(); liveWatch(); if(grp()) wsSync(true);
+  toast(`Wiederhergestellt: ${ns} Spots, ${nt} Fahrten, ${np} Fotos`);
+}
+$('#modal').addEventListener('click', async e => {
+  const b = e.target.closest('[data-bk]'); if(!b) return;
+  const a = b.dataset.bk, inp = $('#bk-in'); if(inp) bkCodeIn = inp.value;
+  if(a === 'close') return bkClose();
+  if(a === 'toggle'){ prefs.bk = prefs.bk === false; savePrefs(); renderBackup(); if(prefs.bk !== false) bkRun(true); return; }
+  if(a === 'now') return bkRun(true);
+  if(a === 'copy' || a === 'share'){ prefs.bkCodeG = grp().code; savePrefs(); }
+  if(a === 'copy') return copyText(bkCode(), 'Code kopiert – leg ihn an einem sicheren Ort ab');
+  if(a === 'share') return shareURL(`${appURL()}#restore=${bkCode().slice(6)}`, 'Spots-Wiederherstellungscode', `Mein Spots-Wiederherstellungscode (nicht weitergeben):\n${bkCode()}\n`);
+  if(a === 'gcreate'){ $('#modal').hidden = true; openGroupDlg('create', {}); return; }
+  if(a === 'gjoin'){ $('#modal').hidden = true; openGroupDlg('code', {}); return; }
+  if(a === 'paste'){ try{ bkCodeIn = (await navigator.clipboard.readText()).trim(); bkErr = ''; }catch(_){ bkErr = 'Einfügen ging nicht – halt das Feld gedrückt und wähle „Einsetzen“.'; } return renderBackup(); }
+  if(a === 'restore'){
+    const o = bkParse(bkCodeIn); if(!o){ bkErr = 'Das ist kein gültiger Wiederherstellungscode. Kopier ihn komplett (beginnt mit SPOTS-).'; return renderBackup(); }
+    const same = grp() && grp().code === o.g && myId() === o.d;   // gleiche Person: nur Daten zusammenführen
+    return bkRestore(o, !same && (!grp() || !myName() || (!tracks.length && !data.spots.some(s => !String(s.id).startsWith('bsp')))));
+  }
+  if(a === 'offer' && bkOfferSrc){ const x = bkOfferSrc; bkOfferSrc = null; return bkRestore(x.src, x.adopt); }
+});
+// beim Start: liegengebliebene Änderungen sichern
+setTimeout(() => { if(bkOn() && (localStorage.getItem('meine-spots-bk-dirty') === '1' || Date.now() - (bk.at || 0) > 20 * 3600e3)) bkRun(); }, 12000);
+window.addEventListener('online', () => { if(bkOn() && localStorage.getItem('meine-spots-bk-dirty') === '1') setTimeout(bkRun, 5000); });
+
 /* ================= Garage: deine echten Autos =================
    Bleibt auf diesem Gerät. Kilometerstand = eingetragener Stand + aufgezeichnete Fahrten danach. */
 const GKEY = 'meine-spots-garage';
 let garage = {cars:[], active:null};
 try{ const g = JSON.parse(localStorage.getItem(GKEY) || 'null'); if(g && Array.isArray(g.cars)) garage = g; }catch(e){}
-function saveGarage(){ try{ localStorage.setItem(GKEY, JSON.stringify(garage)); return true; }catch(e){ toast('Speicher ist voll.'); return false; } }
+function saveGarage(){ bkDirty(); try{ localStorage.setItem(GKEY, JSON.stringify(garage)); return true; }catch(e){ toast('Speicher ist voll.'); return false; } }
 const gCar = id => garage.cars.find(c => c.id === id) || null;
 const gActive = () => gCar(garage.active);
 const gModel = c => [c.make, c.model].filter(Boolean).join(' ');
@@ -5439,7 +5719,7 @@ let tab = 'spots', selTrack = null, trackRenaming = false, trackDelArmed = false
 
 let riskCache = new WeakMap();
 function saveTracks(){
-  riskCache = new WeakMap();
+  riskCache = new WeakMap(); bkDirty();
   try{ localStorage.setItem(TKEY, JSON.stringify(tracks)); return true; }
   catch(e){ toast('Speicher voll. Exportiere deine Daten und lösche alte Strecken.'); return false; }
 }
@@ -5728,6 +6008,7 @@ function renderStats(){
     <div id="xplCard">${xplCardHTML()}</div>
     <div id="wayCard">${wayCardHTML()}</div>
     <div id="cxCard">${cxCardHTML()}</div>
+    <div id="styleCard">${styleCardHTML()}</div>
     <div class="st-h"><span>Kilometer pro Woche</span><em id="stCap">Diese Woche ${fmtKmS(kmWeek)}</em></div>
     <div class="st-chart" id="stChart">${chart}</div>
     <div class="st-list">
@@ -6172,6 +6453,49 @@ function cxTrackHTML(t){
     if(c.tmin != null) tags.push(`${Math.round(c.tmin) === Math.round(c.tmax) ? Math.round(c.tmin) : Math.round(c.tmin) + '–' + Math.round(c.tmax)} °C`);
   }
   return `<div class="cx-tags">${tags.map(x => `<span>${x}</span>`).join('')}</div>`;
+}
+
+/* ================= Fahrstil-Trend: Risk, Bremsen und Kurven über die Zeit =================
+   Pro Monat (bei weniger als 10 Wochen Daten: pro Woche) der typische Wert deiner Fahrten. Niedriger = ruhiger. */
+function styleData(){
+  const xs = myTracks().filter(t => t.created && !t._ws).map(t => ({t, r:trackRisk(t)})).filter(x => x.r).sort((a, b) => a.t.created - b.t.created);
+  if(xs.length < 3) return {list:[], n:xs.length};
+  const weekly = xs[xs.length - 1].t.created - xs[0].t.created < 70 * 864e5;
+  const key = ts => weekly ? weekStart(ts) : new Date(new Date(ts).getFullYear(), new Date(ts).getMonth(), 1).getTime();
+  const B = new Map(); xs.forEach(x => { const k = key(x.t.created); if(!B.has(k)) B.set(k, []); B.get(k).push(x); });
+  const list = [...B].map(([k, a]) => { const D = a.reduce((s, x) => s + (x.r.an ? x.r.an.D : 0), 0); return {k, n:a.length, risk:Math.round(median(a.map(x => x.r.score))), brake:median(a.map(x => x.r.brake)), lat:median(a.map(x => x.r.lat)), ev:D > 0 ? a.reduce((s, x) => s + x.r.ev, 0) / (D / 100000) : 0}; })
+    .sort((a, b) => a.k - b.k).slice(weekly ? -10 : -8);
+  return {weekly, list, n:xs.length};
+}
+const styleLabel = (S, k) => S.weekly ? `KW ${isoWeek(k)}` : new Date(k).toLocaleDateString('de-DE', {month:'short'}).replace('.', '') + (new Date(S.list[0].k).getFullYear() !== new Date(S.list[S.list.length - 1].k).getFullYear() ? ' ' + String(new Date(k).getFullYear()).slice(2) : '');
+const styleWhen = (S, k) => S.weekly ? `KW ${isoWeek(k)}` : new Date(k).toLocaleDateString('de-DE', new Date(k).getFullYear() === new Date().getFullYear() ? {month:'long'} : {month:'long', year:'numeric'});
+function styleCardHTML(){
+  const S = styleData(), head = `<div class="st-h"><span>Fahrstil</span>${S.n ? `<em>${S.n} Fahrten</em>` : ''}</div>`;
+  if(S.list.length < 2) return head + `<div class="wy-empty">Der Trend erscheint, sobald du in zwei verschiedenen ${S.weekly === false ? 'Monaten' : 'Wochen'} gefahren bist. Er zeigt, ob du ruhiger oder sportlicher fährst.</div>`;
+  const L = S.list, W = 320, H = 132, pl = 26, pr = 10, pt = 12, pb = 20, cw = W - pl - pr, ch = H - pt - pb;
+  const top = Math.max(30, Math.ceil((Math.max(...L.map(x => x.risk)) + 8) / 10) * 10);
+  const X = i => pl + (L.length === 1 ? cw / 2 : i / (L.length - 1) * cw), Y = v => pt + ch - v / top * ch;
+  const line = L.map((x, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(x.risk).toFixed(1)}`).join(' ');
+  const area = `${line} L${X(L.length - 1).toFixed(1)} ${Y(0)} L${X(0).toFixed(1)} ${Y(0)} Z`;
+  const svgC = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Risk pro ${S.weekly ? 'Woche' : 'Monat'}">
+    <defs><linearGradient id="stA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>
+    ${[0, top / 2, top].map(v => `<line class="grid" x1="${pl}" x2="${W - pr}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${pl - 5}" y="${Y(v) + 3}" text-anchor="end">${v}</text>`).join('')}
+    <path d="${area}" fill="url(#stA)"/><path d="${line}" fill="none" style="stroke:var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${L.map((x, i) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(x.risk).toFixed(1)}" r="4.5" fill="${riskLevel(x.risk).col}" style="stroke:var(--solid-2)" stroke-width="1.5"/><text class="ax" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle">${styleLabel(S, x.k)}</text>`).join('')}
+  </svg>`;
+  const ok = L.filter(x => x.n >= 2), a = ok.length >= 2 ? ok[0] : L[0], b = ok.length >= 2 ? ok[ok.length - 1] : L[L.length - 1], d = b.risk - a.risk;
+  const msg = d <= -3 ? `Du fährst ruhiger als ${S.weekly ? 'in' : 'im'} ${styleWhen(S, a.k)}: Risk ${a.risk} → ${b.risk}.` : d >= 3 ? `Zuletzt sportlicher als ${S.weekly ? 'in' : 'im'} ${styleWhen(S, a.k)}: Risk ${a.risk} → ${b.risk}.` : `Dein Fahrstil ist gleichmäßig: Risk um ${b.risk}.`;
+  const tile = (k, va, vb, f, eps) => { const up = vb - va > Math.max(eps, va * .08), dn = va - vb > Math.max(eps, va * .08); return `<div class="sty-t"><span>${k}</span><b>${f(va)} → ${f(vb)}</b><i class="${dn ? 'good' : up ? 'bad' : ''}">${dn ? '↓ ruhiger' : up ? '↑ mehr' : '= gleich'}</i></div>`; };
+  return head + `<div class="sty">
+    <div class="st-chart sty-chart">${svgC}</div>
+    <div class="cx-ins">${esc(msg)}</div>
+    <div class="sty-tiles">
+      ${tile('Bremsen in G', a.brake, b.brake, v => v.toFixed(2).replace('.', ','), .03)}
+      ${tile('Kurven in G', a.lat, b.lat, v => v.toFixed(2).replace('.', ','), .03)}
+      ${tile('Manöver/100 km', a.ev, b.ev, v => (v >= 10 ? Math.round(v) : v.toFixed(1).replace('.', ',')), .3)}
+    </div>
+    <div class="cx-foot">Typischer Wert pro ${S.weekly ? 'Woche' : 'Monat'}, verglichen ${styleWhen(S, a.k)} mit ${styleWhen(S, b.k)}. Bremsen und Kurven: stärkster Wert je Fahrt.</div>
+  </div>`;
 }
 
 /* ================= Jahresrückblick: Story-Bilder wie „Wrapped“ =================
@@ -8649,7 +8973,7 @@ const PKEY = 'meine-spots-runs';
 const PRESETS = [[0,50],[0,100],[0,200],[50,100],[80,120],[100,150],[100,200],[150,200]];
 let runs = [];
 try{ runs = JSON.parse(localStorage.getItem(PKEY) || '[]'); if(!Array.isArray(runs)) runs = []; }catch(e){ runs = []; }
-const saveRuns = () => { try{ localStorage.setItem(PKEY, JSON.stringify(runs.slice(0, 200))); }catch(e){} };
+const saveRuns = () => { bkDirty(); try{ localStorage.setItem(PKEY, JSON.stringify(runs.slice(0, 200))); }catch(e){} };
 let perfOn = false, pfWatch = null, pfRaf = null, audio = null, pfClearArmed = false;
 let pf = {from:0, to:100, custom:false, state:'idle', prev:null, v:null, acc:null, ts:[], tStart:0, wallStart:0, dist:0, maxV:0, result:null};
 if(prefs.perf && typeof prefs.perf.from === 'number'){ pf.from = prefs.perf.from; pf.to = prefs.perf.to; pf.custom = !!prefs.perf.custom; }
@@ -8823,8 +9147,8 @@ const CKEY = 'meine-spots-courses', EKEY = 'meine-spots-efforts';
 let courses = [], efforts = [];
 try{ courses = JSON.parse(localStorage.getItem(CKEY) || '[]'); if(!Array.isArray(courses)) courses = []; }catch(e){ courses = []; }
 try{ efforts = JSON.parse(localStorage.getItem(EKEY) || '[]'); if(!Array.isArray(efforts)) efforts = []; }catch(e){ efforts = []; }
-const saveCourses = () => { try{ localStorage.setItem(CKEY, JSON.stringify(courses)); }catch(e){ toast('Speicher voll.'); } };
-const saveEfforts = () => { try{ localStorage.setItem(EKEY, JSON.stringify(efforts)); }catch(e){ toast('Speicher voll.'); } };
+const saveCourses = () => { bkDirty(); try{ localStorage.setItem(CKEY, JSON.stringify(courses)); }catch(e){ toast('Speicher voll.'); } };
+const saveEfforts = () => { bkDirty(); try{ localStorage.setItem(EKEY, JSON.stringify(efforts)); }catch(e){ toast('Speicher voll.'); } };
 let sub = 'rec', selCourse = null, courseRenaming = false, courseDelArmed = false, ckTarget = null;
 let drawing = false, draw = null, raceFlash = null;
 const GATE = 30, CP_R = 50;
