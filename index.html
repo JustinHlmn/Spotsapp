@@ -1974,7 +1974,7 @@ let storageOk = true;
 function save(){
   bkDirty();
   try{ localStorage.setItem(KEY, JSON.stringify(data)); }
-  catch(e){ if(storageOk){ storageOk = false; toast('Speichern im Browser nicht möglich – nutze „Exportieren“ als Sicherung.'); } }
+  catch(e){ if(storageOk){ storageOk = false; toast('Speichern im Browser nicht möglich – sichere deine Daten unter Einstellungen › „Backup-Datei speichern“.'); } }
 }
 let prefs = {labels:true, gps:false, terrain:false, base:'sat'};
 try{ Object.assign(prefs, JSON.parse(localStorage.getItem(PREF) || '{}')); }catch(e){}
@@ -3661,7 +3661,7 @@ function accountFromText(raw){
   const q = new URLSearchParams(raw.includes('#') ? raw.slice(raw.indexOf('#') + 1) : raw.replace(/^\?/, ''));
   if(q.get('link') && /^[a-z0-9]{10,64}$/i.test(q.get('link'))){
     const jc = q.get('join');
-    return {type:'link', lo:{dev:q.get('link'), name:(q.get('n') || '').slice(0, 24), code:jc && CODE_RE.test(jc) ? jc : null, g:q.get('g') || 'Gruppe', bk:/^[A-Za-z0-9_-]{43}$/.test(q.get('bk') || '') ? q.get('bk') : null}};
+    return {type:'link', lo:{dev:q.get('link'), name:(q.get('n') || '').slice(0, 24), code:jc && CODE_RE.test(jc) ? jc : null, g:q.get('g') || 'Crew', bk:/^[A-Za-z0-9_-]{43}$/.test(q.get('bk') || '') ? q.get('bk') : null}};
   }
   const m = raw.match(/SPOTS-[A-Za-z0-9_-]{40,}/);
   if(m) return {type:'restore', code:m[0]};
@@ -3763,7 +3763,7 @@ async function onbJoinChecked(code, gname){
 }
 function onbJoin(code, gname, mk){
   const oldG = grp(); if(oldG && oldG.code !== code) memberGone(oldG.code, myId());
-  prefs.group = {code, name:gname || 'Gruppe', joined:Date.now(), ...(mk ? {mkAdmin:true} : {})}; delete prefs.wsSeen; delete prefs.feedSeen; savePrefs();
+  prefs.group = {code, name:gname || 'Crew', joined:Date.now(), ...(mk ? {mkAdmin:true} : {})}; delete prefs.wsSeen; delete prefs.feedSeen; savePrefs();
   WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.loaded = 0; wsSub = 'feed';
   syncSpotsHead(); wsSync(true);
 }
@@ -3836,7 +3836,7 @@ window.addEventListener('hashchange', handleHash);
 
 /* ================= Gruppe: Workshop & Bestenlisten =================
    Datenbank: Firebase Firestore (kostenlos). Die Konfiguration kommt hier rein, sobald das Projekt angelegt ist.
-   Geschützt über einen langen Gruppen-Code im Pfad (groups/<code>/…) – ohne Code sieht niemand etwas. */
+   Geschützt über einen langen Crew-Code im Pfad (groups/<code>/…) – ohne Code sieht niemand etwas. */
 const FB = {apiKey:'AIzaSyDPD8Bpe1WkswwwSThBUKjlKwDiCAKE4Tw', projectId:'jamsis-spots'};   // Firebase-Projekt der Gruppe (öffentlich, kein Geheimnis)
 const WSKEY = 'meine-spots-ws';
 const WS = {spots:[], runs:[], courses:[], efforts:[], members:[], drives:[], reacts:[], events:[], rsvps:[], crew:null, loaded:0, busy:false, err:null, rulesOld:false, nameClash:null};
@@ -3880,7 +3880,7 @@ function wsCache(){
 }
 const wsUpsert = (arr, obj) => { const i = arr.findIndex(x => x._id === obj._id); if(i >= 0) arr[i] = obj; else arr.push(obj); };
 function newCode(){ const a = new Uint8Array(18); crypto.getRandomValues(a); return Array.from(a, x => 'abcdefghijkmnpqrstuvwxyz23456789'[x % 32]).join('') + uid().slice(0, 6); }
-const inviteURL = () => `${appURL()}#join=${grp().code}&g=${encodeURIComponent(grp().name || 'Gruppe')}`;
+const inviteURL = () => `${appURL()}#join=${grp().code}&g=${encodeURIComponent(grp().name || 'Crew')}`;
 
 /* ================= Crew-Rechte: eindeutige Namen, Admin, Rauswerfen/Sperren, neuer Link =================
    Liegt als Dokument „_crew“ in der Mitglieder-Sammlung (dafür braucht es keine neuen Firebase-Regeln).
@@ -4014,13 +4014,13 @@ let gpPending = null;
 function openGroupDlg(kind, arg){
   gpPending = {kind, arg};
   const nm = esc(myName());
-  const nameField = `<label class="f">Dein Name in der Gruppe<input class="inp" id="gp-me" value="${nm}" maxlength="24" placeholder="z. B. Alex"></label>`;
+  const nameField = `<label class="f">Dein Name in der Crew<input class="inp" id="gp-me" value="${nm}" maxlength="24" placeholder="z. B. Alex"></label>`;
   let body = '';
-  if(kind === 'join') body = `<h2>Gruppe „${esc(arg.name)}“ beitreten?</h2><div class="muted">Danach siehst du die Spots und Bestenlisten der Gruppe und kannst selbst Spots teilen.</div>${nameField}
+  if(kind === 'join') body = `<h2>Crew „${esc(arg.name)}“ beitreten?</h2><div class="muted">Danach siehst du die Spots und Bestenlisten der Crew und kannst selbst Spots teilen.</div>${nameField}
       <div class="btns"><button class="btn" data-gp="cancel">Abbrechen</button><button class="btn primary" data-gp="join">Beitreten</button></div>
-      <button class="txtbtn" data-gp="tocode" style="align-self:center">Schon in der Gruppe? Mit Geräte-Link anmelden</button>`;
-  if(kind === 'create') body = `<h2>Gruppe erstellen</h2><div class="muted">Du bekommst einen Einladungslink für deine Freunde. Nur wer den Link hat, kommt rein.</div>
-      <label class="f">Name der Gruppe<input class="inp" id="gp-name" value="${esc((prefs.group && prefs.group.name) || '')}" maxlength="30" placeholder="z. B. Freitagsrunde"></label>${nameField}
+      <button class="txtbtn" data-gp="tocode" style="align-self:center">Schon in der Crew? Mit Geräte-Link anmelden</button>`;
+  if(kind === 'create') body = `<h2>Crew erstellen</h2><div class="muted">Du bekommst einen Einladungslink für deine Freunde. Nur wer den Link hat, kommt rein.</div>
+      <label class="f">Name der Crew<input class="inp" id="gp-name" value="${esc((prefs.group && prefs.group.name) || '')}" maxlength="30" placeholder="z. B. Freitagsrunde"></label>${nameField}
       <div class="btns"><button class="btn" data-gp="cancel">Abbrechen</button><button class="btn primary" data-gp="create">Erstellen</button></div>
       <button class="txtbtn" data-gp="tocode" style="align-self:center">Schon eingeladen? Link einfügen</button>`;
   if(kind === 'code') body = `<h2>Link einfügen</h2><div class="muted">Einladungslink, Spot-Link, Geräte-Link oder Wiederherstellungscode. Mit Geräte-Link oder Code bist du hier derselbe wie auf deinem Handy.</div>
@@ -4028,7 +4028,7 @@ function openGroupDlg(kind, arg){
       <div class="btns"><button class="btn" data-gp="cancel">Abbrechen</button><button class="btn primary" data-gp="code">Beitreten</button></div>`;
   if(kind === 'name') body = `<h2>Wie heißt du?</h2><div class="muted">So sehen die anderen, von wem ein Spot oder eine Zeit kommt.</div>${nameField}
       <div class="btns"><button class="btn" data-gp="cancel">Abbrechen</button><button class="btn primary" data-gp="name">Weiter</button></div>`;
-  $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Gruppe"><div class="pad" style="padding:18px 16px 16px">${body}<div class="err" id="gp-err"></div></div></div>`;
+  $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Crew"><div class="pad" style="padding:18px 16px 16px">${body}<div class="err" id="gp-err"></div></div></div>`;
   $('#modal').hidden = false;
   setTimeout(() => { const i = $('#modal input'); if(i && !i.value) i.focus(); }, 60);
 }
@@ -4063,12 +4063,12 @@ $('#modal').addEventListener('click', async e => {
   const oldG = grp();
   if(oldG && ((target && !target.same && target.code !== oldG.code) || a === 'create')) memberGone(oldG.code, myId());
   if(target && !target.same) prefs.group = {code:target.code, name:target.name, joined:Date.now()};
-  if(a === 'create') prefs.group = {code:newCode(), name:($('#gp-name').value.trim() || 'Meine Gruppe'), joined:Date.now(), mkAdmin:true};
+  if(a === 'create') prefs.group = {code:newCode(), name:($('#gp-name').value.trim() || 'Meine Crew'), joined:Date.now(), mkAdmin:true};
   WS.nameClash = null;
   savePrefs();
   const next = gpPending; gpPending = null; $('#modal').hidden = true;
   if(a === 'name' && next.arg && next.arg.then) return next.arg.then();
-  if(a === 'create') toast('Gruppe erstellt – lad jetzt deine Freunde ein');
+  if(a === 'create') toast('Crew erstellt – lad jetzt deine Freunde ein');
   if(a === 'join' || a === 'code') toast(`Willkommen in „${prefs.group.name}“`);
   wsSub = 'feed'; if(tab !== 'crew') setTab('crew');
   WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.loaded = 0; delete prefs.wsSeen; delete prefs.rxSeen;
@@ -4076,8 +4076,8 @@ $('#modal').addEventListener('click', async e => {
   if(next.arg && next.arg.then) next.arg.then();
 });
 function needGroup(then){
-  if(!FB){ toast('Der Workshop ist noch nicht mit der Datenbank verbunden.'); return false; }
-  if(!grp()){ openGroupDlg('create', {then}); return false; }
+  if(!FB){ toast('Teilen geht gerade nicht.'); return false; }
+  if(!grp()){ toast('Zum Teilen brauchst du eine Crew – erstell eine oder tritt einer bei.'); openGroupDlg('create', {then}); return false; }
   if(!myName()){ openGroupDlg('name', {then}); return false; }
   return true;
 }
@@ -4178,7 +4178,7 @@ async function wsUploadSpot(s){
     const docId = `${myId()}_${s.id}`, meta = {...obj, ph:undefined, nph:obj.ph.length};
     await fsPut('spots', docId, obj, meta);
     s.ws = docId; save(); wsUpsert(WS.spots, {...meta, _id:docId}); wsFull.set(docId, {...obj, _id:docId}); wsCache();
-    toast(`„${s.name}“ ist jetzt im Workshop`);
+    toast(`„${s.name}“ ist jetzt in der Crew`);
     if(view === 'detail' && selected === s.id) renderDetail(s);
     wsRefreshUI();
   }catch(e){ toast('Hochladen hat nicht geklappt. Prüfe dein Internet.'); }
@@ -4188,7 +4188,7 @@ async function wsRemoveSpot(docId){
     await fsDel('spots', docId);
     WS.spots = WS.spots.filter(x => x._id !== docId); wsCache();
     data.spots.forEach(s => { if(s.ws === docId) delete s.ws; }); save();
-    toast('Aus dem Workshop entfernt');
+    toast('Aus der Crew entfernt');
     if(view === 'ws'){ wsSel = null; show('list', 'half'); }
     if(view === 'detail' && selected){ const s = data.spots.find(x => x.id === selected); if(s) renderDetail(s); }
     wsRefreshUI();
@@ -4216,7 +4216,7 @@ function syncSpotsHead(){
   const h = $('#spotsHead'), on = tab === 'spots' && !searching;
   h.hidden = !on;
   $('#chips').hidden = !on || spotView === 'ws';
-  if(on) h.innerHTML = `<div class="seg2" role="tablist"><button data-sv="mine" class="${spotView === 'mine' ? 'on' : ''}">Meine</button><button data-sv="ws" class="${spotView === 'ws' ? 'on' : ''}">Gruppe${spotView !== 'ws' && wsNewCount('sp') ? '<i class="nw nwd"></i>' : WS.spots.length ? ` <span class="n">${WS.spots.length}</span>` : ''}</button></div>`;
+  if(on) h.innerHTML = `<div class="seg2" role="tablist"><button data-sv="mine" class="${spotView === 'mine' ? 'on' : ''}">Meine</button><button data-sv="ws" class="${spotView === 'ws' ? 'on' : ''}">Crew${spotView !== 'ws' && wsNewCount('sp') ? '<i class="nw nwd"></i>' : WS.spots.length ? ` <span class="n">${WS.spots.length}</span>` : ''}</button></div>`;
   wsBadges(true);
 }
 document.addEventListener('click', e => {
@@ -4228,9 +4228,9 @@ document.addEventListener('click', e => {
 /* Workshop-Liste */
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 2 ? 'gerade eben' : m < 60 ? `vor ${m} Min` : m < 1440 ? `vor ${Math.round(m / 60)} Std` : m < 2880 ? 'gestern' : `vor ${Math.round(m / 1440)} Tagen`; };
 function wsNoGroupHTML(){
-  if(!FB) return `<div class="ws-card"><b>Gruppe ist vorbereitet</b><span>Es fehlt nur noch die Verbindung zur Datenbank. Bis dahin kannst du jeden Spot als Link teilen.</span></div>`;
-  return `<div class="ws-card"><b>Noch in keiner Gruppe</b><span>Erstell eine Gruppe und schick deinen Freunden den Einladungslink, oder tritt mit einem Link bei.</span>
-    <div class="btns"><button class="btn" data-wsa="code">Mit Link beitreten</button><button class="btn primary" data-wsa="create">Gruppe erstellen</button></div></div>`;
+  if(!FB) return `<div class="ws-card"><b>Crew ist vorbereitet</b><span>Es fehlt nur noch die Verbindung zur Datenbank. Bis dahin kannst du jeden Spot als Link teilen.</span></div>`;
+  return `<div class="ws-card"><b>Noch in keiner Crew</b><span>Erstell eine Crew und schick deinen Freunden den Einladungslink, oder tritt mit einem Link bei.</span>
+    <div class="btns"><button class="btn" data-wsa="code">Mit Link beitreten</button><button class="btn primary" data-wsa="create">Crew erstellen</button></div></div>`;
 }
 let wsHeadOpen = false;
 function renderWorkshop(){
@@ -4244,7 +4244,7 @@ function renderWorkshop(){
       ${wsHeadOpen ? `<div class="wh-acts"><button class="btn primary" data-wsa="invite">${svg(UI.share, 15)} Einladen</button><button class="btn" data-wsa="sync">Aktualisieren</button><button class="btn" data-wsa="avatar">Profilbild</button><button class="btn" data-wsa="code">Link einfügen</button></div>` : ''}
     </div>
     ${WS.err ? `<div class="ws-err">${esc(WS.err)}</div>` : ''}
-    ${WS.rulesOld ? `<div class="ws-err">Für Profilbilder und Fahrten müssen die Firebase-Regeln noch aktualisiert werden.</div>` : ''}
+    ${WS.rulesOld ? `<div class="ws-err">Profilbilder und geteilte Fahrten gehen in dieser Crew gerade nicht.</div>` : ''}
     ${WS.nameClash ? `<button class="ws-err ws-clash" data-wsa="rename">Den Namen „${esc(WS.nameClash)}“ gibt es in der Crew schon. Die anderen sehen dich erst, wenn du ihn änderst – hier tippen.</button>` : ''}
     <div class="seg2 ws-seg"><button data-wss="feed" class="${wsSub === 'feed' ? 'on' : ''}">News${wsSub === 'feed' ? '' : nwBadge('dr') || nwBadge('lb') || nwBadge('sp')}</button><button data-wss="drives" class="${wsSub === 'drives' ? 'on' : ''}">Fahrten${nwBadge('dr')}</button><button data-wss="lb" class="${wsSub === 'lb' ? 'on' : ''}">Zeiten${nwBadge('lb')}</button><button data-wss="crew" class="${wsSub === 'crew' ? 'on' : ''}">Leute</button></div>`;
   body.innerHTML = head + (wsSub === 'feed' ? wsFeedHTML() : wsSub === 'lb' ? wsBoardsHTML() : wsSub === 'drives' ? wsDrivesHTML() : wsCrewHTML());
@@ -4258,7 +4258,7 @@ function renderWsSpots(){
 
 function wsSpotsHTML(){
   const list = WS.spots.slice().sort((a, b) => (b.at || 0) - (a.at || 0));
-  if(!list.length) return `<div class="empty"><b>Noch keine Spots in der Gruppe</b>Öffne einen deiner Spots und tippe auf „In den Workshop“.</div>`;
+  if(!list.length) return `<div class="empty"><b>Noch keine Spots in der Crew</b>Öffne einen deiner Spots und tippe auf „In die Crew“.</div>`;
   return list.map(w => {
     const saved = wsSavedAs(w), mine = w.dev === myId(), col = (w.cat && w.cat.color) || '#868e96';
     return `<button class="item" data-ws="${esc(w._id)}"><span class="ic" style="--c:${esc(col)}">${ic((w.cat && w.cat.icon) || 'pin', 16)}</span>
@@ -4294,7 +4294,7 @@ function wsBoardsHTML(){
     html += podiumHTML(rows, fmtS, r => `Ø ${fmtGn(r.ga)} G · ${new Date(r.date).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}`, r => `ru:${r._id}:${r.time}`);
   }
   html += `<div class="sec">Rennstrecken</div>`;
-  if(!WS.courses.length) html += `<div class="empty" style="padding:10px">Noch keine Rennstrecke geteilt. Öffne eine Rennstrecke und tippe auf „In den Workshop“.</div>`;
+  if(!WS.courses.length) html += `<div class="empty" style="padding:10px">Noch keine Rennstrecke geteilt. Öffne eine Rennstrecke und tippe auf „In die Crew“.</div>`;
   else html += WS.courses.slice().sort((a, b) => (b.at || 0) - (a.at || 0)).map(c => {
     const rows = WS.efforts.filter(f => f.course === c._id).sort((a, b) => a.time - b.time), have = courses.some(x => x.id === c._id), open = wsOpenCourse === c._id;
     return `<div class="ws-course${open ? ' open' : ''}">
@@ -4368,7 +4368,7 @@ function wsCrewHTML(){
       <span>${m.st ? `${(weekKm(m.st, 0) || 0).toFixed(0)} km diese Woche` : 'keine Fahrdaten'}</span>
       ${sparkSVG(m.st)}
       <small>${m.st ? `${Math.round(m.st.km).toLocaleString('de-DE')} km · ${m.st.n} Fahrt${m.st.n === 1 ? '' : 'en'}` : '&nbsp;'}</small></button>`).join('')}</div>
-    <div class="muted crew-nd">${label}: geteilt werden nur Kilometer pro Woche, keine Strecken. Ausschalten in den Einstellungen unter „Gruppe“.</div>`;
+    <div class="muted crew-nd">${label}: geteilt wird nur die Wochenstatistik, keine Strecken. Ausschalten in den Einstellungen unter „Crew“.</div>`;
   return html;
 }
 function zoomAvatar(dev){
@@ -4387,7 +4387,7 @@ function openCrew(dev){
   const mx = Math.max(1, ...vals.map(x => x.v)), W = 300, H = 110, bw = W / 8;
   const chart = st ? `<svg viewBox="0 0 ${W} ${H + 18}" class="crew-chart" role="img" aria-label="Kilometer pro Woche">${vals.map((x, k) => { const bh = Math.max(3, x.v / mx * H);
       return `<rect class="bar${x.i === 0 ? ' on' : ''}" data-cw="${k}" x="${(k * bw + 4).toFixed(1)}" y="${(H - bh).toFixed(1)}" width="${(bw - 8).toFixed(1)}" height="${bh.toFixed(1)}" rx="4"/>
-        <text class="ax" x="${(k * bw + bw / 2).toFixed(1)}" y="${H + 14}" text-anchor="middle">${x.i === 0 ? 'Diese' : new Date(weekStart(Date.now() - x.i * 7 * 864e5)).toLocaleDateString('de-DE', {day:'numeric', month:'numeric'})}</text>`; }).join('')}</svg>` : '';
+        <text class="ax" x="${(k * bw + bw / 2).toFixed(1)}" y="${H + 14}" text-anchor="middle">${x.i === 0 ? 'Diese Wo.' : new Date(weekStart(Date.now() - x.i * 7 * 864e5)).toLocaleDateString('de-DE', {day:'numeric', month:'numeric'})}</text>`; }).join('')}</svg>` : '';
   $('#modal').innerHTML = `<div class="dlg crew-dlg" role="dialog" aria-modal="true" aria-label="Profil">
     <div class="top" style="padding:12px 14px"><span></span><button class="txtbtn bold" data-crewx>Fertig</button></div>
     <div class="pad" style="padding-top:0;gap:14px">
@@ -4437,7 +4437,7 @@ $('#listBody').addEventListener('click', e => {
     if(k === 'avatar') $('#avFile').click();
     if(k === 'head'){ wsHeadOpen = !wsHeadOpen; renderList(); }
     if(k === 'rename') openGroupDlg('name', {then:() => { prefs.memberSig = ''; pushMember().then(() => { wsCache(); wsRefreshUI(); }).catch(() => {}); pushBests().catch(() => {}); }});
-    if(k === 'invite') shareURL(inviteURL(), `Gruppe ${grp().name}`, `Komm in unsere Gruppe „${grp().name}“ bei Spots:`);
+    if(k === 'invite') shareURL(inviteURL(), `Crew ${grp().name}`, `Komm in unsere Crew „${grp().name}“ bei Spots:`);
     return;
   }
   const sv = e.target.closest('[data-wsave]');
@@ -4620,7 +4620,7 @@ function feedNotify(){
   const rv = reviewNotice();
   if(rv) return toast(rv);
   if(!since || !items.length) return;
-  toast(items.length === 1 ? `${items[0].ic} ${feedText(items[0])}` : `${items.length} Neuigkeiten in deiner Gruppe – schau in die News`);
+  toast(items.length === 1 ? `${items[0].ic} ${feedText(items[0])}` : `${items.length} Neuigkeiten in deiner Crew – schau in die News`);
 }
 
 /* ================= Ausfahrten: Treffpunkt, Uhrzeit, Route – die Crew sagt zu, beim Treffen geht Live an =================
@@ -4886,9 +4886,9 @@ function renderReview(){
     <div class="woa">${R.almost.length ? `<div class="woa-head"><b>${R.almost.length}</b><span>${R.almost.length === 1 ? 'Fahrt' : 'Fahrten'} ${P.now ? (rvKind === 'w' ? 'diese Woche' : 'diesen Monat') : 'in ' + esc(P.title)}, die richtig hätten schiefgehen können</span></div>
       ${R.almost.map(d => { const lv = riskLevel(d.risk); return `<button class="woa-row" data-woa="${esc(d._id)}">${avHTML(d.dev, d.by, 34)}<span class="woa-tx"><b>${nm(d.dev)}</b><span>${esc(placeTxt(d) || d.name)} · ${new Date(d.created || d.at).toLocaleDateString('de-DE', {weekday:'short', day:'numeric', month:'numeric'})}</span></span><span class="woa-rk" style="--lv:${lv.col}"><b>${d.risk}</b><small>${lv.name}</small></span></button>`; }).join('')}`
       : `<div class="woa-empty"><b>Niemand auf der Wall.</b>Genau so soll es sein.</div>`}
-      <p class="woa-foot">Kein Preis, sondern eine Warnung: Wer hier steht, hatte Glück. Zählt nur Fahrten, die in der Gruppe geteilt sind, ab Risk 70.</p></div>
+      <p class="woa-foot">Kein Preis, sondern eine Warnung: Wer hier steht, hatte Glück. Zählt nur Fahrten, die in der Crew geteilt sind, ab Risk 70.</p></div>
     ${R.spots.length || R.drives.length || R.likes.length ? `<div class="rv-sec">Geteilt</div><div class="rv-chips">${R.drives.length ? `<span>🛣️ ${R.drives.length} Fahrt${R.drives.length > 1 ? 'en' : ''}</span>` : ''}${R.spots.length ? `<span>📍 ${R.spots.length} Spot${R.spots.length > 1 ? 's' : ''}</span>` : ''}${R.likes.length ? `<span>🔥 ${R.likes.length} Reaktion${R.likes.length > 1 ? 'en' : ''}</span>` : ''}</div>` : ''}
-    <p class="rv-foot">Zählt nur, was in der Gruppe geteilt ist: Kilometer pro Woche (Einstellungen › Gruppe), Bestzeiten, Spots und Fahrten. Wer eine ältere App-Version hat, fehlt bei Fahrten und Awards.</p>`;
+    <p class="rv-foot">Zählt nur, was in der Crew geteilt ist: Kilometer pro Woche (Einstellungen › Crew), Bestzeiten, Spots und Fahrten. Wer eine ältere App-Version hat, fehlt bei Fahrten und Awards.</p>`;
 }
 $('#review').addEventListener('click', e => {
   const b = e.target.closest('[data-rv], [data-crewrv], [data-woa]'); if(!b) return;
@@ -4941,7 +4941,7 @@ function trimSegs(segs, m){   // Start und Ziel kürzen, damit z. B. die Haustü
 }
 async function wsUploadDrive(t){
   if(!needGroup(() => wsUploadDrive(t))) return;
-  if(WS.rulesOld){ toast('Erst die Firebase-Regeln aktualisieren, dann klappt das Teilen von Fahrten.'); return; }
+  if(WS.rulesOld){ toast('Teilen von Fahrten geht in dieser Crew gerade nicht.'); return; }
   const segs = trimSegs(t.segs, 250);
   if(!segs || !segs.length){ toast('Die Fahrt ist zu kurz zum Teilen.'); return; }
   toast('Fahrt wird geteilt …');
@@ -4964,21 +4964,21 @@ async function wsUploadDrive(t){
     const docId = `${myId()}_${t.id}`;
     await fsPut('drives', docId, obj, meta);
     t.ws = docId; saveTracks(); wsUpsert(WS.drives, {...meta, _id:docId}); wsTrackObjs.delete(docId); wsCache();
-    toast(`„${t.name}“ ist im Workshop – Start und Ziel sind um 250 m gekürzt`);
+    toast(`„${t.name}“ ist in der Crew – Start und Ziel sind um 250 m gekürzt`);
     if(view === 'track') renderTrackView();
-  }catch(e){ toast(/403/.test(e.message) ? 'Erst die Firebase-Regeln aktualisieren.' : 'Teilen hat nicht geklappt. Prüfe dein Internet.'); }
+  }catch(e){ toast(/403/.test(e.message) ? 'Teilen geht in dieser Crew gerade nicht.' : 'Teilen hat nicht geklappt. Prüfe dein Internet.'); }
 }
 async function wsRemoveDrive(t){
   try{
     await fsDel('drives', t.ws);
     WS.drives = WS.drives.filter(x => x._id !== t.ws); wsTrackObjs.delete(t.ws); delete t.ws; saveTracks(); wsCache();
-    toast('Fahrt aus dem Workshop genommen');
+    toast('Fahrt aus der Crew genommen');
     if(view === 'track') renderTrackView();
   }catch(e){ toast('Entfernen hat nicht geklappt. Prüfe dein Internet.'); }
 }
 function wsDrivesHTML(){
   const list = WS.drives.slice().sort((a, b) => (b.created || b.at || 0) - (a.created || a.at || 0));
-  if(!list.length) return `<div class="empty"><b>Noch keine Fahrten geteilt</b>Öffne unter „Strecken“ eine deiner Fahrten und tippe auf „Fahrt in den Workshop teilen“. Start und Ziel werden dabei um 250 m gekürzt.</div>`;
+  if(!list.length) return `<div class="empty"><b>Noch keine Fahrten geteilt</b>Öffne unter „Fahrten“ eine deiner Fahrten und tippe auf „Fahrt in die Crew teilen“. Start und Ziel werden dabei um 250 m gekürzt.</div>`;
   return list.map(d => `<button class="item ws-drive" data-wsdrv="${esc(d._id)}">${avHTML(d.dev, d.by, 40)}
       <span class="tx"><span class="t">${esc(d.name)}${isNewIn('dr', d) ? '<i class="nw-tag">Neu</i>' : ''}</span>
         <span class="s">${d.dev === myId() ? 'Du' : esc(d.by || '?')}${placeTxt(d) ? ' · ' + esc(placeTxt(d)) : ''}</span>
@@ -5011,10 +5011,10 @@ function openWsSpot(id){
 }
 function renderWsDetail(){
   const w = WS.spots.find(x => x._id === wsSel), el = $('#wsView');
-  if(!w){ el.innerHTML = `<div class="top"><button class="txtbtn" data-wsd="back">${svg(UI.back, 14)} Workshop</button></div><div class="pad"><div class="muted">Dieser Spot ist nicht mehr im Workshop.</div></div>`; return; }
+  if(!w){ el.innerHTML = `<div class="top"><button class="txtbtn" data-wsd="back">${svg(UI.back, 14)} Crew</button></div><div class="pad"><div class="muted">Dieser Spot ist nicht mehr im Workshop.</div></div>`; return; }
   const saved = wsSavedAs(w), mine = w.dev === myId(), col = (w.cat && w.cat.color) || '#868e96';
   const park = w.walk && w.parking ? `<div class="card"><div class="h"><span class="pmark">P</span>Parkplatz</div><div class="stats"><div><b>${fmtDist(dist(w.parking, w))}</b><span>Luftlinie</span></div><div><b>ca. ${fmtMin(walkMin(dist(w.parking, w)))}</b><span>zu Fuß</span></div></div>${w.parking.note ? `<div>${esc(w.parking.note)}</div>` : ''}</div>` : '';
-  el.innerHTML = `<div class="top"><button class="txtbtn" data-wsd="back">${svg(UI.back, 14)} ${tab === 'crew' ? 'Crew' : 'Gruppe'}</button><button class="icon-btn press" data-wsd="back" aria-label="Schließen">${svg(UI.close, 14)}</button></div>
+  el.innerHTML = `<div class="top"><button class="txtbtn" data-wsd="back">${svg(UI.back, 14)} ${tab === 'crew' ? 'Crew' : 'Crew'}</button><button class="icon-btn press" data-wsd="back" aria-label="Schließen">${svg(UI.close, 14)}</button></div>
     <div class="pad">
       <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${esc(col)}"><span class="ic">${ic((w.cat && w.cat.icon) || 'pin', 13)}</span>${esc((w.cat && w.cat.name) || 'Spot')}</span><h2>${esc(w.name)}</h2>
         <span class="muted ws-by">${avHTML(w.dev, w.by, 20)}Geteilt ${mine ? 'von dir' : `von ${esc(w.by || '?')}`} · ${ago(w.at || 0)}${me ? ` · ${fmtDist(dist(me, w))} entfernt` : ''}</span></div>
@@ -5028,7 +5028,7 @@ function renderWsDetail(){
       ${w.notes ? `<p class="notes">${esc(w.notes)}</p>` : ''}
       ${park}
       <div class="card"><div class="coords"><span>${fmtCoord(w)}</span><button class="txtbtn" data-copy="${fmtCoord(w)}">Kopieren</button></div>${extLinks(w)}</div>
-      ${mine ? `<button class="btn danger" data-wsd="del">Aus dem Workshop entfernen</button>` : ''}
+      ${mine ? `<button class="btn danger" data-wsd="del">Aus der Crew entfernen</button>` : ''}
     </div>`;
 }
 $('#wsView').addEventListener('click', e => {
@@ -5077,7 +5077,7 @@ async function wsUploadCourse(c){
     const obj = {name:c.name, pts:c.pts, len:c.len, loop:!!c.loop, by:myName(), dev:myId(), at:Date.now()};
     await fsPut('courses', c.id, obj); wsUpsert(WS.courses, {...obj, _id:c.id});
     await pushBests(); wsCache();
-    toast(`„${c.name}“ ist jetzt im Workshop – eure Zeiten landen in einer Bestenliste`);
+    toast(`„${c.name}“ ist jetzt in der Crew – eure Zeiten landen in einer Bestenliste`);
     if(view === 'course') renderCourseView();
   }catch(e){ toast('Hochladen hat nicht geklappt. Prüfe dein Internet.'); }
 }
@@ -5168,7 +5168,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.15';
+const VERSION = '2026.10.06.16';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -5216,18 +5216,18 @@ function renderSettings(){
         ${tg('ghost', 'Geister-Auto auf Rennstrecken')}
         ${tg('sound', 'Töne bei der 0–100-Messung')}
       </div>
-      ${FB ? `<div class="set-sec">Gruppe</div>
+      ${FB ? `<div class="set-sec">Crew</div>
       <div class="set-card">${grp() ? `
-        <div class="set-row"><span>${esc(grp().name)}<small>Workshop und Bestenlisten werden mit dieser Gruppe geteilt</small></span></div>
-        <button class="set-row" data-st="avatar"><span>Profilbild<small>Sehen die anderen in der Gruppe</small></span><span class="ri">${avHTML(myId(), myName(), 34)}</span></button>
+        <div class="set-row"><span>${esc(grp().name)}<small>Geteilte Spots, Fahrten und Bestenlisten sehen alle in dieser Crew</small></span></div>
+        <button class="set-row" data-st="avatar"><span>Profilbild<small>Sehen die anderen in der Crew</small></span><span class="ri">${avHTML(myId(), myName(), 34)}</span></button>
         <button class="set-row" data-st="gname"><span>Dein Name</span><span class="ri">${esc(myName() || '–')}${svg('<path d="M15 5 8 12l7 7"/>', 14).replace('<svg', '<svg style="transform:scaleX(-1)"')}</span></button>
         <button class="set-row${onOff('shareStats') ? ' on' : ''}" data-st="tg" data-k="shareStats" role="switch" aria-checked="${onOff('shareStats')}"><span>Wochenstatistik teilen<small>Kilometer, Anzahl Fahrten, Fahrzeit, Höchsttempo und Ø Risiko pro Woche – keine Strecken</small></span><i class="tg"></i></button>
         <button class="set-row" data-st="ginvite"><span>Freunde einladen</span><span class="ri">${svg(UI.share, 16)}</span></button>
         ${isAdmin() ? `<button class="set-row adm-row" data-st="admin"><span>Crew verwalten<small>Rauswerfen, sperren, neuer Einladungslink</small></span><span class="ri"><i class="adm-tag">Admin</i>${chev}</span></button>`
           : `<button class="set-row" data-st="mkadmin"><span>Admin-Zugang<small>Mit Passwort Admin dieser Crew werden</small></span>${chev}</button>`}
         <button class="set-row" data-st="link"><span>Auf weiterem Gerät nutzen<small>Z. B. am PC – dort bist du dann auch ${esc(myName() || 'du')}${isAdmin() ? ', mit Admin-Rechten' : ''}</small></span>${chev}</button>
-        <button class="set-row" data-st="gleave"><span style="color:var(--danger)">Gruppe verlassen</span></button>` : `
-        <button class="set-row" data-st="gcreate"><span>Gruppe erstellen</span>${chev}</button>
+        <button class="set-row" data-st="gleave"><span style="color:var(--danger)">Crew verlassen</span></button>` : `
+        <button class="set-row" data-st="gcreate"><span>Crew erstellen</span>${chev}</button>
         <button class="set-row" data-st="gjoin"><span>Mit Link beitreten</span>${chev}</button>`}</div>` : ''}
       <div class="set-sec">Daten</div>
       <div class="set-card">
@@ -5261,7 +5261,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'car'){ openCarPicker(); return; }
   if(a === 'garage'){ openGarage(); return; }
   if(a === 'gname') openGroupDlg('name', {then:() => { prefs.memberSig = ''; pushMember().catch(() => {}); pushBests().catch(() => {}); }});
-  if(a === 'ginvite') shareURL(inviteURL(), `Gruppe ${grp().name}`, `Komm in unsere Gruppe „${grp().name}“ bei Spots:`);
+  if(a === 'ginvite') shareURL(inviteURL(), `Crew ${grp().name}`, `Komm in unsere Crew „${grp().name}“ bei Spots:`);
   if(a === 'gcreate') openGroupDlg('create', {});
   if(a === 'admin'){ openAdmin(); return; }
   if(a === 'link'){ openLinkDlg(); return; }
@@ -5301,7 +5301,7 @@ function openAdmin(){
       ${bans.length ? `<div class="set-sec">Gesperrt</div><div class="set-card adm-list">${bans.map(([d, x]) => `<div class="adm-m">${avHTML(d, x.n, 38)}<div class="adm-tx"><b>${esc(x.n || '?')}</b><span>gesperrt am ${new Date(x.t).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}</span></div><div class="adm-acts"><button class="btn sm" data-adm="unban" data-dev="${esc(d)}">Entsperren</button></div></div>`).join('')}</div>` : ''}
       <div class="set-sec">Einladungslink</div>
       <div class="set-card adm-renew">
-        <div class="adm-tx"><b>Neuen Einladungslink erstellen</b><span>Der alte Link geht danach nicht mehr. Alle Spots, Fahrten und Zeiten ziehen mit um. Schick den neuen Link in eure Gruppe – wer ihn nicht bekommt, ist draußen.</span></div>
+        <div class="adm-tx"><b>Neuen Einladungslink erstellen</b><span>Der alte Link geht danach nicht mehr. Alle Spots, Fahrten und Zeiten ziehen mit um. Schick den neuen Link in eure Crew – wer ihn nicht bekommt, ist draußen.</span></div>
         <button class="btn${admArmed === 'renew' ? ' armed danger' : ''}" data-adm="renew" ${admBusy ? 'disabled' : ''}>${admArmed === 'renew' ? 'Wirklich? Nochmal tippen' : 'Link erneuern'}</button>
         <div class="adm-prog" id="admProg"></div>
       </div>
@@ -5348,7 +5348,7 @@ async function crewRenew(){
     await fsRawPut(old, 'members', CREW_DOC, docFields({moved:true, by:myName(), at:Date.now()})).catch(() => {});
     admBusy = false; admArmed = null; WS.loaded = 0; wsSync(true);
     $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Neuer Link"><div class="pad" style="padding:20px 16px 16px;gap:12px">
-      <h2>Neuer Einladungslink ist da</h2><div class="muted">Der alte Link funktioniert nicht mehr. Schick den neuen jetzt in eure Gruppe. Auf deinem PC: dort einmal „Auf weiterem Gerät nutzen“ neu öffnen.</div>
+      <h2>Neuer Einladungslink ist da</h2><div class="muted">Der alte Link funktioniert nicht mehr. Schick den neuen jetzt in eure Crew. Auf deinem PC: dort einmal „Auf weiterem Gerät nutzen“ neu öffnen.</div>
       <div class="lnk-box">${esc(inviteURL())}</div>
       <div class="btns"><button class="btn" data-lk="copyinv">Kopieren</button><button class="btn primary" data-lk="shareinv">${svg(UI.share, 15)} Teilen</button></div>
       <button class="txtbtn" data-gp-ok style="align-self:center">Fertig</button></div></div>`;
@@ -5403,7 +5403,7 @@ $('#modal').addEventListener('click', e => {
 $('#modal').addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.id === 'adm-pw'){ e.preventDefault(); adminLogin(); } });
 
 /* Gerät verknüpfen: derselbe Mensch auf Handy und PC */
-const linkURL = () => `${appURL()}#link=${myId()}&n=${encodeURIComponent(myName())}${grp() ? `&join=${grp().code}&g=${encodeURIComponent(grp().name || 'Gruppe')}` : ''}${grp() && window.crypto?.subtle ? `&bk=${bkKeyRaw()}` : ''}`;
+const linkURL = () => `${appURL()}#link=${myId()}&n=${encodeURIComponent(myName())}${grp() ? `&join=${grp().code}&g=${encodeURIComponent(grp().name || 'Crew')}` : ''}${grp() && window.crypto?.subtle ? `&bk=${bkKeyRaw()}` : ''}`;
 function openLinkDlg(){
   $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Weiteres Gerät"><div class="pad" style="padding:18px 16px 16px;gap:12px">
     <h2>Auf weiterem Gerät nutzen</h2>
@@ -5432,7 +5432,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'copy') return copyText(linkURL(), 'Link kopiert – öffne ihn auf dem anderen Gerät');
   if(a === 'share') return shareURL(linkURL(), 'Spots', 'Mein Gerät verknüpfen:');
   if(a === 'copyinv') return copyText(inviteURL(), 'Einladungslink kopiert');
-  if(a === 'shareinv') return shareURL(inviteURL(), `Gruppe ${grp().name}`, `Neuer Link für „${grp().name}“ bei Spots:`);
+  if(a === 'shareinv') return shareURL(inviteURL(), `Crew ${grp().name}`, `Neuer Link für „${grp().name}“ bei Spots:`);
   if(a === 'back'){ renderSettings(); return; }
   if(a === 'no'){ linkPending = null; $('#modal').hidden = true; if(onbNeeded() && $('#onb').hidden){ $('#onb').hidden = false; renderOnb(); } return; }
   if(a === 'yes' && linkPending){
@@ -5633,19 +5633,19 @@ async function bkRun(force){
       prefs.bkCodeSeen = 1; prefs.bkCodeFor = grp().code; delete prefs.bkCodeG; savePrefs();
       setTimeout(() => { if($('#modal').hidden && $('#onb').hidden) openBackup('first'); }, 600);
     }
-  }catch(e){ bk.err = /403/.test(e.message || '') ? 'Die Gruppen-Datenbank hat das Backup abgelehnt.' : 'Backup gerade nicht möglich. Es wird später nochmal versucht.'; }
+  }catch(e){ bk.err = /403/.test(e.message || '') ? 'Die Crew-Datenbank hat das Backup abgelehnt.' : 'Backup gerade nicht möglich. Es wird später nochmal versucht.'; }
   bk.busy = false; bk.prog = ''; bkUI();
 }
 function bkAgo(ts){ if(!ts) return 'noch nie'; const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'gerade eben' : m < 60 ? `vor ${m} Min` : m < 1440 ? `vor ${Math.round(m / 60)} Std` : `am ${new Date(ts).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}`; }
 function bkStatusTxt(){
   if(!(window.crypto && crypto.subtle)) return 'Geht in diesem Browser nicht';
-  if(!grp()) return 'Braucht eine Gruppe';
+  if(!grp()) return 'Braucht eine Crew';
   if(prefs.bk === false) return 'Aus';
   if(bk.busy) return 'Sichert …';
   return bk.at ? `Gesichert ${bkAgo(bk.at)}` : 'Noch nicht gesichert';
 }
 // Wiederherstellungscode: Gruppe, Person, Schlüssel und Backup-Nummer in einem
-const bkCode = () => 'SPOTS-' + u8b64(u8enc({g:grp().code, gn:grp().name || 'Gruppe', d:myId(), n:myName(), k:bkKeyRaw()}));
+const bkCode = () => 'SPOTS-' + u8b64(u8enc({g:grp().code, gn:grp().name || 'Crew', d:myId(), n:myName(), k:bkKeyRaw()}));
 function bkParse(raw){
   const m = String(raw || '').match(/SPOTS-([A-Za-z0-9_-]{40,})/) || String(raw || '').match(/restore=([A-Za-z0-9_-]{40,})/);
   if(!m) return null;
@@ -5672,8 +5672,8 @@ function renderBackup(){
   let body;
   if(!has) body = `<div class="muted">Dieser Browser kann nicht verschlüsseln. Nutze „Backup-Datei speichern“.</div>`;
   else if(bkMode === 'restore') body = `<div class="muted">Füg deinen Wiederherstellungscode ein – oder den Link aus „Auf weiterem Gerät nutzen“ von deinem Handy. Danach bist du hier derselbe, deine Spots und Fahrten kommen dazu.</div>${restore}`;
-  else if(!grp()) body = `<div class="muted">Das Backup liegt verschlüsselt bei deiner Gruppe. Erstell eine Gruppe – auch nur für dich – oder tritt einer bei.</div>
-    <div class="btns"><button class="btn" data-bk="gjoin">Beitreten</button><button class="btn primary" data-bk="gcreate">Gruppe erstellen</button></div>
+  else if(!grp()) body = `<div class="muted">Das Backup liegt verschlüsselt bei deiner Crew. Erstell eine Crew – auch nur für dich – oder tritt einer bei.</div>
+    <div class="btns"><button class="btn" data-bk="gjoin">Beitreten</button><button class="btn primary" data-bk="gcreate">Crew erstellen</button></div>
     <div class="set-sec">Backup wiederherstellen</div>${restore}`;
   else body = `
     ${bkMode === 'first' ? `<div class="bk-first"><b>Backup ist an.</b><span>Speicher jetzt deinen Wiederherstellungscode, z. B. in den Notizen. Nur damit bekommst du alles auf ein neues Handy zurück.</span></div>` : ''}
@@ -5718,7 +5718,7 @@ async function bkRestore(src, adopt){
       memberGone(oldG.code, myId());
     }
     liveStop(true);
-    prefs.group = {code:src.g, name:src.gn || 'Gruppe', joined:Date.now()}; prefs.dev = src.d; if(src.n) prefs.myName = src.n;
+    prefs.group = {code:src.g, name:src.gn || 'Crew', joined:Date.now()}; prefs.dev = src.d; if(src.n) prefs.myName = src.n;
     if(prefs.bkKey !== raw){ prefs.bkKey = raw; bk.sent = {}; }
     prefs.linkAdopt = true; prefs.memberSig = ''; prefs.onb = 1; prefs.bkCodeSeen = 1; prefs.bkCodeG = src.g; delete prefs.wsSeen; delete prefs.rxSeen; savePrefs();
   }
@@ -6054,7 +6054,7 @@ $('#importFile').addEventListener('change', async e => {
     }
     save(); refreshAll(); if(n) fitAll(); updateTrackLayers();
     toast(`${n} Spots${nt ? ` und ${nt} Strecken` : ''} importiert`);
-  }catch(err){ toast('Datei konnte nicht gelesen werden. Erwartet wird ein Export aus „Meine Spots“.'); }
+  }catch(err){ toast('Datei konnte nicht gelesen werden. Erwartet wird eine Backup-Datei aus Spots.'); }
 });
 
 /* ================= Standort (live) ================= */
@@ -6243,6 +6243,7 @@ const recElapsed = () => rec ? rec.active + (rec.runFrom ? Date.now() - rec.runF
 const fmtKm = m => m < 1000 ? `${Math.round(m)} m` : `${(m/1000).toFixed(2).replace('.', ',')} km`;
 const fmtDur = ms => { const t = Math.floor(ms/1000), h = Math.floor(t/3600), m = Math.floor(t%3600/60), sec = t%60;
   return h ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}` : `${m}:${String(sec).padStart(2,'0')}`; };
+const fmtDurU = ms => { const t = Math.round(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60; return h ? `${h}:${String(m).padStart(2, '0')} h` : `${m}:${String(sec).padStart(2, '0')} Min`; };
 const fmtDurLong = ms => { const m = Math.round(ms/60000); return m < 60 ? `${m} Min` : `${Math.floor(m/60)} h ${m%60} Min`; };
 const fmtSpd = v => `${(v*3.6).toFixed(1).replace('.', ',')} km/h`;
 const fmtDate = ts => { const d = new Date(ts); return d.toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'short', ...(d.getFullYear() !== new Date().getFullYear() ? {year:'numeric'} : {}), hour:'2-digit', minute:'2-digit'}); };
@@ -6340,10 +6341,10 @@ function stopRec(){
   const pts = rec.segs.reduce((n, sg) => n + sg.length, 0);
   if(pts < 2){
     rec = null; persistRec(true); drawLive();
-    toast('Strecke zu kurz – nichts gespeichert.');
+    toast('Fahrt zu kurz – nichts gespeichert.');
   } else {
     rec.stopped = true; persistRec(true);
-    if(view !== 'edit' && !mode) openTrackSave(); else toast('Aufzeichnung beendet – speichere sie unter „Strecken“.');
+    if(view !== 'edit' && !mode) openTrackSave(); else toast('Aufzeichnung beendet – speichere sie unter „Fahrten“.');
   }
   renderTracksHead(); updateRecUI(); renderNearest();
 }
@@ -6388,7 +6389,7 @@ function updateRecUI(){
 }
 function renderTracksHead(){
   const h = $('#tracksHead');
-  const segHTML = `<div class="seg2" role="tablist"><button data-sub="rec" class="${sub === 'rec' ? 'on' : ''}">Meine</button><button data-sub="race" class="${sub === 'race' ? 'on' : ''}">Rennstrecken</button><button data-sub="stats" class="${sub === 'stats' ? 'on' : ''}">Statistik</button></div>`;
+  const segHTML = `<div class="seg2" role="tablist"><button data-sub="rec" role="tab" aria-selected="${sub === 'rec'}" class="${sub === 'rec' ? 'on' : ''}">Meine</button><button data-sub="race" class="${sub === 'race' ? 'on' : ''}">Rennstrecken</button><button data-sub="stats" class="${sub === 'stats' ? 'on' : ''}">Statistik</button></div>`;
   if(sub === 'stats' && !(rec && !rec.stopped)){ h.innerHTML = segHTML; renderCkTop(); updateRecUI(); return; }
   if(sub === 'race' && !(rec && !rec.stopped)){
     h.innerHTML = segHTML + `<button class="btn primary" data-race="draw">${svg(ICONS.flag, 16)} Rennstrecke einzeichnen</button>
@@ -6432,7 +6433,7 @@ function openTrackSave(){
   const def = `Strecke ${new Date(rec.start).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}, ${new Date(rec.start).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})}`;
   const avg = rec.active > 0 ? rec.dist / (rec.active / 1000) : 0;
   $('#trackSaveView').innerHTML = `
-    <div class="top"><button class="txtbtn" data-ts="discard">Verwerfen</button><strong>Strecke speichern</strong><button class="txtbtn bold" data-ts="save">Sichern</button></div>
+    <div class="top"><button class="txtbtn" data-ts="discard">Verwerfen</button><strong>Fahrt speichern</strong><button class="txtbtn bold" data-ts="save">Sichern</button></div>
     <div class="pad">
       <label class="f">Name<input class="inp" id="t-name" value="${esc(def)}" maxlength="80"></label>
       <div class="tstats">
@@ -6451,7 +6452,7 @@ function openTrackSave(){
 $('#trackSaveView').addEventListener('click', e => {
   const b = e.target.closest('[data-ts]'); if(!b || !rec) return;
   if(b.dataset.ts === 'save'){
-    const t = {id:rec.id, name:($('#t-name').value.trim() || 'Strecke'), created:rec.start, dist:Math.round(rec.dist), dur:rec.active, maxSpd:rec.maxSpd,
+    const t = {id:rec.id, name:($('#t-name').value.trim() || $('#t-name').defaultValue || 'Fahrt'), created:rec.start, dist:Math.round(rec.dist), dur:rec.active, maxSpd:rec.maxSpd,
                segs:rec.segs.filter(sg => sg.length)};
     if(rec.g && (rec.g.lat || rec.g.brake || rec.g.acc)) t.g = rec.g;
     if(garage.cars.length && gCar(tsCar || garage.active)) t.car = tsCar || garage.active;
@@ -6462,7 +6463,7 @@ $('#trackSaveView').addEventListener('click', e => {
     renderList(); openTrack(t.id, false);
     fetchPlace(t); if(grp()) setTimeout(() => pushMember().then(wsCache).catch(() => {}), 1500);
     const found = scanTrack(t);
-    toast(found.length ? `Strecke gespeichert · ${found.length} neue Zeit${found.length > 1 ? 'en' : ''} auf Rennstrecken` : 'Strecke gespeichert');
+    toast(found.length ? `Fahrt gespeichert · ${found.length} neue Zeit${found.length > 1 ? 'en' : ''} auf Rennstrecken` : 'Fahrt gespeichert');
   } else {
     if(!discardArmed){ discardArmed = true; b.textContent = 'Wirklich verwerfen?'; b.style.color = 'var(--danger)'; setTimeout(() => { if(b.isConnected){ discardArmed = false; b.textContent = 'Verwerfen'; b.style.color = ''; } }, 3500); return; }
     rec = null; persistRec(true); drawLive(); renderTracksHead(); renderNearest();
@@ -6491,7 +6492,7 @@ function renderStats(){
     const lab = new Date(w.st).toLocaleDateString('de-DE', {day:'numeric', month:'numeric'});
     return `<path class="bar${i === 7 ? ' on' : ''}" data-i="${i}" d="${barPath(x, y, bw - gap, h, 4)}"/>
       <rect class="hit" data-i="${i}" x="${pl + i * bw}" y="${pt}" width="${bw}" height="${ch + pb}"/>
-      <text class="ax" x="${x + (bw - gap) / 2}" y="${H - 4}" text-anchor="middle">${i === 7 ? 'Diese' : lab}</text>`;
+      <text class="ax" x="${x + (bw - gap) / 2}" y="${H - 4}" text-anchor="middle">${i === 7 ? 'Diese Wo.' : lab}</text>`;
   }).join('');
   const chart = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Kilometer pro Woche, letzte 8 Wochen">
       <line class="grid" x1="${pl}" x2="${W - 4}" y1="${pt}" y2="${pt}"/><line class="grid" x1="${pl}" x2="${W - 4}" y1="${pt + ch / 2}" y2="${pt + ch / 2}"/><line class="grid" x1="${pl}" x2="${W - 4}" y1="${pt + ch}" y2="${pt + ch}"/>
@@ -6565,7 +6566,7 @@ function trackCells(t){
   return set;
 }
 function xplCalc(){
-  const ts = myTracks().sort((a, b) => (a.created || 0) - (b.created || 0));
+  const ts = myTracks().filter(t => (t.dist || 0) >= 100).sort((a, b) => (a.created || 0) - (b.created || 0));
   const sig = ts.map(t => t.id + (t.segs || []).reduce((a, sg) => a + sg.length, 0)).join('|');
   if(xpl && xpl.sig === sig) return xpl;
   const seen = new Map(), per = {};
@@ -6634,6 +6635,7 @@ async function xrMatch(t){
   return {r:[...names]};
 }
 const xplOpen = () => tab === 'tracks' && sub === 'stats' && view === 'list' && !!$('#xplCard');
+let xrFail = 0;
 async function xrRun(){
   if(xrBusy || !navigator.onLine) return; xrBusy = true;
   try{
@@ -6643,7 +6645,8 @@ async function xrRun(){
     for(const t of myTracks().sort((a, b) => (a.created || 0) - (b.created || 0))){   // älteste zuerst, damit „neu“ stimmt
       if(xRoads[t.id] || (t.dist || 0) < 900) continue;
       if(!xplOpen()) break;
-      const r = await xrMatch(t); if(!r) break;
+      const r = await xrMatch(t); if(!r){ xrFail = Date.now(); const el = $('#xplCard'); if(el && xplOpen()) el.innerHTML = xplCardHTML(); break; }
+      xrFail = 0;
       xRoads[t.id] = r; try{ localStorage.setItem(XR_KEY, JSON.stringify(xRoads)); }catch(e){}
       const el = $('#xplCard'); if(el && xplOpen()) el.innerHTML = xplCardHTML();
     }
@@ -6678,7 +6681,7 @@ function xplCardHTML(){
         <div><b>+${fmtKmS(months[5].km * 1000)}</b><span>Neuland im ${new Date().toLocaleDateString('de-DE', {month:'long'})}</span></div>
       </div>
       <div class="xbars" aria-label="Neuland pro Monat">${bars}</div>
-      ${R.done < R.need ? `<div class="xpl-prog"><i></i>Straßennamen werden erkannt … ${R.done} von ${R.need} Fahrten</div>` : ''}
+      ${R.done < R.need ? (xrFail ? `<div class="muted" style="font-size:12.5px">Straßennamen gerade nicht abrufbar – ${R.need - R.done} Fahrten fehlen noch.</div>` : `<div class="xpl-prog"><i></i>Straßennamen werden erkannt … ${R.done} von ${R.need} Fahrten</div>`) : ''}
       ${recent ? `<div class="xrs">${recent}</div>` : ''}
     </div>`;
 }
@@ -6928,7 +6931,7 @@ function cxRefresh(){
 function cxStats(ts){
   const S = {tot:[0, 0], n:[0, 0], r:[0, 0], g:[0, 0], sn:[0, 0], dry:[0, 0], wxTot:[0, 0], wx:0, need:0, nightRisk:[], dayRisk:[]};
   ts.forEach(t => {
-    const c = t.cx; if(!c) return; S.need++;
+    const c = t.cx; if(!c) return; if(c.wx || (c.tot[0] > 0 && cxNeedsWx(t))) S.need++;   // nur, was noch ladbar ist
     ['tot', 'n'].forEach(k => { S[k][0] += c[k][0]; S[k][1] += c[k][1]; });
     if(c.wx){ S.wx++; ['r', 'g', 'sn', 'dry'].forEach(k => { S[k][0] += c[k][0]; S[k][1] += c[k][1]; }); S.wxTot[0] += c.tot[0]; S.wxTot[1] += c.tot[1]; }
     const f = c.tot[0] ? c.n[0] / c.tot[0] : 0, rk = trackRisk(t);
@@ -7022,7 +7025,7 @@ const hexA = (h, a) => `rgba(${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3
 const MON1 = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 const wrapYears = () => [...new Set(myTracks().filter(t => t.created).map(t => new Date(t.created).getFullYear()))].sort((a, b) => a - b);
 function wrapData(y){
-  const ts = myTracks().filter(t => t.created && new Date(t.created).getFullYear() === y).sort((a, b) => a.created - b.created);
+  const ts = myTracks().filter(t => (t.dist || 0) >= 100 && t.created && new Date(t.created).getFullYear() === y).sort((a, b) => a.created - b.created);
   const km = ts.reduce((a, t) => a + (t.dist || 0), 0) / 1000, dur = ts.reduce((a, t) => a + (t.dur || 0), 0);
   const months = Array(12).fill(0); ts.forEach(t => months[new Date(t.created).getMonth()] += (t.dist || 0) / 1000);
   const topM = months.indexOf(Math.max(...months)), days = new Set(ts.map(t => new Date(t.created).toDateString())).size;
@@ -7116,7 +7119,7 @@ async function drawWrap(key, D){
   if(key === 'way'){
     if(D.way){
       const w = D.way, [a, b] = wayTitle(w).split(' → ');
-      x.fillStyle = 'rgba(255,255,255,.6)'; x.font = WRF(700, 40); x.fillText('Deine Lieblingsstrecke', 90, 270);
+      x.fillStyle = 'rgba(255,255,255,.6)'; x.font = WRF(700, 40); x.fillText('Dein häufigster Weg', 90, 270);
       x.fillStyle = '#fff'; x.font = WRF(800, 84); x.fillText(a, 90, 380, 900); x.fillStyle = col; x.fillText('→ ' + b, 90, 480, 900);
       wrTracks(x, w.trips.filter(t => new Date(t.created).getFullYear() === D.y).slice(-12), {l:150, t:560, w:780, h:760}, col, {a:.5, w:7, glow:true, dots:true});
       wrStat(x, `${D.wayN}×`, 'gefahren', 90, 1500, 130, '#fff'); wrStat(x, fmtMn(w.typ), 'typische Fahrzeit', 570, 1500, 110);
@@ -7251,7 +7254,7 @@ function renderTrackList(){
   if(sub === 'race') return renderCourseList();
   if(sub === 'stats') return renderStats();
   const body = $('#listBody');
-  if(!tracks.length){ body.innerHTML = `<div class="empty"><b>Noch keine Strecken</b>Tippe auf „Aufzeichnung starten“ und los geht’s.</div>`; return; }
+  if(!tracks.length){ body.innerHTML = `<div class="empty"><b>Noch keine Fahrten</b>Tippe auf „Aufzeichnung starten“ und los geht’s.</div>`; return; }
   const nFav = tracks.filter(t => t.fav).length; if(!nFav && prefs.trkFav){ prefs.trkFav = false; savePrefs(); }
   const list = prefs.trkFav ? tracks.filter(t => t.fav) : tracks;
   const chips = nFav ? `<div class="chips fav-chips"><button class="chip ${prefs.trkFav ? '' : 'on'}" data-trkfav="0">Alle <span class="n">${tracks.length}</span></button><button class="chip ${prefs.trkFav ? 'on' : ''}" data-trkfav="1" style="--c:#ffd60a">${svg(ICONS.star, 13, 2.2)} Lieblinge <span class="n">${nFav}</span></button></div>` : '';
@@ -7278,33 +7281,33 @@ function curTrack(){ return selTrack && String(selTrack).startsWith('ws:') ? (ws
 function closeTrack(){ const foreign = selTrack && String(selTrack).startsWith('ws:'); selTrack = null; tvSel = -1; tvCmp = null; renderList(); show('list', 'half'); if(foreign) renderWsMarkers(); }
 function renderTrackView(){
   const t = curTrack(); if(!t) return;
-  const avg = t.dur > 0 ? t.dist / (t.dur / 1000) : 0;
+  const avg = t.dur > 0 ? t.dist / (t.dur / 1000) : 0, tiny = trkLen(t) < 100;
   $('#trackView').innerHTML = `
     <div class="top"><button class="txtbtn" data-tv="back">${svg(UI.back,14)} ${t._ws ? 'Crew' : 'Fahrten'}</button><span class="row" style="gap:8px">${t._ws ? '' : `<button class="icon-btn press fav-btn${t.fav ? ' on' : ''}" data-tv="fav" aria-pressed="${!!t.fav}" aria-label="${t.fav ? 'Aus Lieblingsstrecken entfernen' : 'Als Lieblingsstrecke markieren'}">${svg(ICONS.star, 16, 2.2)}</button>`}<button class="icon-btn press" data-tv="back" aria-label="Schließen">${svg(UI.close,14)}</button></span></div>
     <div class="pad">
       ${t._ws ? `<div style="display:flex;flex-direction:column;gap:6px"><span class="badge ws-by">${avHTML(t._ws.dev, t._ws.by, 22)}Fahrt von ${t._ws.dev === myId() ? 'dir' : esc(t._ws.by)}</span><h2>${esc(t.name)}</h2><span class="muted">${fmtDate(t.created)}${placeTxt(t) ? ' · ' + esc(placeTxt(t)) : ''}</span></div>` : trackRenaming
         ? `<div class="row"><input class="inp" id="tv-name" value="${esc(t.name)}" maxlength="80"><button class="txtbtn bold" data-tv="renamesave">Fertig</button></div>`
-        : `<div style="display:flex;flex-direction:column;gap:4px"><span class="badge" style="--c:#ff9f0a"><span class="ic">${svg(UI.route,13)}</span>Strecke</span><h2>${esc(t.name)}</h2><span class="muted">${fmtDate(t.created)}</span></div>`}
+        : `<div style="display:flex;flex-direction:column;gap:4px"><span class="badge" style="--c:#ff9f0a"><span class="ic">${svg(UI.route,13)}</span>Fahrt</span><h2>${esc(t.name)}</h2><span class="muted">${fmtDate(t.created)}</span></div>`}
       ${t._ws ? `<div class="rx-row">${rxHTML('dr:' + t._ws.docId, t._ws.dev, 'full')}</div>` : t.ws && FB && grp() ? `<div class="rx-row">${rxHTML('dr:' + t.ws, myId(), 'full')}</div>` : ''}
       <div class="tstats">
         <div><b>${fmtKm(t.dist)}</b><span>Distanz</span></div>
-        <div><b>${fmtDur(t.dur)}</b><span>Dauer</span></div>
-        <div><b>${fmtSpd(avg)}</b><span>Ø Tempo</span></div>
+        <div><b>${fmtDurU(t.dur)}</b><span>Dauer</span></div>
+        <div><b>${fmtSpd(avg)}</b><span>Ø Tempo gesamt</span></div>
         <div><b>${fmtSpd(t.maxSpd || 0)}</b><span>Max. Tempo</span></div>
       </div>
-      <div id="cxTv">${cxTrackHTML(t)}</div>
+      ${tiny ? '<div class="muted" style="font-size:13px">Diese Aufzeichnung ist zu kurz für Auswertungen.</div>' : `<div id="cxTv">${cxTrackHTML(t)}</div>
       ${riskCardHTML(t)}
       <div id="wayTv">${wayTrackHTML(t)}</div>
       ${xplTrackHTML(t)}
       ${cmpHTML(t)}
-      ${analyzeTrack(t) ? `<button class="btn primary" data-tv="replay">${svg(UI.play, 15)} Fahrt abspielen</button>` : ''}
+      ${analyzeTrack(t) ? `<button class="btn primary" data-tv="replay">${svg(UI.play, 15)} Fahrt abspielen</button>` : ''}`}
       ${trkLen(t) > 1500 ? `<button class="btn" data-tv="again">${svg(UI.nav, 15)} Nochmal fahren</button>` : ''}
       ${tvDetailsHTML(t)}
       ${t._ws && t._ws.dev !== myId() ? `<button class="btn rival" data-tv="rival">${svg(ICONS.flag,15)} ${courses.some(c => c.fromDrive === t._ws.docId) ? `Geister-Rennen gegen ${esc(t._ws.by)} öffnen` : `Geister-Rennen gegen ${esc(t._ws.by)}`}</button>` : ''}
-      ${t._ws && t._ws.dev !== myId() ? '' : `<button class="btn" data-tv="course">${svg(ICONS.flag,15)} Als Rennstrecke speichern</button>`}
-      ${t._ws && t._ws.dev !== myId() ? '' : `<button class="btn" data-tv="img">${svg(UI.share,15)} Als Bild teilen</button>`}
+      ${tiny || (t._ws && t._ws.dev !== myId()) ? '' : `<button class="btn" data-tv="course">${svg(ICONS.flag,15)} Als Rennstrecke speichern</button>`}
+      ${tiny || (t._ws && t._ws.dev !== myId()) ? '' : `<button class="btn" data-tv="img">${svg(UI.share,15)} Als Bild teilen</button>`}
       <button class="btn" data-tv="gpx">${svg(UI.share,15)} Als GPX exportieren</button>
-      ${FB && !t._ws ? `<button class="btn${t.ws ? ' on-ws' : ''}" data-tv="ws">${t.ws ? 'Im Workshop geteilt · entfernen' : 'Fahrt in den Workshop teilen'}</button>` : ''}
+      ${FB && !t._ws ? `<button class="btn${t.ws ? ' on-ws' : ''}" data-tv="ws">${t.ws ? 'In der Crew geteilt · entfernen' : 'Fahrt in die Crew teilen'}</button>` : ''}
       ${t._ws ? '' : `<div class="btns"><button class="btn" data-tv="rename">Umbenennen</button><button class="btn danger" data-tv="del">Löschen</button></div>`}
     </div>`;
   if(trackRenaming) setTimeout(() => { const i = $('#tv-name'); if(i){ i.focus(); i.select(); } }, 50);
@@ -7327,7 +7330,7 @@ $('#trackView').addEventListener('click', e => {
   if(a === 'img'){ if(!t.place) fetchPlace(t).catch(() => {}).finally(() => openShareImg(t)); else openShareImg(t); return; }
   if(a === 'ws'){
     if(!t.ws) return wsUploadDrive(t);
-    if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = 'Wirklich aus dem Workshop nehmen?'; setTimeout(() => { if(b.isConnected){ b.classList.remove('armed'); b.textContent = 'Im Workshop geteilt · entfernen'; } }, 3500); return; }
+    if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = 'Wirklich aus der Crew nehmen?'; setTimeout(() => { if(b.isConnected){ b.classList.remove('armed'); b.textContent = 'In der Crew geteilt · entfernen'; } }, 3500); return; }
     return wsRemoveDrive(t);
   }
   if(a === 'gpx') downloadText(`${t.name.replace(/[^\wäöüÄÖÜß -]+/g, '').trim() || 'strecke'}.gpx`, toGPX(t), 'application/gpx+xml');
@@ -7337,7 +7340,11 @@ $('#trackView').addEventListener('click', e => {
     show('list', 'half'); renderList(); toast(`„${t.name}“ gelöscht`);
   }
 });
-$('#trackView').addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.id === 'tv-name'){ e.preventDefault(); $('#trackView [data-tv="renamesave"]').click(); } });
+$('#trackView').addEventListener('keydown', e => {
+  if(e.target.id !== 'tv-name') return;
+  if(e.key === 'Enter'){ e.preventDefault(); $('#trackView [data-tv="renamesave"]').click(); }
+  if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); trackRenaming = false; renderTrackView(); }
+});
 function toGPX(t){
   const x = s => String(s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
   return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Spots" xmlns="http://www.topografix.com/GPX/1/1">\n<trk><name>${x(t.name)}</name>\n` +
@@ -7459,7 +7466,7 @@ function tvDetailsHTML(t){
     <div class="tv-leg"><span>Farbe:</span><span>${Math.round(an.lo)}</span><i style="background:linear-gradient(90deg,${TRAMP.join(',')})"></i><span>${Math.round(an.hi)} km/h</span></div>
     <div class="st-h">G-Kräfte <em>${an.g.src === 'sensor' ? 'Bewegungssensor' : 'aus GPS, ungefähr'}</em></div>
     <div class="tv-g">
-      <button data-gat="lat" style="--c:#bf5af2"><b><i></i>${fmtG(Math.abs(an.g.lat.v))}</b><span>Querkraft · ${an.g.lat.v >= 0 ? 'Rechtskurve' : 'Linkskurve'}</span></button>
+      <button data-gat="lat" style="--c:#bf5af2"><b><i></i>${fmtG(Math.abs(an.g.lat.v))}</b><span>Querkraft${Math.abs(an.g.lat.v) < .05 ? '' : ` · ${an.g.lat.v >= 0 ? 'Rechtskurve' : 'Linkskurve'}`}</span></button>
       <button data-gat="brake" style="--c:#ff453a"><b><i></i>${fmtG(an.g.brake.v)}</b><span>Stärkste Bremsung</span></button>
       <button data-gat="acc" style="--c:#0a84ff"><b><i></i>${fmtG(an.g.acc.v)}</b><span>Stärkste Beschleunigung</span></button>
     </div>
@@ -7602,7 +7609,7 @@ function cmpCalc(a, b){
   }
   cmpCache.set(key, res); return res;
 }
-const fmtGap = s => { const a = Math.abs(s); return a < 60 ? `${a.toFixed(a < 10 ? 1 : 0).replace('.', ',')} s` : fmtDur(a * 1000); };
+const fmtGap = s => { const a = Math.abs(s); return a < 60 ? `${a.toFixed(a < 10 ? 1 : 0).replace('.', ',')} s` : fmtDurU(a * 1000); };
 const dayLbl = ts => new Date(ts).toLocaleDateString('de-DE', {weekday:'short', day:'numeric', month:'numeric'});
 function cmpGeom(c){
   const W = 340, l = 30, r = 10, tp = 16, h1 = 112, gapY = 26, h2 = 74, bt = 18, H = tp + h1 + gapY + h2 + bt, iw = W - l - r;
@@ -8255,7 +8262,7 @@ function trackRisk(t){
   else if(prev.length >= 2){ const ps = prev.map(x => x.p95).sort((x, y) => x - y); ratio = b.p95 / ps[Math.floor(ps.length / 2)]; cmpTxt = `${pct(ratio)} als deine üblichen Fahrten`; }
   const F = [
     {w:.18, c:clamp01((b.p95 - 80) / 120), t:`Top-Tempo ${Math.round(b.p95)} km/h`},
-    {w:.10, c:clamp01((b.avg - 50) / 90), t:`Ø ${Math.round(b.avg)} km/h`},
+    {w:.10, c:clamp01((b.avg - 50) / 90), t:`Ø ${Math.round(b.avg)} km/h in Fahrt`},
     {w:.12, c:clamp01(fHigh / .4), t:`${Math.round(fHigh * 100)} % der Zeit über 130`},
     {w:.15, c:clamp01((brake - .3) / .6), t:`Bremsung ${fmtG(brake)}`},
     {w:.08, c:clamp01((acc - .2) / .4), t:`Beschleunigung ${fmtG(acc)}`},
@@ -9537,7 +9544,7 @@ function renderNavPrev(){
     return `<button class="nopt${nav.mode === k ? ' on' : ''}" data-nav="mode" data-m="${k}"><b>${k === 'fast' ? (o.land && o.land.dur < r.dur ? 'Mit Autobahn' : 'Schnellste') : 'Landstraße'}</b><span class="nt">${fmtDurNav(r.dur)} · ${fmtKmS(r.L)}</span>
       <small>${k === 'land' ? [`${dd >= 0 ? '+' : '−'}${Math.abs(dd)} Min`, Math.abs(dk) >= 100 ? `${dk >= 0 ? '+' : '−'}${fmtKmS(Math.abs(dk))}` : ''].filter(Boolean).join(' · ') + ' · ohne Autobahn' : mwTxt(r)}</small></button>`;
   };
-  const opts = nav.tour && nav.tour.fav ? `<div class="nopt-note tour-note">${svg(ICONS.star, 15)} Folgt deiner Fahrt „${esc(nav.tour.name)}“${nav.tour.toStart > 300 ? ` · ${fmtKmS(nav.tour.toStart)} bis zum Start` : ''}</div>` : nav.tour ? `<div class="nopt-note tour-note">${svg(TOUR_IC, 15)} Rundtour · ${tourDots(nav.tour.curv)} · ${esc(nav.tour.via || 'Landstraßen')}</div>` : o.land ? `<div class="nopts">${card('fast', o.fast)}${card('land', o.land)}</div>`
+  const opts = nav.tour && nav.tour.fav ? `<div class="nopt-note tour-note">${svg(ICONS.star, 15)} Folgt deiner gespeicherten Fahrt${nav.tour.toStart > 300 ? ` · ${fmtKmS(nav.tour.toStart)} bis zum Start` : ''}</div>` : nav.tour ? `<div class="nopt-note tour-note">${svg(TOUR_IC, 15)} Rundtour · ${tourDots(nav.tour.curv)} · ${esc(nav.tour.via || 'Landstraßen')}</div>` : o.land ? `<div class="nopts">${card('fast', o.fast)}${card('land', o.land)}</div>`
     : `<div class="nopt-note">${o.fast.mw >= 800 ? 'Keine sinnvolle Strecke ohne Autobahn gefunden.' : 'Die schnellste Route fährt schon ohne Autobahn.'}</div>`;
   const stops = navUser();
   $('#navPrev').innerHTML = `
@@ -10404,7 +10411,7 @@ const courseEfforts = id => efforts.filter(f => f.course === id).sort((a, b) => 
 
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-sub]'); if(!b || b.dataset.sub === sub) return;
-  sub = b.dataset.sub; renderTracksHead(); renderList(); updateTrackLayers(); if(mobile()) setSnap(snap);
+  sub = b.dataset.sub; renderTracksHead(); renderList(); updateTrackLayers(); if(mobile()) setSnap(sub !== 'rec' && (snap === 'peek' || snap === 'mini') ? 'half' : snap);
 });
 
 /* Geometrie (lokales Meter-System) */
@@ -10638,7 +10645,7 @@ function renderCourseView(){
       <div id="rwCourse">${rwCourseHTML(c)}</div>
       ${ghostChipsHTML(c)}
       <button class="btn primary" data-cv="drive">${svg(UI.gauge,16)} ${(() => { const r = ghostRef(c.id); return r && r.rival ? `Gegen ${esc(r.name)} fahren` : 'Jetzt fahren'; })()}</button>
-      ${FB ? `<button class="btn" data-cv="ws">${WS.courses.some(x => x._id === c.id) ? 'Im Workshop – Bestenliste der Gruppe ansehen' : 'In den Workshop: Gruppen-Bestenliste'}</button>` : ''}
+      ${FB ? `<button class="btn" data-cv="ws">${WS.courses.some(x => x._id === c.id) ? 'In der Crew – Bestenliste der Crew ansehen' : 'In die Crew: Crew-Bestenliste'}</button>` : ''}
       <div class="card"><div class="h">Bestenliste</div>${rows ? `<div class="lb">${rows}</div>` : '<div class="muted">Noch keine Zeit. Tippe auf „Jetzt fahren“ und fahr über die grüne Startlinie.</div>'}</div>
       <button class="btn" data-cv="scan">Aufzeichnungen nach Zeiten durchsuchen</button>
       <div class="btns"><button class="btn" data-cv="rename">Umbenennen</button><button class="btn danger" data-cv="del">Löschen</button></div>
