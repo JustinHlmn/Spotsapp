@@ -473,8 +473,8 @@ h2{font-size:23px}
 .shimg-prev.square img{max-height:46vh}
 
 /* ---------- Gefühl: Übergänge, Federn, Nachtmodus, Sehenswertes ---------- */
-.view.enter.push{animation:viewpush .44s cubic-bezier(.2,.9,.25,1.04)}
-.view.enter.pop{animation:viewpop .44s cubic-bezier(.2,.9,.25,1.04)}
+.view.enter.vpush{animation:viewpush .44s cubic-bezier(.2,.9,.25,1.04)}
+.view.enter.vpop{animation:viewpop .44s cubic-bezier(.2,.9,.25,1.04)}
 @keyframes viewpush{from{opacity:0;transform:translateX(34px)}}
 @keyframes viewpop{from{opacity:0;transform:translateX(-34px)}}
 #modal .dlg{animation:dlgin .46s cubic-bezier(.2,.9,.25,1.08)}
@@ -2590,17 +2590,22 @@ addEventListener('resize', () => mobile() && setSnap(snap, false));
 
 const VDEPTH = {list:0, detail:1, place:1, track:1, course:1, ws:1, sun:1, trackSave:1, mode:2, edit:2, draw:2};
 function show(v, snapTo){
-  const changed = v !== view, dir = (VDEPTH[v] || 0) >= (VDEPTH[view] || 0) ? 'push' : 'pop';
+  const changed = v !== view, dir = (VDEPTH[v] || 0) >= (VDEPTH[view] || 0) ? 'vpush' : 'vpop';
+  // Liste merkt sich Höhe und Scrollposition, damit "Zurück" genau dorthin führt
+  if(changed && view === 'list'){ const pb = $('#listView .pb'); listMem = {snap, sc:pb ? pb.scrollTop : 0, tab}; }
+  if(changed && v === 'list' && listMem && listMem.tab === tab && (!snapTo || snapTo === 'half') && mobile()) snapTo = listMem.snap;
   view = v;
   if(!mobile() && panelCollapsed && v !== 'list') setCollapsed(false);
   for(const id of ['listView','detailView','placeView','editView','modeView','trackView','trackSaveView','courseView','drawView','wsView','sunView']){
     const el = $('#' + id), on = id === v + 'View';
     el.hidden = !on;
-    if(on && changed){ el.classList.remove('enter', 'push', 'pop'); void el.offsetWidth; el.classList.add('enter', dir); }
+    if(on && changed){ el.classList.remove('enter', 'vpush', 'vpop'); void el.offsetWidth; el.classList.add('enter', dir); }
   }
   if(snapTo) setSnap(snapTo); else if(mobile()) setSnap(snap);
+  if(changed && v === 'list' && listMem && listMem.tab === tab && listMem.sc){ const pb = $('#listView .pb'), sc = listMem.sc; if(pb){ pb.scrollTop = sc; requestAnimationFrame(() => { if(view === 'list') pb.scrollTop = sc; }); } }
   updateTrackLayers(); renderWsMarkers();
 }
+let listMem = null;
 
 /* ================= Liste ================= */
 function renderChips(){
@@ -4904,7 +4909,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.06';
+const VERSION = '2026.10.06.07';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
