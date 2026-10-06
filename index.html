@@ -499,6 +499,42 @@ body.cockpit.cknight .glass{background:rgba(3,7,12,.88)}
 .mk-sight{width:26px;height:26px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;color:#111;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.45);cursor:pointer}
 .mk-sight.k-view{background:#ffd60a}.mk-sight.k-pass{background:#ff9f0a}.mk-sight.k-lake{background:#64d2ff}
 
+/* ---------- Gemeinden, Sonne, Saison ---------- */
+.gem{background:var(--solid);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.gem-k{display:flex;justify-content:space-between;align-items:baseline}
+.gem-k b{font-size:16px}.gem-k span{font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.gem-bar{height:10px;border-radius:5px;background:var(--fill);overflow:hidden}
+.gem-bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--accent),#ff9f0a)}
+.gem-open{font-size:13px;color:var(--muted);line-height:1.45}
+.gem-open small{font-size:11.5px;opacity:.8}
+.gem-chips{margin:0;padding:0}
+.sunp{display:flex;flex-direction:column;gap:10px}
+.sunp-day button{font-size:12.5px}
+.sunp-now{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sunp-now b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.sunp-now span{font-size:13px;color:var(--muted)}
+.sunp-r{width:100%;accent-color:#ffd60a}
+.sunp-st{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:650}
+.sunp-st i{width:10px;height:10px;border-radius:50%;background:var(--muted)}
+.sunp-st.ok i{background:#ffd60a;box-shadow:0 0 0 4px rgba(255,214,10,.2)}.sunp-st.ok{color:#ffd60a}
+.sunp-st.blk i{background:#ff9f0a}.sunp-st.blk{color:#ff9f0a}
+.sunp-st.night{color:var(--muted)}
+.sunp-ch{width:100%;height:auto;display:block;background:var(--fill);border-radius:12px}
+.sunp-ch .terr{fill:#2f4a3a;opacity:.95}
+.sunp-ch .sp{stroke:#ffd60a;stroke-width:1.6;stroke-dasharray:3 3;opacity:.8}
+.sunp-ch .sun{fill:#ffd60a;stroke:#fff7d6;stroke-width:2}
+.sunp-ch .hz0{stroke:var(--muted);stroke-width:.6;opacity:.5}
+.sunp-ch .ax{fill:var(--muted);font-size:9px;font-family:var(--font)}
+.sunp-win{display:flex;flex-direction:column;gap:2px;font-size:14px}
+.sunp-win small{font-size:12px;color:var(--muted)}
+.sunp-note{font-size:11.5px;color:var(--muted)}
+.season{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:16px;background:color-mix(in srgb,#ff9f0a 10%,var(--solid));border:1px solid color-mix(in srgb,#ff9f0a 40%,transparent)}
+.season-h{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#ff9f0a}
+.season-r{display:flex;flex-direction:column;line-height:1.3;padding-left:2px}
+.season-r b{font-size:14px}.season-r.warn b{color:#ff9f0a}
+.season-r span{font-size:12px;color:var(--muted)}
+.season-f{font-size:11px;color:var(--muted)}
+
 /* ---------- Rundtour ---------- */
 .tour-open{width:100%}
 .tour-dlg .top{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 0 18px}
@@ -1977,6 +2013,13 @@ function onMapStyle(){
     'heatmap-radius':['interpolate', ['exponential', 1.6], ['zoom'], 6, 1.5, 10, 3, 13, 6, 16, 18],
     'heatmap-color':['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(0,0,0,0)', .12, 'rgba(40,110,255,.55)', .35, '#21c4ff', .6, '#7dff6a', .82, '#ffd60a', 1, '#ff6a3d'],
     'heatmap-opacity':.9}});
+  map.addSource('gem', {type:'geojson', data:FC([])});
+  map.addLayer({id:'gem-fill', type:'fill', source:'gem', layout:{visibility:'none'}, paint:{'fill-color':['case', ['get', 'v'], '#f4d35e', '#000000'], 'fill-opacity':['case', ['get', 'v'], .3, .18]}});
+  map.addLayer({id:'gem-line', type:'line', source:'gem', layout:{visibility:'none'}, paint:{'line-color':['case', ['get', 'v'], '#f4d35e', '#ffffff'], 'line-width':['case', ['get', 'v'], 1.8, 1], 'line-opacity':.75}});
+  map.addSource('sunray', {type:'geojson', data:FC([])});
+  map.addLayer({id:'sunray-glow', type:'line', source:'sunray', filter:['==', ['get', 'k'], 'ray'], layout:{'line-cap':'round'}, paint:{'line-color':'#ffd60a', 'line-width':10, 'line-opacity':.25, 'line-blur':4}});
+  map.addLayer({id:'sunray-line', type:'line', source:'sunray', filter:['==', ['get', 'k'], 'ray'], layout:{'line-cap':'round'}, paint:{'line-color':['case', ['get', 'vis'], '#ffd60a', '#ff9f0a'], 'line-width':3, 'line-dasharray':['case', ['get', 'vis'], ['literal', [1, 0]], ['literal', [1.5, 1.5]]]}});
+  map.addLayer({id:'sunray-sun', type:'circle', source:'sunray', filter:['==', ['get', 'k'], 'sun'], paint:{'circle-radius':11, 'circle-color':'#ffd60a', 'circle-stroke-color':'#fff7d6', 'circle-stroke-width':3}});
   map.addLayer({id:'acc-fill', type:'fill', source:'acc', paint:{'fill-color':'#4da3ff', 'fill-opacity':.14}});
   map.addLayer({id:'acc-line', type:'line', source:'acc', paint:{'line-color':'#4da3ff', 'line-opacity':.5, 'line-width':1}});
   for(const id of ['track-all','track-view','track-case','track-live','track-ends']) map.addSource(id, {type:'geojson', data:FC([])});
@@ -2841,6 +2884,8 @@ function renderDetail(s){
       ${s.notes ? `<p class="notes">${esc(s.notes)}</p>` : ''}
       <div id="rwSpot">${rwSpotHTML(s)}</div>
       <div class="card wx" id="wxCard">${wxHTML(s)}</div>
+      <div class="card sunp" id="sunPlan">${sunPlanHTML(s)}</div>
+      <div id="seasonSpot"></div>
       ${park}
       <div class="card">
         <div class="h">${s.walk ? 'Spot' : 'Mit dem Auto erreichbar'}</div>
@@ -2849,10 +2894,10 @@ function renderDetail(s){
       </div>
       <div class="btns"><button class="btn" data-act="edit">Bearbeiten</button><button class="btn danger" data-act="del">Löschen</button></div>
     </div>`;
-  loadWeather(s); rwSpotLoad(s);
+  loadWeather(s); rwSpotLoad(s); sunPlanLoad(s); seasonSpotLoad(s);
   fillPhotos($('#detailView'));
 }
-function closeDetail(){ selected = null; show('list', 'half'); renderMarkers(); }
+function closeDetail(){ selected = null; setSrc('sunray', FC([])); show('list', 'half'); renderMarkers(); }
 $('#detailView').addEventListener('click', e => {
   const im = e.target.closest('img[data-ph]');
   if(im){ const s = data.spots.find(x => x.id === selected); if(s) openLightbox(s.photos, +im.dataset.i); return; }
@@ -3182,6 +3227,7 @@ map.on('click', e => {
   }
   if(ckOn || navPrevOn) return;
   if(drawing){ addDrawPoint(e.lngLat); return; }
+  if(gemOn && mapReady && !mode){ const g = map.queryRenderedFeatures(e.point, {layers:['gem-fill']}); if(g.length){ const p = g[0].properties; toast(p.v ? `${p.n} · befahren am ${new Date(+p.t).toLocaleDateString('de-DE', {day:'numeric', month:'short', year:'numeric'})}` : `${p.n} · noch nicht befahren`); return; } }
   if(mode) return place(e.lngLat);
   if(mapReady && (tab === 'tracks' || view === 'track' || view === 'course') && view !== 'edit' && view !== 'trackSave'){
     const ch = map.queryRenderedFeatures(e.point, {layers:['course-all-hit']});
@@ -4858,7 +4904,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.05';
+const VERSION = '2026.10.06.06';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -6153,6 +6199,7 @@ function renderStats(){
       <div class="st-tile"><b>${dur ? Math.round(tot / (dur / 1000) * 3.6) : 0} km/h</b><span>Ø Tempo</span></div>
     </div>
     <div id="xplCard">${xplCardHTML()}</div>
+    <div id="gemCard">${gemCardHTML()}</div>
     <div id="wayCard">${wayCardHTML()}</div>
     <div id="cxCard">${cxCardHTML()}</div>
     <div id="styleCard">${styleCardHTML()}</div>
@@ -6176,7 +6223,7 @@ function renderStats(){
   chartEl.addEventListener('click', e => { const t = e.target.closest('[data-i]'); if(t) pick(+t.dataset.i); });
   chartEl.addEventListener('pointerleave', () => pick(7));
   setTimeout(xrRun, 400);
-  setTimeout(() => { if(tab === 'tracks' && sub === 'stats'){ wayGeoFetch(); cxRun(); } }, 700);
+  setTimeout(() => { if(tab === 'tracks' && sub === 'stats'){ wayGeoFetch(); cxRun(); gemAuto(); } }, 700);
 }
 
 /* ================= Straßen-Sammler: Heatmap und Neuland =================
@@ -8995,11 +9042,306 @@ function renderNavPrev(){
     <div class="nsum"><div><b>${fmtDurNav(R.dur)}</b><span>Fahrzeit</span></div><div><b>${fmtNav(R.L).replace('Jetzt', '0 m')}</b><span>Strecke</span></div><div><b>${clock(R.dur)}</b><span>Ankunft</span></div></div>
     <div class="nstops">${stops.map((x, k) => `<div class="nstop"><span class="nsi">${k + 1}</span><span class="nsic">${svg(STOP_IC[x.kind] || STOP_IC.place, 14, 2.2)}</span><span class="nsn">${esc(x.name)}</span><button class="nsx" data-nav="rmstop" data-i="${k}" aria-label="Zwischenstopp entfernen">${svg(UI.close, 12)}</button></div>`).join('')}
       ${stops.length < 3 ? `<button class="nadd" data-nav="addstop">${svg(UI.plus, 14)} Zwischenstopp</button>` : ''}</div>
+    ${nav.busy ? '' : seasonNavHTML()}
     ${nav.busy ? '' : navSightsHTML()}
     ${rwNavHTML()}
     <div class="btns"><button class="btn" data-nav="cancel">Abbrechen</button><button class="btn primary" data-nav="go" ${nav.busy ? 'disabled' : ''}>${svg(UI.nav, 16)} Los</button></div>`;
-  navSightsLoad(); navSightMarks();
+  navSightsLoad(); navSightMarks(); seasonNavLoad();
 }
+/* ================= Gemeinden sammeln =================
+   Gemeindegrenzen des Landkreises aus OpenStreetMap (Overpass), vereinfacht und auf dem Gerät gespeichert.
+   Befahren = mindestens ein Punkt einer eigenen Fahrt liegt in der Gemeinde. */
+const GEM_KEY = 'meine-spots-gem';
+let gemDB = {}; try{ gemDB = JSON.parse(localStorage.getItem(GEM_KEY) || '{}') || {}; }catch(e){ gemDB = {}; }
+let gemOn = false, gemBusy = false, gemErr = '', gemCache = null, gemTried = false;
+const gemSave = () => { try{ localStorage.setItem(GEM_KEY, JSON.stringify(gemDB)); }catch(e){ toast('Speicher voll – Gemeinden nicht gespeichert.'); } };
+async function ovp(q){
+  for(const base of OVERPASS){ try{ const r = await fetch(base, {method:'POST', body:'data=' + encodeURIComponent(q)}); if(r.ok) return await r.json(); }catch(e){} }
+  return null;
+}
+function osmRings(members){
+  const segs = (members || []).filter(m => m.type === 'way' && m.geometry && m.geometry.length > 1 && m.role !== 'inner').map(m => m.geometry.map(g => [g.lon, g.lat]));
+  const same = (a, b) => Math.abs(a[0] - b[0]) < 1e-7 && Math.abs(a[1] - b[1]) < 1e-7, out = [];
+  while(segs.length){
+    let ring = segs.shift();
+    for(let guard = 0; guard < 4000; guard++){
+      const last = ring[ring.length - 1]; if(same(ring[0], last)) break;
+      const i = segs.findIndex(sg => same(sg[0], last) || same(sg[sg.length - 1], last)); if(i < 0) break;
+      let sg = segs.splice(i, 1)[0]; if(!same(sg[0], last)) sg = sg.slice().reverse();
+      ring = ring.concat(sg.slice(1));
+    }
+    if(ring.length >= 4) out.push(ring);
+  }
+  return out;
+}
+function simplifyRing(r, m = 35){ const out = [r[0]]; let l = r[0]; for(let i = 1; i < r.length - 1; i++){ if(dist({lng:l[0], lat:l[1]}, {lng:r[i][0], lat:r[i][1]}) >= m){ out.push(r[i]); l = r[i]; } } out.push(r[r.length - 1]); return out.map(c => [+c[0].toFixed(5), +c[1].toFixed(5)]); }
+const ringBox = r => r.reduce((b, c) => [Math.min(b[0], c[0]), Math.min(b[1], c[1]), Math.max(b[2], c[0]), Math.max(b[3], c[1])], [180, 90, -180, -90]);
+function inRing(p, r){ let ins = false; for(let i = 0, j = r.length - 1; i < r.length; j = i++){ const a = r[i], b = r[j]; if((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) ins = !ins; } return ins; }
+const inGem = (p, g) => g.rings.some((r, k) => { const b = g.box[k]; return p[0] >= b[0] && p[0] <= b[2] && p[1] >= b[1] && p[1] <= b[3] && inRing(p, r); });
+async function gemLoad(pt){
+  if(gemBusy) return; gemBusy = true; gemErr = ''; gemRefresh();
+  try{
+    const a = await ovp(`[out:json][timeout:25];is_in(${pt.lat.toFixed(5)},${pt.lng.toFixed(5)})->.a;area.a["boundary"="administrative"]["admin_level"="6"];out tags;`);
+    const ar = a && (a.elements || [])[0];
+    if(!ar){ gemErr = a ? 'Hier wurde kein Landkreis gefunden.' : 'Kartendaten gerade nicht erreichbar.'; return; }
+    const rel = ar.id - 3600000000, kname = ar.tags.name || 'Landkreis';
+    let j = null, lvl = 8;
+    for(const l of [8, 9, 10]){
+      j = await ovp(`[out:json][timeout:90];area(${ar.id})->.k;rel(area.k)["boundary"="administrative"]["admin_level"="${l}"];out geom;rel(${rel});out geom;`);
+      if(!j){ gemErr = 'Gemeinden gerade nicht ladbar. Versuch es später.'; return; }
+      if((j.elements || []).filter(e => e.tags && e.tags.admin_level === String(l)).length >= 2){ lvl = l; break; }
+    }
+    const kr = (j.elements || []).find(e => e.id === rel), kRings = kr ? osmRings(kr.members).map(r => simplifyRing(r, 60)) : [];
+    const kG = {rings:kRings, box:kRings.map(ringBox)};
+    const gems = (j.elements || []).filter(e => e.type === 'relation' && e.id !== rel && e.tags && e.tags.admin_level === String(lvl) && e.tags.name).map(e => {
+      const rings = osmRings(e.members).map(r => simplifyRing(r)); if(!rings.length) return null;
+      const all = rings.flat(), c = [all.reduce((s, x) => s + x[0], 0) / all.length, all.reduce((s, x) => s + x[1], 0) / all.length];
+      return {id:e.id, n:e.tags.name, rings, box:rings.map(ringBox), c};
+    }).filter(g => g && (!kRings.length || inGem(g.c, kG)) && !/gemeindefrei/i.test(g.n));
+    if(gems.length < 2){ gemErr = 'Für diesen Landkreis gibt es keine Gemeindegrenzen.'; return; }
+    gemDB[rel] = {n:kname, lvl, at:Date.now(), gems}; prefs.gemCur = rel; savePrefs(); gemSave(); gemCache = null;
+    if(gemOn) gemShow(true);
+  }finally{ gemBusy = false; gemRefresh(); }
+}
+function gemCalc(){
+  const K = gemDB[prefs.gemCur]; if(!K) return null;
+  const ts = myTracks().filter(t => !t._ws), sig = prefs.gemCur + '|' + ts.map(t => t.id).join(',');
+  if(gemCache && gemCache.sig === sig) return gemCache;
+  const vis = {}; let lastG = null;
+  ts.slice().sort((a, b) => a.created - b.created).forEach(t => (t.segs || []).forEach(sg => { let lp = null; sg.forEach(q => {
+    if(lp && Math.abs(q[0] - lp[0]) < .0012 && Math.abs(q[1] - lp[1]) < .0008) return; lp = q;
+    const p = [q[0], q[1]];
+    if(lastG && inGem(p, lastG)){ if(!vis[lastG.id]) vis[lastG.id] = t.created; return; }
+    const g = K.gems.find(x => inGem(p, x)); if(g){ lastG = g; if(!vis[g.id]) vis[g.id] = t.created; }
+  }); }));
+  gemCache = {sig, K, vis, n:Object.keys(vis).length, tot:K.gems.length};
+  return gemCache;
+}
+function gemShow(on){
+  gemOn = on; if(!mapReady) return;
+  ['gem-fill', 'gem-line'].forEach(l => map.setLayoutProperty(l, 'visibility', on ? 'visible' : 'none'));
+  const G = gemCalc();
+  if(on && G){
+    setSrc('gem', FC(G.K.gems.map(g => ({type:'Feature', properties:{n:g.n, v:!!G.vis[g.id], t:G.vis[g.id] || 0}, geometry:{type:'MultiPolygon', coordinates:g.rings.map(r => [r])}}))));
+    const b = new maplibregl.LngLatBounds(); G.K.gems.forEach(g => g.box.forEach(x => { b.extend([x[0], x[1]]); b.extend([x[2], x[3]]); }));
+    map.fitBounds(b, {padding:camPad(), duration:900});
+    if(mobile()) setSnap('peek');
+  }
+  gemRefresh();
+}
+function gemAuto(){
+  if(gemTried || gemDB[prefs.gemCur] || gemBusy || !navigator.onLine) return;
+  gemTried = true;
+  const t = myTracks().find(x => x.segs && x.segs[0] && x.segs[0][0]), p = me || (t ? {lng:t.segs[0][0][0], lat:t.segs[0][0][1]} : null);
+  if(p) gemLoad(p);
+}
+function gemRefresh(){ const el = $('#gemCard'); if(el) el.innerHTML = gemCardHTML(); }
+function gemCardHTML(){
+  const G = gemCalc(), K = G && G.K, word = K && K.lvl > 8 ? 'Stadtteile' : 'Gemeinden';
+  const head = `<div class="st-h"><span>${word}</span>${G ? `<em>${G.n} von ${G.tot}</em>` : ''}</div>`;
+  if(!G) return head + `<div class="gem">${gemBusy ? '<div class="xpl-prog"><i></i>Lade Gemeindegrenzen …</div>' : `<div class="muted" style="font-size:13px">${esc(gemErr || 'Zeigt, wie viele Gemeinden deines Landkreises du schon befahren hast.')}</div><button class="btn" data-gem="here">Landkreis hier laden</button>`}</div>`;
+  const pct = Math.round(G.n / G.tot * 100), ref = me || null;
+  const open = K.gems.filter(g => !G.vis[g.id]).map(g => ({g, d:ref ? dist(ref, {lng:g.c[0], lat:g.c[1]}) : 0})).sort((a, b) => a.d - b.d).slice(0, 4);
+  const kn = Object.entries(gemDB).filter(([id]) => id !== String(prefs.gemCur));
+  return head + `<div class="gem">
+    <div class="gem-k"><b>${esc(K.n)}</b><span>${pct} %</span></div>
+    <div class="gem-bar"><i style="width:${Math.max(2, pct)}%"></i></div>
+    ${open.length ? `<div class="gem-open">Noch offen: ${open.map(o => `${esc(o.g.n)}${ref ? ` <small>${fmtKmS(o.d)}</small>` : ''}`).join(', ')}</div>` : `<div class="gem-open">Alle ${word} befahren!</div>`}
+    <div class="btns"><button class="btn${gemOn ? ' primary' : ''}" data-gem="map">${gemOn ? 'Karte ausblenden' : 'Auf der Karte'}</button><button class="btn" data-gem="here" ${gemBusy ? 'disabled' : ''}>${gemBusy ? 'Lädt …' : 'Landkreis an Kartenmitte'}</button></div>
+    ${kn.length ? `<div class="chips gem-chips">${kn.map(([id, k]) => `<button class="chip" data-gem="pick" data-id="${id}">${esc(k.n)}</button>`).join('')}</div>` : ''}
+    ${gemErr ? `<div class="err">${esc(gemErr)}</div>` : ''}
+  </div>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-gem]'); if(!b) return;
+  const a = b.dataset.gem;
+  if(a === 'map') gemShow(!gemOn);
+  if(a === 'here'){ const c = mapReady ? map.getCenter() : me; if(c) gemLoad({lat:c.lat, lng:c.lng}); }
+  if(a === 'pick'){ prefs.gemCur = +b.dataset.id; savePrefs(); gemCache = null; if(gemOn) gemShow(true); else gemRefresh(); }
+});
+
+/* ================= Fotospot-Planer: Sonne am Spot mit Gelände-Horizont =================
+   Sonnenstand gerechnet, Gelände rundherum aus dem Höhenmodell von Open-Meteo (90 m, ohne Key).
+   Sichtbar = Sonne steht höher als der Horizont (Berge, Hügel) in ihrer Richtung. */
+const HZ_KEY = 'meine-spots-hz', HZ_D = [120, 250, 400, 600, 850, 1200, 1700, 2400, 3300, 4500, 6000, 8000, 11000, 15000, 20000];
+let hzDB = {}; try{ hzDB = JSON.parse(localStorage.getItem(HZ_KEY) || '{}') || {}; }catch(e){ hzDB = {}; }
+let sunP = {id:null, day:0, min:null, busy:false, err:''};
+function sunPos(date, lat, lng){
+  const rad = Math.PI / 180, d = date.valueOf() / 864e5 - .5 + 2440588 - 2451545;
+  const M = rad * (357.5291 + .98560028 * d), C = rad * (1.9148 * Math.sin(M) + .02 * Math.sin(2 * M) + .0003 * Math.sin(3 * M));
+  const L = M + C + rad * 102.9372 + Math.PI, e = rad * 23.4397;
+  const dec = Math.asin(Math.sin(e) * Math.sin(L)), ra = Math.atan2(Math.sin(L) * Math.cos(e), Math.cos(L));
+  const phi = rad * lat, H = rad * (280.16 + 360.9856235 * d) - rad * -lng - ra;
+  const az = Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(phi) - Math.tan(dec) * Math.cos(phi));
+  const alt = Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H));
+  return {az:(az / rad + 180 + 360) % 360, alt:alt / rad};
+}
+const DIR8 = ['Norden', 'Nordosten', 'Osten', 'Südosten', 'Süden', 'Südwesten', 'Westen', 'Nordwesten'];
+const dir8 = az => DIR8[Math.round(az / 45) % 8];
+function sunDay(s){ const d = new Date(); d.setDate(d.getDate() + sunP.day); d.setHours(12, 0, 0, 0); return {noon:d, S:SUN(d, s.lat, s.lng)}; }
+function hzAt(H, az){   // Horizont-Höhe in Grad, zwischen den gerechneten Richtungen interpoliert
+  if(!H || !H.a) return null;
+  const k = Object.keys(H.a).map(Number).sort((a, b) => a - b); if(!k.length) return null;
+  let lo = null, hi = null; k.forEach(x => { if(x <= az) lo = x; if(x >= az && hi == null) hi = x; });
+  if(lo == null || hi == null) return null;
+  if(hi - lo > 8) return null;
+  return hi === lo ? H.a[lo] : H.a[lo] + (H.a[hi] - H.a[lo]) * (az - lo) / (hi - lo);
+}
+async function hzFetch(s){
+  const key = s.id, H = hzDB[key] && Math.abs(hzDB[key].lat - s.lat) < 1e-5 && Math.abs(hzDB[key].lng - s.lng) < 1e-5 ? hzDB[key] : (hzDB[key] = {lat:s.lat, lng:s.lng, h0:null, a:{}});
+  const {S} = sunDay(s); if(!S.rise || !S.sunset) return H;
+  const az0 = Math.floor(sunPos(new Date(S.rise.getTime() - 40 * 60000), s.lat, s.lng).az / 3) * 3, az1 = Math.ceil(sunPos(new Date(S.sunset.getTime() + 40 * 60000), s.lat, s.lng).az / 3) * 3;
+  const need = []; for(let a = az0; a <= az1; a += 3) if(H.a[a] == null) need.push(a);
+  if(!need.length && H.h0 != null) return H;
+  const pts = [[s.lat, s.lng, -1, 0]];
+  need.forEach(a => HZ_D.forEach(d => { const p = tourBearPt(s, a, d); pts.push([p.lat, p.lng, a, d]); }));
+  const el = [];
+  for(let i = 0; i < pts.length; i += 100){
+    const ch = pts.slice(i, i + 100);
+    const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${ch.map(x => x[0].toFixed(5)).join(',')}&longitude=${ch.map(x => x[1].toFixed(5)).join(',')}`);
+    if(!r.ok) throw new Error('elev'); el.push(...(await r.json()).elevation);
+  }
+  if(H.h0 == null) H.h0 = el[0];
+  const best = {};
+  pts.forEach((x, i) => { if(x[2] < 0) return; const drop = x[3] * x[3] / (2 * 6371000) * .87, ang = Math.atan2(el[i] - H.h0 - 1.7 - drop, x[3]) * 180 / Math.PI; if(best[x[2]] == null || ang > best[x[2]]) best[x[2]] = ang; });
+  Object.entries(best).forEach(([a, v]) => { H.a[a] = +v.toFixed(2); });
+  const ks = Object.keys(hzDB); if(ks.length > 60) delete hzDB[ks[0]];
+  try{ localStorage.setItem(HZ_KEY, JSON.stringify(hzDB)); }catch(e){}
+  return H;
+}
+function sunSee(s, t){ const p = sunPos(t, s.lat, s.lng), h = hzAt(hzDB[s.id], p.az); return {...p, hz:h, vis:p.alt > (h == null ? 0 : Math.max(h, -.8))}; }
+function sunWindow(s){   // wann die Sonne am Spot wirklich zu sehen ist
+  const {noon, S} = sunDay(s); if(!S.rise || !S.sunset || !hzDB[s.id] || hzDB[s.id].h0 == null) return null;
+  let first = null, last = null;
+  for(let t = S.rise.getTime() - 20 * 60000; t <= S.sunset.getTime() + 20 * 60000; t += 120000){ const v = sunSee(s, new Date(t)); if(v.hz == null) continue; if(v.vis){ if(first == null) first = t; last = t; } }
+  return {first, last, rise:S.rise.getTime(), set:S.sunset.getTime(), noon:noon.getTime()};
+}
+function sunPlanHTML(s){
+  const {S} = sunDay(s); if(!S.rise || !S.sunset) return '';
+  if(sunP.id !== s.id){ sunP.id = s.id; sunP.err = ''; const now = Date.now(); sunP.min = now > S.rise.getTime() && now < S.sunset.getTime() && !sunP.day ? Math.round((now - S.rise.getTime()) / 60000) : Math.max(0, Math.round((S.sunset - S.rise) / 60000) - 45); }
+  const span = Math.round((S.sunset - S.rise) / 60000) + 30, t = new Date(S.rise.getTime() - 15 * 60000 + (sunP.min + 15) * 60000), v = sunSee(s, t), W = sunWindow(s), H = hzDB[s.id];
+  const hm2 = ms => new Date(ms).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+  const st = v.alt <= -.8 ? ['night', 'Sonne unter dem Horizont'] : v.hz == null ? ['', sunP.busy ? 'Gelände wird geprüft …' : sunP.err || 'Gelände noch nicht geprüft'] : v.vis ? ['ok', 'Vom Spot aus sichtbar'] : ['blk', `Hinter dem Gelände (${Math.max(0, v.hz).toFixed(1).replace('.', ',')}° hoch)`];
+  const chart = sunChart(s, t);
+  return `<div class="h">${svg(WXI.sun, 16, 2)} Sonne am Spot</div>
+    <div class="seg2 sunp-day">${['Heute', 'Morgen', 'In 7 Tagen'].map((n, i) => `<button class="${[0, 1, 7][i] === sunP.day ? 'on' : ''}" data-sunp="day" data-v="${[0, 1, 7][i]}">${n}</button>`).join('')}</div>
+    <div class="sunp-now"><b>${hm2(t)}</b><span>aus ${dir8(v.az)} · ${Math.round(v.az)}° · ${v.alt > 0 ? Math.round(v.alt) + '° hoch' : 'unter dem Horizont'}</span></div>
+    <input type="range" class="sunp-r" data-sunp="t" min="0" max="${span}" step="5" value="${sunP.min}" aria-label="Uhrzeit">
+    <div class="sunp-st ${st[0]}"><i></i>${esc(st[1])}</div>
+    ${chart}
+    ${W ? `<div class="sunp-win">${W.first ? `Sonne am Spot: <b>${hm2(W.first)}–${hm2(W.last)}</b>` : '<b>Heute kommt die Sonne hier nicht über das Gelände.</b>'}<small>Offiziell ${hm2(W.rise)}–${hm2(W.set)}${W.first && (W.first - W.rise > 6e5 || W.set - W.last > 6e5) ? ' · Berge und Hügel verdecken sie früher' : ''}</small></div>` : ''}
+    <div class="sunp-note">Gelb auf der Karte: Richtung zur Sonne. Grafik: Horizont rundherum und Sonnenbahn.</div>`;
+}
+function sunChart(s, t){
+  const H = hzDB[s.id], {S} = sunDay(s); if(!H || !Object.keys(H.a).length) return '';
+  const path = []; for(let m = S.rise.getTime() - 40 * 60000; m <= S.sunset.getTime() + 40 * 60000; m += 600000) path.push(sunPos(new Date(m), s.lat, s.lng));
+  const azs = Object.keys(H.a).map(Number).sort((a, b) => a - b), a0 = azs[0], a1 = azs[azs.length - 1];
+  const top = Math.max(10, ...path.map(p => p.alt), ...azs.map(a => H.a[a])) + 3, bot = Math.min(-3, ...azs.map(a => H.a[a])) - 1;
+  const Wd = 320, Ht = 112, X = a => 4 + (a - a0) / Math.max(1, a1 - a0) * (Wd - 8), Y = v => 6 + (top - v) / (top - bot) * (Ht - 22);
+  const terr = `M${X(a0)} ${Y(bot)} ` + azs.map(a => `L${X(a).toFixed(1)} ${Y(H.a[a]).toFixed(1)}`).join(' ') + ` L${X(a1)} ${Y(bot)} Z`;
+  const sp = path.filter(p => p.az >= a0 && p.az <= a1).map((p, i) => `${i ? 'L' : 'M'}${X(p.az).toFixed(1)} ${Y(p.alt).toFixed(1)}`).join(' ');
+  const now = sunPos(t, s.lat, s.lng), ticks = [90, 135, 180, 225, 270].filter(a => a > a0 + 5 && a < a1 - 5);
+  return `<svg class="sunp-ch" viewBox="0 0 ${Wd} ${Ht}" role="img" aria-label="Horizont und Sonnenbahn">
+    <line x1="4" x2="${Wd - 4}" y1="${Y(0)}" y2="${Y(0)}" class="hz0"/>
+    <path d="${sp}" fill="none" class="sp"/><path d="${terr}" class="terr"/>
+    ${now.az >= a0 && now.az <= a1 ? `<circle cx="${X(now.az).toFixed(1)}" cy="${Y(now.alt).toFixed(1)}" r="6.5" class="sun"/>` : ''}
+    ${ticks.map(a => `<text x="${X(a)}" y="${Ht - 3}" text-anchor="middle" class="ax">${{90:'O', 135:'SO', 180:'S', 225:'SW', 270:'W'}[a]}</text>`).join('')}
+  </svg>`;
+}
+function sunRay(s, t){
+  const v = sunSee(s, t); if(v.alt <= -2){ setSrc('sunray', FC([])); return; }
+  const end = tourBearPt(s, v.az, 2500), far = tourBearPt(s, v.az, 3000);
+  setSrc('sunray', FC([{type:'Feature', properties:{k:'ray', vis:v.vis}, geometry:{type:'LineString', coordinates:[[s.lng, s.lat], [end.lng, end.lat]]}}, {type:'Feature', properties:{k:'sun'}, geometry:{type:'Point', coordinates:[far.lng, far.lat]}}]));
+}
+async function sunPlanLoad(s){
+  const t = () => { const {S} = sunDay(s); return new Date(S.rise.getTime() - 15 * 60000 + (sunP.min + 15) * 60000); };
+  try{ sunRay(s, t()); }catch(e){}
+  if(sunP.busy || !navigator.onLine) return;
+  sunP.busy = true;
+  try{ await hzFetch(s); sunP.err = ''; }catch(e){ sunP.err = 'Gelände gerade nicht prüfbar'; }
+  sunP.busy = false;
+  if(selected === s.id && view === 'detail'){ const el = $('#sunPlan'); if(el) el.innerHTML = sunPlanHTML(s); try{ sunRay(s, t()); }catch(e){} }
+}
+$('#detailView').addEventListener('input', e => {
+  const r = e.target.closest('[data-sunp="t"]'); if(!r) return;
+  const s = data.spots.find(x => x.id === selected); if(!s) return;
+  sunP.min = +r.value; const el = $('#sunPlan'), tmp = document.createElement('div'); tmp.innerHTML = sunPlanHTML(s);
+  const olds = [...el.children], news = [...tmp.children];   // Regler selbst nicht ersetzen, sonst bricht das Ziehen ab
+  if(olds.length === news.length) olds.forEach((c, i) => { if(!c.matches('.sunp-r') && c.outerHTML !== news[i].outerHTML) c.replaceWith(news[i]); });
+  const {S} = sunDay(s); sunRay(s, new Date(S.rise.getTime() - 15 * 60000 + (sunP.min + 15) * 60000));
+});
+$('#detailView').addEventListener('click', e => {
+  const b = e.target.closest('[data-sunp="day"]'); if(!b) return;
+  const s = data.spots.find(x => x.id === selected); if(!s) return;
+  sunP.day = +b.dataset.v; sunP.id = null; $('#sunPlan').innerHTML = sunPlanHTML(s); sunPlanLoad(s);
+});
+
+/* ================= Saison-Hinweise: Sperrungen, Baustellen, Winter (laut OpenStreetMap) ================= */
+const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], MON_DE = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+function condInfo(v){   // z. B. "no @ (Nov 1-Apr 30)"
+  const out = []; let now = false;
+  String(v).split(';').forEach(part => {
+    const m = part.match(/^\s*([a-z_]+)\s*@\s*\(?([^)]*)\)?/i); if(!m) return;
+    const what = m[1].toLowerCase(), cond = m[2];
+    if(!/^(no|destination|private|agricultural|forestry|delivery)$/.test(what)) return;
+    const who = what === 'no' ? 'gesperrt' : what === 'destination' ? 'nur Anlieger' : 'gesperrt (nur Land-/Forstwirtschaft)';
+    const r = cond.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(\d{1,2})?\s*-\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(\d{1,2})?/);
+    if(r){
+      const a = MON3.indexOf(r[1]), b = MON3.indexOf(r[3]), d = new Date(), md = d.getMonth() * 100 + d.getDate(), s0 = a * 100 + (+r[2] || 1), s1 = b * 100 + (+r[4] || 31);
+      const inn = s0 <= s1 ? md >= s0 && md <= s1 : md >= s0 || md <= s1; if(inn) now = true;
+      out.push(`${who} ${r[2] ? r[2] + '. ' : ''}${MON_DE[a]} – ${r[4] ? r[4] + '. ' : ''}${MON_DE[b]}`);
+    } else if(/winter|snow|ice/i.test(cond)) out.push(`${who} im Winter / bei Schnee`);
+    else if(/\d{1,2}:\d{2}/.test(cond)) out.push(`zeitweise ${who} (${cond.replace(/\s+/g, ' ').slice(0, 40)})`);
+    else out.push(`zeitweise ${who}`);
+  });
+  return out.length ? {txt:out.join(', '), now} : null;
+}
+function seasonItems(els, R){
+  const out = [];
+  (els || []).forEach(e => {
+    const t = e.tags || {}, nm = t.ref || t.name || t['construction:name'] || '', c = e.center ? {lat:e.center.lat, lng:e.center.lon} : null; if(!c) return;
+    let txt = null, lvl = 'info';
+    if(t.highway === 'construction'){ txt = 'Baustelle' + (t.opening_date ? ` (bis ${t.opening_date})` : ''); lvl = 'warn'; }
+    else {
+      const k = Object.keys(t).find(x => /^(access|motor_vehicle|vehicle|motorcar):conditional$/.test(x)), ci = k ? condInfo(t[k]) : null;
+      if(ci){ txt = ci.now ? `Jetzt ${ci.txt}` : `${ci.txt[0].toUpperCase()}${ci.txt.slice(1)}`; lvl = ci.now ? 'warn' : 'info'; }
+      else if(t.seasonal && t.seasonal !== 'no'){ txt = t.seasonal === 'winter' ? 'Nur im Winter befahrbar' : t.seasonal === 'summer' ? 'Nur im Sommer befahrbar' : 'Nur saisonal befahrbar'; lvl = 'info'; }
+      else if(t.winter_service === 'no'){ txt = 'Kein Winterdienst'; lvl = 'info'; }
+    }
+    if(!txt) return;
+    const it = {txt, lvl, nm, c};
+    if(R){ const pr = routeProject(R, R.toXY(c.lng, c.lat)); it.along = pr.along; }
+    if(!out.some(x => x.txt === it.txt && x.nm === it.nm && dist(x.c, c) < 2000)) out.push(it);
+  });
+  return out.sort((a, b) => (a.lvl === 'warn' ? 0 : 1) - (b.lvl === 'warn' ? 0 : 1) || (a.along || 0) - (b.along || 0)).slice(0, 6);
+}
+const SEASON_F = `["highway"]["highway"!~"^(footway|path|cycleway|steps|bridleway|track|pedestrian|service)$"]`;
+async function seasonNavLoad(){
+  const n = nav; if(!n || !n.route || n.busy) return;
+  const R = n.route, key = n.mode + ':' + Math.round(R.L) + ':' + R.coords.length;
+  if(n.season && n.season.key === key) return;
+  n.season = {key, list:null};
+  const pts = []; const st = Math.max(250, R.L / 160); for(let a = 0; a <= R.L; a += st){ const q = routeAt(R, a); pts.push(`${q.lat.toFixed(5)},${q.lng.toFixed(5)}`); }
+  const P = pts.join(',');
+  const j = await ovp(`[out:json][timeout:25];(way(around:30,${P})["highway"="construction"];way(around:30,${P})${SEASON_F}[~"^(access|motor_vehicle|vehicle|motorcar):conditional$"~"."];way(around:30,${P})${SEASON_F}["seasonal"];way(around:30,${P})${SEASON_F}["winter_service"="no"];);out tags center 60;`);
+  if(nav !== n || !n.season || n.season.key !== key) return;
+  n.season.list = j ? seasonItems(j.elements, R) : [];
+  if(navPrevOn && !n.pick && n.season.list.length) renderNavPrev();
+}
+function seasonNavHTML(){
+  const S = nav.season; if(!S || !S.list || !S.list.length) return '';
+  return `<div class="season"><div class="season-h">${svg('<path d="M12 3 2.5 20h19z"/><path d="M12 10v4.5M12 17.5v.5"/>', 14, 2.2)} Hinweise zur Strecke</div>
+    ${S.list.map(x => `<div class="season-r ${x.lvl}"><b>${esc(x.txt)}</b><span>${esc([x.nm, x.along != null ? `bei km ${Math.max(0, x.along / 1000).toFixed(x.along < 10000 ? 1 : 0).replace('.', ',')}` : ''].filter(Boolean).join(' · '))}</span></div>`).join('')}
+    <div class="season-f">Laut OpenStreetMap – kann veraltet sein.</div></div>`;
+}
+async function seasonSpotLoad(s){
+  if(!navigator.onLine) return;
+  const j = await ovp(`[out:json][timeout:20];(way(around:400,${s.lat.toFixed(5)},${s.lng.toFixed(5)})["highway"="construction"];way(around:400,${s.lat.toFixed(5)},${s.lng.toFixed(5)})${SEASON_F}[~"^(access|motor_vehicle|vehicle|motorcar):conditional$"~"."];way(around:400,${s.lat.toFixed(5)},${s.lng.toFixed(5)})${SEASON_F}["seasonal"];way(around:400,${s.lat.toFixed(5)},${s.lng.toFixed(5)})${SEASON_F}["winter_service"="no"];);out tags center 20;`);
+  if(!j || selected !== s.id) return;
+  const L = seasonItems(j.elements, null).filter(x => dist(s, x.c) <= 700), el = $('#seasonSpot'); if(!el) return;
+  el.innerHTML = L.length ? `<div class="season"><div class="season-h">${svg('<path d="M12 3 2.5 20h19z"/><path d="M12 10v4.5M12 17.5v.5"/>', 14, 2.2)} Hinweise zur Anfahrt</div>${L.map(x => `<div class="season-r ${x.lvl}"><b>${esc(x.txt)}</b><span>${esc([x.nm, fmtDist(dist(s, x.c)) + ' vom Spot'].filter(Boolean).join(' · '))}</span></div>`).join('')}<div class="season-f">Laut OpenStreetMap – kann veraltet sein.</div></div>` : '';
+}
+
 /* ================= Kurvige Rundtour =================
    Sucht kurvige Landstraßen (OpenStreetMap über Overpass) in passender Entfernung, legt drei Wegpunkte darauf
    und lässt Valhalla eine Runde ohne Autobahn zurück zum Start rechnen. Bewertet wird die Kurvigkeit der fertigen Route. */
