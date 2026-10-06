@@ -3582,12 +3582,22 @@ function catFor(name, color, icon){
 }
 let incoming = null, incomingM = null;
 // Geräte-Link („Auf weiterem Gerät nutzen“) oder Wiederherstellungscode erkennen – egal ob geöffnet oder eingefügt
+// Einladung aus Link oder nacktem Code: nur echte Codes (20–40 Buchstaben/Ziffern), sonst null
+const CODE_RE = /^[a-z0-9]{20,40}$/i;
+const safeDec = v => { try{ return decodeURIComponent(v); }catch(e){ return v; } };
+function inviteFrom(raw){
+  raw = String(raw || '').trim(); if(!raw) return null;
+  const m = raw.match(/[#?&]join=([^&\s#]+)/i), code = m ? m[1] : raw;
+  if(!CODE_RE.test(code)) return null;
+  const gm = raw.match(/[?&#]g=([^&#\s]+)/);
+  return {code, name:(gm ? safeDec(gm[1].replace(/\+/g, ' ')) : 'Crew').slice(0, 40) || 'Crew'};
+}
 function accountFromText(raw){
   raw = String(raw || '').trim(); if(!raw) return null;
   const q = new URLSearchParams(raw.includes('#') ? raw.slice(raw.indexOf('#') + 1) : raw.replace(/^\?/, ''));
   if(q.get('link') && /^[a-z0-9]{10,64}$/i.test(q.get('link'))){
     const jc = q.get('join');
-    return {type:'link', lo:{dev:q.get('link'), name:(q.get('n') || '').slice(0, 24), code:jc && jc.length >= 20 ? jc : null, g:q.get('g') || 'Gruppe', bk:/^[A-Za-z0-9_-]{43}$/.test(q.get('bk') || '') ? q.get('bk') : null}};
+    return {type:'link', lo:{dev:q.get('link'), name:(q.get('n') || '').slice(0, 24), code:jc && CODE_RE.test(jc) ? jc : null, g:q.get('g') || 'Gruppe', bk:/^[A-Za-z0-9_-]{43}$/.test(q.get('bk') || '') ? q.get('bk') : null}};
   }
   const m = raw.match(/SPOTS-[A-Za-z0-9_-]{40,}/);
   if(m) return {type:'restore', code:m[0]};
@@ -3612,8 +3622,10 @@ function handleHash(){
       const o = sjson(b64d(q.get('spot')));
       if(typeof o.a === 'number' && typeof o.o === 'number') showIncoming(o);
     } else if(q.get('join')){
-      if(onbNeeded()) onbInvite = {code:q.get('join'), name:q.get('g') || 'Gruppe'};
-      else openGroupDlg('join', {code:q.get('join'), name:q.get('g') || 'Gruppe'});
+      const jc = q.get('join'), gn = (q.get('g') || 'Crew').slice(0, 40);
+      if(!CODE_RE.test(jc)) toast('Dieser Einladungslink ist kaputt. Lass ihn dir nochmal schicken.');
+      else if(onbNeeded()) onbInvite = {code:jc, name:gn};
+      else openGroupDlg('join', {code:jc, name:gn});
     }
   }catch(e){ toast('Der Link ist kaputt oder unvollständig.'); }
   try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
@@ -3686,6 +3698,7 @@ async function onbJoinChecked(code, gname){
   renderOnb(); return false;
 }
 function onbJoin(code, gname, mk){
+  const oldG = grp(); if(oldG && oldG.code !== code) memberGone(oldG.code, myId());
   prefs.group = {code, name:gname || 'Gruppe', joined:Date.now(), ...(mk ? {mkAdmin:true} : {})}; delete prefs.wsSeen; delete prefs.feedSeen; savePrefs();
   WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.loaded = 0; wsSub = 'feed';
   syncSpotsHead(); wsSync(true);
@@ -3709,12 +3722,12 @@ $('#onb').addEventListener('click', async e => {
   if(a === 'link'){
     const acc = accountFromText($('#onb-link').value);
     if(acc){ $('#onb').hidden = true; return openAccount(acc); }
-    const raw = ($('#onb-link').value || '').trim(), m = raw.match(/join=([a-z0-9]{20,})/i), code = m ? m[1] : raw.replace(/[^a-z0-9]/gi, '');
-    if(code.length < 20){ onbErr = 'Das sieht nicht nach einem Einladungslink aus. Kopier den ganzen Link.'; return renderOnb(); }
-    const gm = raw.match(/[?&#]g=([^&]+)/), gname = gm ? decodeURIComponent(gm[1]) : 'Gruppe';
+    const inv = inviteFrom($('#onb-link').value);
+    if(!inv){ onbErr = 'Das sieht nicht nach einem Einladungslink aus. Kopier den ganzen Link.'; return renderOnb(); }
+    const code = inv.code, gname = inv.name;
     b.disabled = true; const ok = await onbJoinChecked(code, gname); b.disabled = false; if(ok) next(); return;
   }
-  if(a === 'create'){ onbJoin(newCode(), `${myName() || 'Meine'}s Crew`, true); toast('Crew erstellt – du bist der Admin. Lad deine Freunde unter „Crew“ ein.'); return next(); }
+  if(a === 'create'){ onbJoin(newCode(), myName() ? `${possName(myName())} Crew` : 'Meine Crew', true); toast('Crew erstellt – du bist der Admin. Lad deine Freunde unter „Crew“ ein.'); return next(); }
   if(a === 'gps'){ prefs.gps = true; savePrefs(); closeOnb(); startGPS(true); return; }
   if(a === 'close') closeOnb();
 });
@@ -3809,7 +3822,9 @@ const inviteURL = () => `${appURL()}#join=${grp().code}&g=${encodeURIComponent(g
    Liegt als Dokument „_crew“ in der Mitglieder-Sammlung (dafür braucht es keine neuen Firebase-Regeln).
    Die Rechte gelten in der App – wer sich auskennt, könnte sie umgehen. */
 const CREW_DOC = '_crew';
-const normName = v => String(v || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9ß]+/g, '');
+// Namen vergleichbar machen: Akzente weg, Groß/klein egal, ähnlich aussehende kyrillische/griechische Buchstaben wie lateinische
+const NAME_FOLD = {'а':'a','е':'e','о':'o','р':'p','с':'c','х':'x','у':'y','к':'k','м':'m','т':'t','н':'h','в':'b','і':'i','ј':'j','ѕ':'s','α':'a','ο':'o','ρ':'p','ν':'v','τ':'t','κ':'k','ι':'i','υ':'u','ε':'e'};
+const normName = v => String(v || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/./gu, c => NAME_FOLD[c] || c).replace(/[^\p{L}\p{N}]+/gu, '');
 const crewDoc = () => WS.crew || {};
 const isAdmin = (dev = myId()) => (crewDoc().admin || []).includes(dev);
 const crewBan = () => crewDoc().ban || {};
@@ -3851,17 +3866,37 @@ async function crewPeek(code){
 }
 // Darf ich mit diesem Namen in diese Gruppe? Liefert eine Fehlermeldung oder ''
 async function joinCheck(code, gname, name){
+  if(!/\p{L}/u.test(String(name || ''))) return 'Der Name braucht mindestens einen Buchstaben. Nimm bitte einen anderen Namen.';
   let pk; try{ pk = await crewPeek(code); }catch(e){ return ''; }   // offline: später beim Hochladen nochmal geprüft
+  if(!pk.crew && !pk.mems.length) return 'Diese Crew gibt es nicht (mehr). Prüf den Link.';
   const c = pk.crew || {};
   if(c.moved) return 'Dieser Einladungslink ist abgelaufen. Frag nach dem neuen Link.';
   if(c.ban && c.ban[myId()]) return `Du bist in „${gname}“ gesperrt.`;
   const o = nameOwner(name, pk.mems, c);
   return o ? `In „${gname}“ gibt es schon ${o.banned ? 'einen gesperrten Namen' : 'jemanden namens'} „${o.name}“. ${o.banned ? 'Nimm bitte einen anderen Namen.' : 'Bist du das auf einem anderen Gerät? Dann melde dich mit dem Geräte-Link oder deinem Wiederherstellungscode an. Sonst nimm einen anderen Namen.'}` : '';
 }
+// Crew-Dokument ändern: immer auf dem frischesten Stand aufsetzen und nur schreiben, wenn sich dazwischen nichts geändert hat
+// (sonst überschreiben sich zwei Admins gegenseitig). patch darf eine Funktion cur => {...} sein.
 async function crewSave(patch){
-  try{ const cur = await fsGet('members', CREW_DOC); delete cur._id; WS.crew = cur; }catch(e){}   // frischester Stand, falls das zweite Gerät auch etwas geändert hat
-  const doc = {...crewDoc(), ...patch, at:Date.now()};
-  await fsPut('members', CREW_DOC, doc); WS.crew = doc; wsCache();
+  for(let i = 0; i < 4; i++){
+    const r = await fetch(`${fsURL('members', CREW_DOC)}?key=${FB.apiKey}`);
+    let cur = {}, ut = null;
+    if(r.ok){ const j = await r.json(); ut = j.updateTime || null; try{ cur = sjson(j.fields.d.stringValue); }catch(e){} }
+    else if(r.status !== 404) throw new Error('Firestore ' + r.status);
+    const p = typeof patch === 'function' ? patch(cur) : patch;
+    const doc = {...cur, ...p, at:Date.now()};
+    const pre = ut ? `&currentDocument.updateTime=${encodeURIComponent(ut)}` : '&currentDocument.exists=false';
+    const w = await fetch(`${fsURL('members', CREW_DOC)}?key=${FB.apiKey}${pre}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({fields:docFields(doc)})});
+    if(w.ok){ WS.crew = doc; wsCache(); return doc; }
+    if(w.status !== 400 && w.status !== 409 && w.status !== 412) throw new Error('Firestore ' + w.status);
+    await sleep(300 + Math.random() * 500);   // jemand war schneller – neu lesen und nochmal
+  }
+  throw new Error('Crew gerade beschäftigt');
+}
+// Mitglied (und Live-Position) in einer Gruppe austragen – beim Verlassen, Wechseln oder Verknüpfen, sonst bleibt ein Geist zurück
+function memberGone(code, dev){
+  if(!FB || !code || !dev) return Promise.resolve();
+  return Promise.all([fsRawDel(code, 'members', dev).catch(() => {}), fsRawDel(code, 'live', dev).catch(() => {})]);
 }
 function leaveGroupLocal(msg){
   liveStop(true); delete prefs.group; delete prefs.wsSeen; delete prefs.rxSeen; savePrefs(); liveWatch();
@@ -3949,10 +3984,9 @@ $('#modal').addEventListener('click', async e => {
   let target = null;
   if(a === 'join') target = {code:gpPending.arg.code, name:gpPending.arg.name};
   if(a === 'code'){
-    const raw = $('#gp-code').value.trim(), m = raw.match(/join=([a-z0-9]{20,})/i), code = m ? m[1] : raw.replace(/[^a-z0-9]/gi, '');
-    if(code.length < 20) return err('Der Code ist zu kurz. Kopier den ganzen Link.');
-    const gm = raw.match(/[?&#]g=([^&]+)/);
-    target = {code, name:gm ? decodeURIComponent(gm[1]) : 'Gruppe'};
+    const inv = inviteFrom($('#gp-code').value);
+    if(!inv) return err('Das ist kein gültiger Einladungslink. Kopier den ganzen Link.');
+    target = inv;
   }
   if(a === 'name' && grp() && FB){ target = {code:grp().code, name:grp().name, same:true}; }
   if(target && FB){
@@ -3962,6 +3996,8 @@ $('#modal').addEventListener('click', async e => {
     if(msg) return err(msg);
   }
   prefs.myName = me_;
+  const oldG = grp();
+  if(oldG && ((target && !target.same && target.code !== oldG.code) || a === 'create')) memberGone(oldG.code, myId());
   if(target && !target.same) prefs.group = {code:target.code, name:target.name, joined:Date.now()};
   if(a === 'create') prefs.group = {code:newCode(), name:($('#gp-name').value.trim() || 'Meine Gruppe'), joined:Date.now(), mkAdmin:true};
   WS.nameClash = null;
@@ -3995,7 +4031,8 @@ async function wsSync(force){
     if(mb){ WS.crew = mb.find(m => m._id === CREW_DOC) || null; WS.members = mb.filter(m => m._id !== CREW_DOC); WS.drives = dr || []; WS.rulesOld = false; }
     if(rx){ WS.reacts = rx.filter(r => !isEvDoc(r)); WS.events = rx.filter(r => r.kind === 'ev'); WS.rsvps = rx.filter(r => r.kind === 'rv'); evTidy(); }
     if(mb && crewEnforce()){ WS.busy = false; return; }
-    if(mb && grp().mkAdmin && !(crewDoc().admin || []).length){ await crewSave({admin:[myId()], since:Date.now()}).catch(() => {}); }
+    { const bn = crewBan(); if(Object.keys(bn).length){ const ok = x => !x.dev || !bn[x.dev]; ['spots', 'runs', 'efforts', 'drives', 'reacts', 'events', 'rsvps'].forEach(k => { WS[k] = (WS[k] || []).filter(ok); }); } }   // Gesperrte ausblenden
+    if(mb && grp().mkAdmin && !(crewDoc().admin || []).length){ await crewSave(c => (c.admin || []).length ? {} : {admin:[myId()], since:Date.now()}).catch(() => {}); }
     if(grp() && grp().mkAdmin){ delete prefs.group.mkAdmin; savePrefs(); }
     const meDoc = WS.members.find(m => m._id === myId());
     if(meDoc && prefs.linkAdopt){   // frisch verknüpftes Gerät: Profilbild und Auto vom anderen Gerät übernehmen
@@ -4005,7 +4042,7 @@ async function wsSync(force){
     }
     await pushBests(); await pushMember();
     wsCache(); feedNotify(); evLiveCheck();
-  }catch(e){ WS.err = 'Workshop gerade nicht erreichbar. Prüfe dein Internet.'; }
+  }catch(e){ WS.err = 'Crew gerade nicht erreichbar. Prüfe dein Internet.'; }
   WS.busy = false; wsRefreshUI();
 }
 function wsRefreshUI(){
@@ -4231,7 +4268,7 @@ function crewList(){
   WS.members.forEach(m => map.set(m._id, {dev:m._id, name:m.name || '?', st:m.st || null}));
   const rem = (map.get(myId()) || {}).st || null;
   map.set(myId(), {dev:myId(), name:myName() || 'Ich', st:onOff('shareStats') ? (!tracks.length && rem ? rem : memberStats()) : rem});
-  [...WS.spots, ...WS.runs, ...WS.drives, ...WS.efforts].forEach(x => { if(x.dev && !map.has(x.dev)) map.set(x.dev, {dev:x.dev, name:x.by || '?', st:null}); });
+  if(!WS.members.length) [...WS.spots, ...WS.runs, ...WS.drives, ...WS.efforts].forEach(x => { if(x.dev && !map.has(x.dev)) map.set(x.dev, {dev:x.dev, name:x.by || '?', st:null}); });
   const ban = crewBan(), kick = crewDoc().kick || {};
   return [...map.values()].filter(m => !ban[m.dev] && !(kick[m.dev] && !WS.members.some(x => x._id === m.dev)));
 }
@@ -4469,7 +4506,8 @@ function feedItems(){
   return out.sort((a, b) => (b.live ? 1 : 0) - (a.live ? 1 : 0) || b.t - a.t).slice(0, 80);
 }
 const feedWho = it => it.dev === myId() ? 'Du' : crewName(it.dev, it.by);
-const feedVerb = it => it.dev === myId() ? it.html.replace(/^hat /, 'hast ').replace(/^ist /, 'bist ') : it.html;
+const feedVerb = it => it.dev === myId() ? it.html.replace(/^hat /, 'hast ').replace(/^ist /, 'bist ').replace(/^plant /, 'planst ').replace(/^fährt /, 'fährst ').replace(/^teilt /, 'teilst ').replace(/^sagt /, 'sagst ').replace(/^war /, 'warst ') : it.html;
+const possName = n => /[sßxz]$/i.test(n) ? `${n}’` : `${n}s`;   // „Jonas’ Crew“, „Maxis Crew“
 const feedText = it => `${feedWho(it)} ${feedVerb(it).replace(/<[^>]+>/g, '')}`;
 const isNewFeed = it => !it.live && !!wsShow && it.dev !== myId() && it.t > (wsShow[it.cat] || 0);
 function feedDay(it){
@@ -4541,7 +4579,8 @@ function evWhen(at){
 function evCountdown(at){
   const ms = at - Date.now();
   if(ms <= 0) return Date.now() < at + EV_AFTER ? 'läuft' : 'vorbei';
-  const m = Math.ceil(ms / 60000), dd = Math.round(m / 1440);
+  const m = Math.ceil(ms / 60000), d0 = new Date(); d0.setHours(0, 0, 0, 0); const d1 = new Date(at); d1.setHours(0, 0, 0, 0);
+  const dd = Math.round((d1 - d0) / 864e5);   // Kalendertage, passend zu „Morgen“ / Wochentag
   return m < 60 ? `in ${m} Min` : m < 1440 ? `in ${Math.floor(m / 60)} Std${m % 60 ? ` ${m % 60} Min` : ''}` : `in ${dd} Tag${dd === 1 ? '' : 'en'}`;
 }
 function evSecHTML(){
@@ -4691,7 +4730,8 @@ async function evSave(b){
   if(!e.title.trim()) return err('Gib der Ausfahrt einen Namen.');
   const at = new Date(`${e.date}T${e.time || '19:00'}`).getTime();
   if(!e.date || isNaN(at)) return err('Tag und Uhrzeit fehlen.');
-  if(at < Date.now() - 15 * 60000 && !e.id) return err('Der Zeitpunkt liegt in der Vergangenheit.');
+  const orig = e.id ? (WS.events || []).find(x => x.id === e.id || x._id === e.id) : null;
+  if(at < Date.now() - 15 * 60000 && (!orig || +orig.at !== at)) return err('Der Zeitpunkt liegt in der Vergangenheit.');
   if(at > Date.now() + 120 * 864e5) return err('Höchstens vier Monate im Voraus.');
   if(!e.meet) return err('Wähle einen Treffpunkt.');
   const P = p => p ? {lat:+p.lat.toFixed(5), lng:+p.lng.toFixed(5), n:(p.n || '').trim().slice(0, 60) || 'Treffpunkt'} : null;
@@ -5064,7 +5104,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.12';
+const VERSION = '2026.10.06.13';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -5117,7 +5157,7 @@ function renderSettings(){
         <div class="set-row"><span>${esc(grp().name)}<small>Workshop und Bestenlisten werden mit dieser Gruppe geteilt</small></span></div>
         <button class="set-row" data-st="avatar"><span>Profilbild<small>Sehen die anderen in der Gruppe</small></span><span class="ri">${avHTML(myId(), myName(), 34)}</span></button>
         <button class="set-row" data-st="gname"><span>Dein Name</span><span class="ri">${esc(myName() || '–')}${svg('<path d="M15 5 8 12l7 7"/>', 14).replace('<svg', '<svg style="transform:scaleX(-1)"')}</span></button>
-        <button class="set-row${onOff('shareStats') ? ' on' : ''}" data-st="tg" data-k="shareStats" role="switch" aria-checked="${onOff('shareStats')}"><span>Wochen-Kilometer teilen<small>Nur km pro Woche und Anzahl Fahrten, keine Strecken</small></span><i class="tg"></i></button>
+        <button class="set-row${onOff('shareStats') ? ' on' : ''}" data-st="tg" data-k="shareStats" role="switch" aria-checked="${onOff('shareStats')}"><span>Wochenstatistik teilen<small>Kilometer, Anzahl Fahrten, Fahrzeit, Höchsttempo und Ø Risiko pro Woche – keine Strecken</small></span><i class="tg"></i></button>
         <button class="set-row" data-st="ginvite"><span>Freunde einladen</span><span class="ri">${svg(UI.share, 16)}</span></button>
         ${isAdmin() ? `<button class="set-row adm-row" data-st="admin"><span>Crew verwalten<small>Rauswerfen, sperren, neuer Einladungslink</small></span><span class="ri"><i class="adm-tag">Admin</i>${chev}</span></button>`
           : `<button class="set-row" data-st="mkadmin"><span>Admin-Zugang<small>Mit Passwort Admin dieser Crew werden</small></span>${chev}</button>`}
@@ -5134,7 +5174,7 @@ function renderSettings(){
         <div class="set-row"><span>Speicher belegt</span><span class="ri" id="stStore">…</span></div>
       </div>
       <div class="set-sec">Über</div>
-      <div class="set-card"><div class="set-row"><span>Spots<small>Alles bleibt nur auf diesem Gerät.</small></span><span class="ri">Version ${VERSION}</span></div></div>
+      <div class="set-card"><div class="set-row"><span>Spots<small>Deine Spots und Fahrten liegen auf diesem Gerät. In die Crew geht nur, was du teilst – und dein verschlüsseltes Backup.</small></span><span class="ri">Version ${VERSION}</span></div></div>
     </div></div>`;
   if(keep) $('#modal .pad').scrollTop = keep;
   storageInfo();
@@ -5165,7 +5205,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'gjoin') openGroupDlg('code', {});
   if(a === 'gleave'){
     if(!b.classList.contains('armed')){ b.classList.add('armed'); b.querySelector('span').textContent = 'Wirklich verlassen? Nochmal tippen'; return; }
-    leaveGroupLocal(); renderSettings(); toast('Gruppe verlassen');
+    memberGone(grp() && grp().code, myId()); leaveGroupLocal(); renderSettings(); toast('Crew verlassen');
   }
   if(a === 'backup') return openBackup();
   if(a === 'export') $('#exportBtn').click();
@@ -5207,8 +5247,8 @@ function openAdmin(){
 async function admKick(dev, ban){
   const m = WS.members.find(x => x._id === dev), name = (m && m.name) || '?';
   try{
-    if(ban) await crewSave({ban:{...crewBan(), [dev]:{n:name, t:Date.now()}}});
-    else await crewSave({kick:{...(crewDoc().kick || {}), [dev]:Date.now()}});
+    if(ban) await crewSave(c => ({ban:{...(c.ban || {}), [dev]:{n:name, t:Date.now()}}}));
+    else await crewSave(c => ({kick:{...(c.kick || {}), [dev]:Date.now()}}));
     await fsDel('members', dev).catch(() => {}); await fsDel('live', dev).catch(() => {});
     WS.members = WS.members.filter(x => x._id !== dev); wsCache();
     toast(ban ? `${name} ist gesperrt` : `${name} ist raus – mit dem Einladungslink kann ${name} wieder beitreten`);
@@ -5224,6 +5264,14 @@ async function crewRenew(){
     const all = {}; let total = 0, done = 0;
     for(const c of cols){ all[c] = (await fsRawList(old, c)).filter(d => !(c === 'members' && (d.id === CREW_DOC || crewBan()[d.id]))); total += all[c].length; }
     for(const c of cols) await pool(all[c], 6, async d => { await fsRawPut(neu, c, d.id, d.fields); done++; if(done % 5 === 0 || done === total) prog(`Ziehe um … ${done} von ${total}`); });
+    // zweiter Durchgang: was andere während des Umzugs neu geschrieben oder geändert haben, auch mitnehmen
+    prog('Prüfe auf Neues …');
+    for(const c of cols){
+      const seen = new Map(all[c].map(d => [d.id, JSON.stringify(d.fields)]));
+      const late = (await fsRawList(old, c)).filter(d => !(c === 'members' && (d.id === CREW_DOC || crewBan()[d.id])) && seen.get(d.id) !== JSON.stringify(d.fields));
+      await pool(late, 6, d => fsRawPut(neu, c, d.id, d.fields));
+      late.forEach(d => { if(!seen.has(d.id)) all[c].push(d); });
+    }
     const crew = {...crewDoc(), kick:{}, moved:false, renewed:Date.now(), at:Date.now()};
     await fsRawPut(neu, 'members', CREW_DOC, docFields(crew));
     // ab hier gilt der neue Code; danach die alten Daten löschen und den alten Link schließen
@@ -5251,8 +5299,8 @@ $('#modal').addEventListener('click', e => {
   const a = b.dataset.adm, dev = b.dataset.dev;
   if(a === 'back'){ admArmed = null; renderSettings(); return; }
   if(a === 'kick' || a === 'ban'){ const k = (a === 'kick' ? 'k' : 'b') + dev; if(admArmed !== k){ admArmed = k; openAdmin(); return; } admKick(dev, a === 'ban'); return; }
-  if(a === 'unadmin'){ const k = 'a' + dev; if(admArmed !== k){ admArmed = k; openAdmin(); return; } admArmed = null; crewSave({admin:(crewDoc().admin || []).filter(x => x !== dev)}).then(() => { toast('Admin-Rechte entfernt'); openAdmin(); wsRefreshUI(); }).catch(() => toast('Ging gerade nicht. Prüfe dein Internet.')); return; }
-  if(a === 'unban'){ const bn = {...crewBan()}; const n = (bn[dev] || {}).n; delete bn[dev]; crewSave({ban:bn}).then(() => { toast(`${n || 'Gerät'} ist entsperrt`); openAdmin(); }).catch(() => toast('Ging gerade nicht. Prüfe dein Internet.')); return; }
+  if(a === 'unadmin'){ const k = 'a' + dev; if(admArmed !== k){ admArmed = k; openAdmin(); return; } admArmed = null; crewSave(c => ({admin:(c.admin || []).filter(x => x !== dev)})).then(() => { toast('Admin-Rechte entfernt'); openAdmin(); wsRefreshUI(); }).catch(() => toast('Ging gerade nicht. Prüfe dein Internet.')); return; }
+  if(a === 'unban'){ const n = (crewBan()[dev] || {}).n; crewSave(c => { const bn = {...(c.ban || {})}; delete bn[dev]; return {ban:bn}; }).then(() => { toast(`${n || 'Gerät'} ist entsperrt`); openAdmin(); }).catch(() => toast('Ging gerade nicht. Prüfe dein Internet.')); return; }
   if(a === 'renew' && !admBusy){ if(admArmed !== 'renew'){ admArmed = 'renew'; openAdmin(); return; } crewRenew(); }
 });
 
@@ -5279,7 +5327,7 @@ async function adminLogin(){
   }
   admTries = 0;
   try{
-    await crewSave({admin:[...new Set([...(crewDoc().admin || []), myId()])], since:crewDoc().since || Date.now()});
+    await crewSave(c => ({admin:[...new Set([...(c.admin || []), myId()])], since:c.since || Date.now()}));
     toast('Du bist jetzt Admin dieser Crew'); wsRefreshUI(); openAdmin();
   }catch(e){ openAdminLogin('Ging gerade nicht. Prüfe dein Internet.'); }
 }
@@ -5295,7 +5343,7 @@ const linkURL = () => `${appURL()}#link=${myId()}&n=${encodeURIComponent(myName(
 function openLinkDlg(){
   $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Weiteres Gerät"><div class="pad" style="padding:18px 16px 16px;gap:12px">
     <h2>Auf weiterem Gerät nutzen</h2>
-    <div class="muted">Öffne diesen Link auf deinem PC oder zweiten Handy – oder füg ihn dort in Spots unter Crew › Link einfügen ein. Dort bist du dann auch „${esc(myName())}“ in „${esc((grp() || {}).name || '')}“${isAdmin() ? ' – mit deinen Admin-Rechten' : ''}. Nicht der Einladungslink verwenden, der macht ein neues Konto.</div>
+    <div class="muted">Öffne diesen Link auf deinem PC oder zweiten Handy – oder füg ihn dort in Spots unter Crew › Link einfügen ein. Dort bist du dann auch „${esc(myName())}“ in „${esc((grp() || {}).name || '')}“${isAdmin() ? ' – mit deinen Admin-Rechten' : ''}. Nicht den Einladungslink verwenden, der macht ein neues Konto.</div>
     <div class="lnk-box">${esc(linkURL())}</div>
     <div class="btns"><button class="btn" data-lk="copy">Link kopieren</button><button class="btn primary" data-lk="share">${svg(UI.share, 15)} An mich senden</button></div>
     <div class="onb-note"><b>Nur an dich selbst schicken.</b> Wer diesen Link öffnet, ist in der Crew du.</div>
@@ -5327,9 +5375,7 @@ $('#modal').addEventListener('click', e => {
     const o = linkPending; linkPending = null;
     liveStop(true);
     const oldDev = prefs.dev, oldGrp = grp();
-    if(oldDev && oldDev !== o.dev && oldGrp && FB && (!o.code || o.code === oldGrp.code)){   // das zweite Konto, das dieses Gerät aus Versehen angelegt hat, wieder entfernen
-      fsDel('members', oldDev).catch(() => {}); fsDel('live', oldDev).catch(() => {});
-    }
+    if(oldGrp && oldDev && (oldDev !== o.dev || (o.code && o.code !== oldGrp.code))) memberGone(oldGrp.code, oldDev);   // altes Konto dieses Geräts austragen
     prefs.dev = o.dev; if(o.name) prefs.myName = o.name; prefs.linkAdopt = true; prefs.memberSig = ''; prefs.onb = 1;
     if(o.code) prefs.group = {code:o.code, name:o.g, joined:Date.now()};
     if(o.bk && o.bk !== prefs.bkKey){ prefs.bkKey = o.bk; bk.sent = {}; bkSave(); }   // gleicher Schlüssel wie das andere Gerät, eigenes Backup neu verschlüsseln
@@ -5518,8 +5564,9 @@ async function bkRun(force){
     bk.at = Date.now(); bk.n = {s:data.spots.filter(x => !String(x.id).startsWith('bsp')).length, t:own.length, p:Object.keys(parts.p).length};
     try{ localStorage.removeItem('meine-spots-bk-dirty'); }catch(e){}
     bkSave();
-    if(!prefs.bkCodeSeen || (prefs.bkCodeG && prefs.bkCodeG !== grp().code)){   // erstes Backup oder neuer Einladungslink: Code (neu) sichern
-      prefs.bkCodeSeen = 1; delete prefs.bkCodeG; savePrefs();
+    if(prefs.bkCodeSeen && !prefs.bkCodeFor) prefs.bkCodeFor = prefs.bkCodeG || grp().code;
+    if(!prefs.bkCodeSeen || prefs.bkCodeFor !== grp().code){   // erstes Backup oder neuer Einladungslink: der alte Code gilt nicht mehr → neu sichern
+      prefs.bkCodeSeen = 1; prefs.bkCodeFor = grp().code; delete prefs.bkCodeG; savePrefs();
       setTimeout(() => { if($('#modal').hidden && $('#onb').hidden) openBackup('first'); }, 600);
     }
   }catch(e){ bk.err = /403/.test(e.message || '') ? 'Die Gruppen-Datenbank hat das Backup abgelehnt.' : 'Backup gerade nicht möglich. Es wird später nochmal versucht.'; }
@@ -5594,10 +5641,18 @@ async function bkRestore(src, adopt){
   const raw = src.k, fail = msg => { bkRes = null; bkMode = 'restore'; bkErr = msg; renderBackup(); };
   let found, cores = [];
   try{ found = await bkFind(src.g, src.d); }catch(e){ return fail('Backup gerade nicht erreichbar. Prüfe dein Internet.'); }
-  if(!found.length) return fail('Zu diesem Code gibt es (noch) kein Backup.');
+  if(!found.length){
+    let moved = false; try{ moved = !!(await crewPeek(src.g)).crew?.moved; }catch(e){}
+    return fail(moved ? 'Deine Crew hat inzwischen einen neuen Einladungslink. Dieser Code gilt deshalb nicht mehr – öffne Spots auf deinem alten Gerät und hol dir unter Backup den neuen Code.' : 'Zu diesem Code gibt es (noch) kein Backup.');
+  }
   for(const f of found){ try{ cores.push({bid:f.bid, c:u8dec(await bkUnseal(await bkGet(src.g, src.d, f.bid, 'c'), raw))}); }catch(e){} }
   if(!cores.length) return fail('Der Code passt nicht zum Backup.');
   if(adopt){   // neues Gerät oder App neu installiert: Gruppe und Person übernehmen, eigenes neues Backup
+    const oldG = grp();
+    if(oldG && (oldG.code !== src.g || myId() !== src.d)){
+      if(!confirm(`Dieses Gerät ist gerade als „${myName() || 'du'}“ in „${oldG.name}“. Mit dem Code wechselt es zu „${src.gn || 'deiner Crew'}“${src.n ? ` als „${src.n}“` : ''} und verlässt „${oldG.name}“. Weiter?`)){ bkRes = null; renderBackup(); return; }
+      memberGone(oldG.code, myId());
+    }
     liveStop(true);
     prefs.group = {code:src.g, name:src.gn || 'Gruppe', joined:Date.now()}; prefs.dev = src.d; if(src.n) prefs.myName = src.n;
     if(prefs.bkKey !== raw){ prefs.bkKey = raw; bk.sent = {}; }
@@ -7868,11 +7923,20 @@ function livePoll(code){
   };
   tick();
 }
+// Rausgeworfen oder gesperrt? Auch ohne Crew-Tab regelmäßig prüfen – sonst sieht man weiter die Live-Positionen
+let crewChkT = 0;
+async function crewCheck(force){
+  if(!FB || !grp() || document.visibilityState === 'hidden' || (!force && Date.now() - crewChkT < 30000)) return;
+  crewChkT = Date.now();
+  try{ const c = await fsGet('members', CREW_DOC); delete c._id; WS.crew = c; crewEnforce(); }catch(e){}
+}
+setInterval(() => { if(live.code) crewCheck(); }, 60000);
 function liveUnwatch(){
   if(live.unsub){ try{ live.unsub(); }catch(e){} live.unsub = null; }
   clearTimeout(live.poll); live.poll = 0; live.code = null; live.mode = null;
 }
 function liveIngest(list){
+  if(list.some(p => p && p.id !== myId())) crewCheck();
   const now = Date.now(), seen = new Set(), mine = myId();
   list.forEach(p => {
     if(!p || p.id === mine) return;
@@ -8011,7 +8075,7 @@ function liveStart(o){
   if(!ckOn || live.on) return;
   const ev = o && o.ev ? o.ev : null;
   if(!needGroup(liveStart)) return;
-  if(!prefs.liveOk){ openLiveConsent(ev); return; }
+  if(prefs.liveOk !== (grp() && grp().code)){ openLiveConsent(ev); return; }
   live.on = true; live.until = Date.now() + LIVE_MAX; live.lastSent = null; live.fails = 0; live.ev = ev ? ev._id : null;
   if(ev) live.until = Math.min(live.until, ev.at + EV_AFTER);
   liveWatch(); if(live.code && live.mode !== 'rt') liveRealtime(live.code);
@@ -8075,7 +8139,7 @@ $('#modal').addEventListener('click', e => {
   const b = e.target.closest('[data-lv]'); if(!b) return;
   $('#modal').hidden = true;
   const ev = liveConsentEv; liveConsentEv = null;
-  if(b.dataset.lv === 'ok'){ prefs.liveOk = true; savePrefs(); liveStart(ev ? {ev} : null); }
+  if(b.dataset.lv === 'ok'){ prefs.liveOk = grp() && grp().code; savePrefs(); liveStart(ev ? {ev} : null); }
 });
 $('#ckLive').addEventListener('click', () => {
   if(!live.on) return liveStart();
