@@ -472,6 +472,33 @@ h2{font-size:23px}
 .shimg-prev img{display:block;max-width:100%;max-height:56vh}
 .shimg-prev.square img{max-height:46vh}
 
+/* ---------- Gefühl: Übergänge, Federn, Nachtmodus, Sehenswertes ---------- */
+.view.enter.push{animation:viewpush .44s cubic-bezier(.2,.9,.25,1.04)}
+.view.enter.pop{animation:viewpop .44s cubic-bezier(.2,.9,.25,1.04)}
+@keyframes viewpush{from{opacity:0;transform:translateX(34px)}}
+@keyframes viewpop{from{opacity:0;transform:translateX(-34px)}}
+#modal .dlg{animation:dlgin .46s cubic-bezier(.2,.9,.25,1.08)}
+@keyframes dlgin{from{opacity:0;transform:translateY(18px) scale(.96)}}
+.icon-btn,.seg2 button,.tabs button,.nadd,.nsadd,.wr-card,.rv-card,.ev-new{transition:transform .3s cubic-bezier(.2,.9,.25,1.5),background-color .2s,color .2s}
+.icon-btn:active,.seg2 button:active,.tabs button:active,.nadd:active,.nsadd:active,.wr-card:active,.rv-card:active,.ev-new:active{transform:scale(.95)}
+.item,.set-row,.feed-row,.wy-row{transition:background-color .15s}
+body.cockpit.cknight #map canvas{filter:brightness(.55) saturate(.7) contrast(1.08)}
+body.cockpit.cknight :is(#ckTop,#ckSpeed,#ckStats,#gMeter,#ckLive,#ckRecenter,#ckRoad,#ckLimit,#navTop,#navBottom,#liveCard,#ckRace){filter:brightness(.78) saturate(.85)}
+body.cockpit.cknight .glass{background:rgba(3,7,12,.88)}
+.nsights{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:16px;background:var(--solid);border:1px solid var(--line)}
+.nsh{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:2px 2px 4px}
+.nsl{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:rwpulse 1.2s ease-in-out infinite;margin-left:4px}
+.nsight{display:flex;align-items:center;gap:10px;padding:6px 2px;border-radius:12px;transition:background-color .3s}
+.nsight.hl{background:var(--accent-soft)}
+.nsic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:none;background:var(--fill)}
+.nsic.k-view{color:#ffd60a}.nsic.k-pass{color:#ff9f0a}.nsic.k-lake{color:#64d2ff}
+.nst{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.25}
+.nst b{font-size:14px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nst small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nsadd{width:32px;height:32px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;flex:none}
+.mk-sight{width:26px;height:26px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;color:#111;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.45);cursor:pointer}
+.mk-sight.k-view{background:#ffd60a}.mk-sight.k-pass{background:#ff9f0a}.mk-sight.k-lake{background:#64d2ff}
+
 /* ---------- Backup ---------- */
 .bk-dlg .top{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 0 18px}
 .bk-dlg .top strong{font-size:17px}
@@ -2479,7 +2506,7 @@ function camPad(){
         SNAPS.forEach((n, i) => { const d = Math.abs(snapY(n) - sheetY); if(d < bd){ bd = d; best = i; } });
         idx = best;
       }
-      setSnap(SNAPS[Math.max(0, Math.min(SNAPS.length - 1, idx))]);
+      const was = snap; setSnap(SNAPS[Math.max(0, Math.min(SNAPS.length - 1, idx))]); if(snap !== was) haptic();
     }
     start = null; dragging = false;
   };
@@ -2499,14 +2526,15 @@ $('#panelOpen').addEventListener('click', () => setCollapsed(false));
 mqMobile.addEventListener?.('change', () => { if(mobile()) setSnap(snap, false); else { panel.style.transform = ''; $('#attrib').style.transform = ''; panel.classList.remove('full'); } });
 addEventListener('resize', () => mobile() && setSnap(snap, false));
 
+const VDEPTH = {list:0, detail:1, place:1, track:1, course:1, ws:1, sun:1, trackSave:1, mode:2, edit:2, draw:2};
 function show(v, snapTo){
-  const changed = v !== view;
+  const changed = v !== view, dir = (VDEPTH[v] || 0) >= (VDEPTH[view] || 0) ? 'push' : 'pop';
   view = v;
   if(!mobile() && panelCollapsed && v !== 'list') setCollapsed(false);
   for(const id of ['listView','detailView','placeView','editView','modeView','trackView','trackSaveView','courseView','drawView','wsView','sunView']){
     const el = $('#' + id), on = id === v + 'View';
     el.hidden = !on;
-    if(on && changed){ el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter'); }
+    if(on && changed){ el.classList.remove('enter', 'push', 'pop'); void el.offsetWidth; el.classList.add('enter', dir); }
   }
   if(snapTo) setSnap(snapTo); else if(mobile()) setSnap(snap);
   updateTrackLayers(); renderWsMarkers();
@@ -4794,7 +4822,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.02';
+const VERSION = '2026.10.06.03';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4825,11 +4853,13 @@ function renderSettings(){
       <div class="set-sec">Darstellung</div>
       <div class="set-card">
         <div class="set-theme">${[['dark','Dunkel'],['light','Hell'],['auto','Automatisch']].map(([k, n]) => `<button data-st="theme" data-v="${k}" class="${th === k ? 'on' : ''}"><i class="th-${k}"></i>${n}</button>`).join('')}</div>
+        ${tg('haptic', 'Haptik', 'Kurzes Vibrieren beim Tippen')}
         <div class="set-row col"><span>Akzentfarbe</span><div class="swatches">${Object.entries(ACCENTS).map(([k, a]) => `<button data-st="accent" data-v="${k}" class="${(ACCENTS[prefs.accent] ? prefs.accent : 'vanille') === k ? 'on' : ''}" style="--c:${lt ? a[1] : a[0]}" aria-label="${a[2]}" title="${a[2]}"></button>`).join('')}</div></div>
       </div>
       <div class="set-sec">Fahren</div>
       <div class="set-card">
         ${tg('recCockpit', 'Aufzeichnen öffnet Cockpit', 'Ein Tipp, direkt losfahren')}
+        <div class="set-row"><span>Nachtmodus<small>Cockpit dunkel ab Sonnenuntergang</small></span><div class="set-seg">${[['auto','Auto'],['on','An'],['off','Aus']].map(([k, n]) => `<button data-st="cknight" data-v="${k}" class="${(prefs.ckNight || 'auto') === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
         <div class="set-row"><span>Kamera<small>im Cockpit</small></span><div class="set-seg">${[['near','Nah'],['normal','Normal'],['far','Weit']].map(([k, n]) => `<button data-st="cam" data-v="${k}" class="${cam === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
         <button class="set-row" data-st="garage"><span>Garage${garage.cars.some(c => gDue(c).some(d => d.lvl >= 1)) ? '<i class="gdot"></i>' : ''}<small>${gActive() ? `${esc(gTitle(gActive()))} · ${fmtNum(gKm(gActive()))} km` : 'Deine echten Autos, TÜV und Service'}</small></span>${chev}</button>
         <button class="set-row car-row" data-st="car"><span>Dein Auto<small>${esc(CAR_TYPES[carType()].name)} · ${esc(CAR_COLORS[carColor()].name)}</small></span><span class="ri">${carSideSVG(carType(), carColor(), 'mini')}</span></button>
@@ -4879,6 +4909,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'theme'){ prefs.theme = b.dataset.v; savePrefs(); applyTheme(); renderSettings(); }
   if(a === 'accent'){ prefs.accent = b.dataset.v; savePrefs(); applyTheme(); renderSettings(); if(view === 'track') updateTrackLayers(); }
   if(a === 'cam'){ prefs.cam = b.dataset.v; savePrefs(); renderSettings(); }
+  if(a === 'cknight'){ prefs.ckNight = b.dataset.v; savePrefs(); renderSettings(); ckNightCheck(true); }
   if(a === 'tg'){ const k = b.dataset.k; prefs[k] = !onOff(k); savePrefs(); b.classList.toggle('on', prefs[k]); b.setAttribute('aria-checked', prefs[k]); if(k === 'gforce' && prefs[k]) gStart(); if(k === 'shareStats' && grp()) pushMember().then(wsCache).catch(() => {}); }
   if(a === 'avatar'){ $('#avFile').click(); return; }
   if(a === 'car'){ openCarPicker(); return; }
@@ -5068,6 +5099,80 @@ function copyText(t, okMsg){
   const done = () => toast(okMsg);
   if(navigator.clipboard?.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb();
   function fb(){ const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){ toast(t); } ta.remove(); }
+}
+
+/* ================= Haptik: kurzes Feedback beim Tippen =================
+   iPhone (ab iOS 18): ein verstecktes System-Schalterchen löst das Haptik-Klicken aus. Android: kurze Vibration. */
+const hapticIOS = /iPhone|iPad/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let hapticLbl = null;
+function haptic(strong){
+  if(!onOff('haptic')) return;
+  try{
+    if(!hapticIOS && navigator.vibrate){ navigator.vibrate(strong ? 16 : 7); return; }
+    if(!hapticIOS) return;
+    if(!hapticLbl){
+      hapticLbl = document.createElement('label'); hapticLbl.setAttribute('aria-hidden', 'true');
+      hapticLbl.style.cssText = 'position:fixed;left:-200px;top:0;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden';
+      const i = document.createElement('input'); i.type = 'checkbox'; i.setAttribute('switch', ''); i.tabIndex = -1; hapticLbl.appendChild(i);
+      hapticLbl.addEventListener('click', e => e.stopPropagation());
+      document.body.appendChild(hapticLbl);
+    }
+    hapticLbl.click();
+  }catch(e){}
+}
+document.addEventListener('click', e => {
+  if(!e.isTrusted) return;
+  const b = e.target.closest('button,.chip,[role="button"],a.btn,.item,.set-row,.pop-row');
+  if(!b || b.disabled || b === hapticLbl) return;
+  haptic(b.matches('.primary,.armed,[data-rec],[data-ck-open],.rec-start'));
+}, true);
+
+/* Vom linken Rand wischen = zurück (Handy) */
+function viewBack(){ const el = $('#' + view + 'View'), b = el && el.querySelector('.top > button.txtbtn:first-child'); if(b) b.click(); else show('list'); }
+(() => {
+  const OK = ['detail', 'place', 'track', 'course', 'ws', 'sun'];
+  let s = null;
+  panel.addEventListener('touchstart', e => {
+    s = null;
+    if(!mobile() || !OK.includes(view) || e.touches.length !== 1 || ckOn) return;
+    const t = e.touches[0];
+    if(t.clientX - panel.getBoundingClientRect().left > 26) return;
+    s = {x:t.clientX, y:t.clientY, el:$('#' + view + 'View'), go:false, t0:performance.now(), dx:0};
+  }, {passive:true});
+  panel.addEventListener('touchmove', e => {
+    if(!s) return;
+    const t = e.touches[0], dx = t.clientX - s.x, dy = t.clientY - s.y;
+    if(!s.go){ if(Math.abs(dy) > 10 && Math.abs(dy) > dx){ s = null; return; } if(dx < 8) return; s.go = true; s.el.style.transition = 'none'; s.el.classList.remove('enter'); }
+    e.preventDefault();
+    s.dx = Math.max(0, dx); s.el.style.transform = `translateX(${s.dx}px)`; s.el.style.opacity = String(1 - Math.min(.45, s.dx / 700));
+  }, {passive:false});
+  const end = () => {
+    const S = s; s = null; if(!S || !S.go) return;
+    const v = S.dx / Math.max(1, performance.now() - S.t0);
+    S.el.style.transition = 'transform .26s var(--ease), opacity .26s';
+    if(S.dx > panel.offsetWidth * .3 || (v > .45 && S.dx > 40)){
+      S.el.style.transform = `translateX(${panel.offsetWidth}px)`; S.el.style.opacity = '0'; haptic();
+      setTimeout(() => { S.el.style.transition = ''; S.el.style.transform = ''; S.el.style.opacity = ''; viewBack(); }, 190);
+    } else { S.el.style.transform = ''; S.el.style.opacity = ''; setTimeout(() => { S.el.style.transition = ''; }, 280); }
+  };
+  panel.addEventListener('touchend', end); panel.addEventListener('touchcancel', end);
+})();
+
+/* ================= Nachtmodus im Cockpit: nach der Abenddämmerung dunkel und blendfrei ================= */
+let ckNightOn = false, ckNightT = 0;
+function ckIsDark(){
+  const p = (ckOn && ckBestPos()) || me || (mapReady ? map.getCenter() : null); if(!p) return false;
+  const d = new Date(); d.setHours(12, 0, 0, 0);
+  const S = SUN(d, p.lat, p.lng); if(!S.rise || !S.blue1 || !S.sunset) return false;
+  const now = Date.now();
+  return now < S.rise.getTime() - (S.blue1 - S.sunset) || now > S.blue1.getTime();
+}
+function ckNightCheck(force){
+  if(!force && Date.now() - ckNightT < 60000) return;
+  ckNightT = Date.now();
+  const m = prefs.ckNight || 'auto', on = ckOn && (m === 'on' || (m === 'auto' && ckIsDark()));
+  if(on === ckNightOn && !force) return;
+  ckNightOn = on; document.body.classList.toggle('cknight', on);
 }
 
 /* ================= Automatisches Backup: verschlüsselt bei der eigenen Gruppe =================
@@ -7228,6 +7333,7 @@ function enterCockpit(){
   rwCk.t = 0; rwCk.r = null; rwCk.warned = '';
   renderCkTop(); updateRecUI(); updateCockpitUI(); liveUI();
   evTried.clear(); setTimeout(evLiveCheck, 1500);   // geplante Ausfahrt: Live automatisch an
+  ckNightCheck(true);
   const fresh = me && Date.now() - meTime < 120000;   // alter Standort würde irgendwohin zentrieren
   cam.fix = fresh ? {lat:me.lat, lng:me.lng, t:performance.now(), v:0, h:null} : null;
   cam.disp = null; cam.bearing = null; cam.zoom = null; ckUserPitch = null; userGesture = false;
@@ -7254,7 +7360,7 @@ function exitCockpit(){
   if(!ckOn) return;
   if(nav && nav.active) endNav(true);
   camStop(); hideGhost(); $('#ckLimit').classList.remove('show'); $('#ckSpeed').classList.remove('over'); $('#ckRoad').hidden = true;
-  ckOn = false; document.body.classList.remove('cockpit', 'ckrec', 'gon'); xplHeatApply();
+  ckOn = false; document.body.classList.remove('cockpit', 'ckrec', 'gon'); xplHeatApply(); ckNightCheck(true);
   liveStop();
   parkAuto(ck.dist, ck.ts && Date.now() - ck.ts < 120000 ? ck.last : null, ck.v);
   if(!(rec && !rec.stopped)) gStop();
@@ -7318,6 +7424,7 @@ function renderCkTop(){
 }
 function updateCockpitUI(){
   if(!ckOn) return;
+  ckNightCheck();
   renderRaceCard(); rwCkCheck(); rwCkRender();
   const stale = !ck.ts || Date.now() - ck.ts > 6000;
   const kmh = ck.v == null ? null : ck.v * 3.6;
@@ -8827,7 +8934,7 @@ function navStopMarks(){
     navStopMk.push(new maplibregl.Marker({element:el, anchor:'center'}).setLngLat([x.lng, x.lat]).addTo(map));
   });
 }
-const STOP_IC = {fuel:GEO_IC.fuel, spot:GEO_IC.poi, friend:'<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>', place:GEO_IC.poi};
+const STOP_IC = {fuel:GEO_IC.fuel, spot:GEO_IC.poi, friend:'<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>', place:GEO_IC.poi, view:'<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.6"/>', pass:'<path d="M3 19 9 9l4 6 3-4 5 8z"/>', lake:'<path d="M3 9c3 0 3-2 6-2s3 2 6 2 3-2 6-2M3 15c3 0 3-2 6-2s3 2 6 2 3-2 6-2"/>'};
 function renderNavPrev(){
   if(nav.pick) return renderStopPick();
   const R = nav.route, o = nav.opts, walk = nav.walkTo ? dist(nav.dest, nav.walkTo) : 0;
@@ -8846,8 +8953,66 @@ function renderNavPrev(){
     <div class="nsum"><div><b>${fmtDurNav(R.dur)}</b><span>Fahrzeit</span></div><div><b>${fmtNav(R.L).replace('Jetzt', '0 m')}</b><span>Strecke</span></div><div><b>${clock(R.dur)}</b><span>Ankunft</span></div></div>
     <div class="nstops">${stops.map((x, k) => `<div class="nstop"><span class="nsi">${k + 1}</span><span class="nsic">${svg(STOP_IC[x.kind] || STOP_IC.place, 14, 2.2)}</span><span class="nsn">${esc(x.name)}</span><button class="nsx" data-nav="rmstop" data-i="${k}" aria-label="Zwischenstopp entfernen">${svg(UI.close, 12)}</button></div>`).join('')}
       ${stops.length < 3 ? `<button class="nadd" data-nav="addstop">${svg(UI.plus, 14)} Zwischenstopp</button>` : ''}</div>
+    ${nav.busy ? '' : navSightsHTML()}
     ${rwNavHTML()}
     <div class="btns"><button class="btn" data-nav="cancel">Abbrechen</button><button class="btn primary" data-nav="go" ${nav.busy ? 'disabled' : ''}>${svg(UI.nav, 16)} Los</button></div>`;
+  navSightsLoad(); navSightMarks();
+}
+/* Unterwegs sehenswert: Aussichtspunkte, Pässe und Seen nah an der Route (OpenStreetMap über Overpass) */
+let navSightMk = [];
+async function navSightsLoad(){
+  const n = nav; if(!n || !n.opts || n.busy) return;
+  const key = `${n.start.lat.toFixed(3)},${n.start.lng.toFixed(3)}>${n.dest.lat.toFixed(3)},${n.dest.lng.toFixed(3)}`;
+  if(n.sights && n.sights.key === key) return;
+  const F = n.opts.fast;
+  if(F.L < 6000){ n.sights = {key, all:[]}; return; }
+  n.sights = {key, all:null};
+  const pts = []; [n.opts.fast, n.opts.land].filter(Boolean).forEach(R => { const st = Math.max(1200, R.L / 90); for(let a = 0; a <= R.L; a += st){ const q = routeAt(R, a); pts.push(`${q.lat.toFixed(4)},${q.lng.toFixed(4)}`); } });
+  const P = pts.join(',');
+  const q = `[out:json][timeout:25];(node["tourism"="viewpoint"](around:1500,${P});node["mountain_pass"="yes"](around:300,${P});)->.n;way["natural"="water"]["name"](around:900,${P})->.w;relation["natural"="water"]["name"](around:900,${P})->.r;.n out 150;.w out geom 40;.r out center 15;`;
+  let j = null;
+  for(const base of OVERPASS){ try{ const r = await fetch(base, {method:'POST', body:'data=' + encodeURIComponent(q)}); if(r.ok){ j = await r.json(); break; } }catch(e){} }
+  if(nav !== n || !n.sights || n.sights.key !== key) return;
+  const all = [], badWater = /^(river|canal|stream|ditch|drain|wastewater|basin|reflecting_pool|moat|fish_pass)$/;
+  ((j && j.elements) || []).forEach(e => {
+    const t = e.tags || {}, ele = t.ele ? ` · ${Math.round(parseFloat(t.ele))} m` : '';
+    if(e.type === 'node' && t.tourism === 'viewpoint') all.push({lat:e.lat, lng:e.lon, name:t.name || 'Aussichtspunkt', named:!!t.name, kind:'view', sub:ele.slice(3)});
+    else if(e.type === 'node' && t.mountain_pass === 'yes') all.push({lat:e.lat, lng:e.lon, name:t.name || 'Pass', named:!!t.name, kind:'pass', sub:ele.slice(3)});
+    else if(t.natural === 'water' && t.name && !badWater.test(t.water || '')){
+      if(e.geometry && e.geometry.length){   // Ufer-Punkt, der der Straße am nächsten ist
+        let best = null; e.geometry.forEach(g => { const pr = routeProject(F, F.toXY(g.lon, g.lat)); if(!best || pr.off < best.off) best = {lat:g.lat, lng:g.lon, off:pr.off}; });
+        if(best) all.push({lat:best.lat, lng:best.lng, name:t.name, named:true, kind:'lake', sub:'See'});
+      } else if(e.center) all.push({lat:e.center.lat, lng:e.center.lon, name:t.name, named:true, kind:'lake', sub:'See'});
+    }
+  });
+  n.sights.all = all; if(nav === n && navPrevOn && !n.pick) renderNavPrev();
+}
+function navSightsList(){
+  const S = nav.sights; if(!S || !S.all) return null;
+  const R = nav.opts.fast, stops = navLeft(), out = [];
+  S.all.map(x => { const pr = routeProject(R, R.toXY(x.lng, x.lat)); return {...x, along:pr.along, off:pr.off}; })
+    .filter(x => x.along > 1000 && x.along < R.L - 800 && x.off <= (x.kind === 'lake' ? 1200 : x.kind === 'pass' ? 300 : 1600) && !stops.some(y => dist(x, y) < 300))
+    .sort((a, b) => (b.named - a.named) || ({pass:0, view:1, lake:2}[a.kind] - {pass:0, view:1, lake:2}[b.kind]) || a.off - b.off)
+    .forEach(x => { if(!out.some(y => dist(x, y) < 500 || (y.name === x.name && x.named && dist(x, y) < 3000))) out.push(x); });
+  return out.slice(0, 6).sort((a, b) => a.along - b.along);
+}
+function navSightsHTML(){
+  const S = nav.sights; if(!S) return '';
+  if(!S.all) return `<div class="nsights"><div class="nsh">${svg(STOP_IC.view, 14)} Unterwegs sehenswert<i class="nsl"></i></div></div>`;
+  const L = S.show = navSightsList(); if(!L || !L.length) return '';
+  const full = navLeft().length >= 3;
+  return `<div class="nsights"><div class="nsh">${svg(STOP_IC.view, 14)} Unterwegs sehenswert</div>
+    ${L.map((x, i) => { const det = x.off < 150 ? 'direkt an der Strecke' : `${fmtDist(x.off)} daneben · ca. +${Math.max(1, Math.round(x.off * 2 / 11 / 60))} Min`; return `<div class="nsight"><span class="nsic k-${x.kind}">${svg(STOP_IC[x.kind], 15, 2)}</span><span class="nst"><b>${esc(x.name)}</b><small>${esc([x.sub, `nach ${fmtKmS(x.along)}`, det].filter(Boolean).join(' · '))}</small></span>${full ? '' : `<button class="nsadd" data-nav="sight" data-i="${i}" aria-label="${esc(x.name)} als Zwischenstopp">${svg(UI.plus, 14, 2.4)}</button>`}</div>`; }).join('')}
+  </div>`;
+}
+function navSightMarks(){
+  navSightMk.forEach(m => m.remove()); navSightMk = [];
+  if(!nav || !navPrevOn || !nav.sights || !nav.sights.show) return;
+  nav.sights.show.forEach((x, i) => {
+    const el = document.createElement('button'); el.className = `mk-sight k-${x.kind}`; el.setAttribute('aria-label', x.name); el.innerHTML = svg(STOP_IC[x.kind], 13, 2.2);
+    el.addEventListener('click', e => { e.stopPropagation(); const b = document.querySelector(`#navPrev [data-nav="sight"][data-i="${i}"]`); if(b){ b.scrollIntoView({block:'nearest'}); b.closest('.nsight').classList.add('hl'); setTimeout(() => b.closest('.nsight') && b.closest('.nsight').classList.remove('hl'), 1200); } });
+    navSightMk.push(new maplibregl.Marker({element:el, anchor:'center'}).setLngLat([x.lng, x.lat]).addTo(map));
+  });
 }
 /* Zwischenstopp wählen: Tankstelle an der Strecke, eigener Spot oder ein Freund, der gerade live ist */
 async function stopPickLoad(kind){
@@ -8880,7 +9045,7 @@ function renderStopPick(){
 }
 function startNav(){
   if(!nav || nav.busy) return;
-  nav.pick = null; setSrc('nav-alt', FC([]));
+  nav.pick = null; setSrc('nav-alt', FC([])); navSightMk.forEach(m => m.remove()); navSightMk = [];
   navPrevOn = false; document.body.classList.remove('navprev');
   nav.active = true; document.body.classList.add('nav');
   enterCockpit();
@@ -8890,7 +9055,7 @@ function startNav(){
 function endNav(fromExit){
   if(!nav) return;
   const wasActive = nav.active;
-  nav = null; navPrevOn = false; navStopMarks();
+  nav = null; navPrevOn = false; navStopMarks(); navSightMk.forEach(m => m.remove()); navSightMk = [];
   document.body.classList.remove('nav', 'navprev');
   setSrc('nav-route', FC([])); setSrc('nav-wx', FC([])); setSrc('nav-alt', FC([]));
   if(wasActive && !fromExit && ckOn) exitCockpit();
@@ -8962,6 +9127,13 @@ document.addEventListener('click', e => {
     nav.stops.push({lat:x.lat, lng:x.lng, name:x.name, kind:nav.pick.kind, along:x.along});
     nav.stops.sort((p, q) => (p.along || 0) - (q.along || 0));
     nav.pick = null; navReplan().then(ok => { if(ok) navFit(); });
+  }
+  if(a === 'sight' && nav.sights && nav.sights.show){
+    const x = nav.sights.show[+b.dataset.i]; if(!x || navLeft().length >= 3) return;
+    nav.stops.push({lat:x.lat, lng:x.lng, name:x.name, kind:x.kind, along:x.along});
+    nav.stops.sort((p, q) => (p.along || 0) - (q.along || 0));
+    toast(`„${x.name}“ ist jetzt Zwischenstopp`);
+    navReplan().then(ok => { if(ok) navFit(); });
   }
   if(a === 'end') endNav();
 });
