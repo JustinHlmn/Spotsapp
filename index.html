@@ -24,7 +24,7 @@
 :root{
   --page:#06111d; --glass:rgba(9,21,35,.78); --glass-strong:rgba(7,18,30,.93);
   --solid:rgba(255,255,255,.05); --solid-2:#0f1d2e;
-  --fg:#f5f2ea; --muted:#8b98aa; --line:rgba(255,255,255,.08);
+  --fg:#f5f2ea; --muted:#98a4b5; --line:rgba(255,255,255,.08);
   --fill:rgba(255,255,255,.075); --fill-2:rgba(255,255,255,.14);
   --accent:#f4d35e; --accent-fg:#0b2540; --accent-soft:rgba(244,211,94,.16);
   --danger:#ff5a5f; --park:#3b82f6;
@@ -44,8 +44,11 @@
   --shadow:0 14px 40px rgba(20,30,50,.16),0 2px 6px rgba(20,30,50,.10);
   --hi:inset 0 1px 0 rgba(255,255,255,.7);
   --on-fg:#ffffff; --inp:#ffffff; --gauge:#ffffff; --gauge-track:rgba(15,20,30,.12); --gridline:rgba(15,20,30,.08);
+  --danger:#c92a2a;
   color-scheme:light;
 }
+/* helles Design: farbige Schrift (Kategorien) dunkler, damit sie lesbar bleibt */
+:root[data-theme="light"] .badge{color:color-mix(in srgb,var(--c) 62%,#000)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{position:fixed;inset:0;margin:0;overflow:hidden;overscroll-behavior:none}
 body{background:var(--page);color:var(--fg);font:14.5px/1.45 var(--font);letter-spacing:-.005em;-webkit-font-smoothing:antialiased}
@@ -421,12 +424,14 @@ h2{font-size:23px}
 .link:hover{color:var(--fg)}
 .ext{font-size:12.5px;color:var(--muted)}
 .ext a{color:var(--accent);text-decoration:none;font-weight:600}
-#toast{border-radius:16px}
+#toast{border-radius:16px;left:16px;right:16px;margin:0 auto;width:fit-content;transform:none}
 .pulse{background:var(--accent)}
 
 #ckTop,#recbar{width:max-content;max-width:calc(100% - 20px)}
 /* Steuerung rechts */
 #ctrl{top:14px;right:14px;gap:10px}
+body.popopen #ctrl{z-index:30}
+#layersPop{background:var(--glass-strong);max-height:calc(100vh - 90px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain}
 .stack{border-radius:16px}
 .stack button{width:46px;height:46px}
 #b-compass{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;padding:0}
@@ -558,6 +563,7 @@ body.cockpit.cknight .glass{background:rgba(3,7,12,.88)}
 .tour-c small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tour-hint{font-size:12px}
 .tour-note{display:flex;align-items:center;gap:6px}
+.onb-back{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:14px;z-index:2}
 #xhair{position:absolute;z-index:4;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;pointer-events:none;display:none;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
 body.placing #xhair{display:block}
 #navBusy{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(30px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:22px;color:var(--fg);font-weight:600;font-size:14px;animation:viewin .3s var(--ease)}
@@ -1717,7 +1723,14 @@ body.cockpit.nav #ckLive{bottom:calc(176px + env(safe-area-inset-bottom,0px))!im
   #near:active{transform:scale(.97)}
   #toast{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px))}
 }
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){*:not(.bk-spin):not(.geo-spin){animation:none!important;transition:none!important}}
+@media (max-width:350px){.tabs button{padding:0 9px!important;font-size:14px}.hdr-actions{gap:4px}.hdr-actions .icon-btn{width:34px;height:34px}}
+#headRow{min-width:0}#headRow .tabs{min-width:0;flex-shrink:1}
+/* größere Trefferflächen ohne optische Änderung */
+:where(.tabs button,.seg2 button,.txtbtn,.icon-btn,.chip){position:relative}
+.tabs button::before,.seg2 button::before,.txtbtn::before,.icon-btn::before,.chip::before{content:"";position:absolute;inset:-5px -2px}
+@media (min-width:1200px){#panel{max-height:calc(100vh - 32px)}}
+@supports (padding:env(safe-area-inset-left)){#ctrl{right:max(10px,env(safe-area-inset-right))}#panel{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}}
 </style>
 </head>
 <body>
@@ -1803,7 +1816,7 @@ body.cockpit.nav #ckLive{bottom:calc(176px + env(safe-area-inset-bottom,0px))!im
   <button id="liveBadge" class="glass" hidden aria-label="Live-Freunde auf der Karte zeigen"><span class="lv-dot"></span><span class="lv-avs"></span><b></b></button>
   <div id="layersPop" class="glass pop" hidden>
     <div class="pop-bases">
-      <button data-base="vec"><i class="sw-vec"></i>Clean</button>
+      <button data-base="vec"><i class="sw-vec"></i>Schlicht</button>
       <button data-base="sat"><i class="sw-sat"></i>Satellit</button>
       <button data-base="street"><i class="sw-street"></i>Straße</button>
       <button data-base="dark"><i class="sw-dark"></i>Dunkel</button>
@@ -2045,6 +2058,18 @@ const map = new maplibregl.Map({
   dragRotate:true, maxPitch:0, fadeDuration:150, renderWorldCopies:true
 });
 map.touchZoomRotate.enableRotation();
+// „Bewegung reduzieren“: Kamerafahrten springen sofort statt zu fliegen
+(() => {
+  const rm = matchMedia('(prefers-reduced-motion: reduce)');
+  for(const fn of ['flyTo', 'easeTo', 'fitBounds']){
+    const orig = map[fn].bind(map);
+    map[fn] = (a, o, ...rest) => {
+      if(!rm.matches) return orig(a, o, ...rest);
+      if(fn === 'fitBounds') return orig(a, {...(o || {}), duration:0, animate:false}, ...rest);
+      return orig({...(a || {}), duration:0, animate:false}, o, ...rest);
+    };
+  }
+})();
 function updateCompass(){
   const el = $('#b-compass'); if(!el) return;
   const b = map.getBearing(), pt = map.getPitch(), show = Math.abs(b) > .5 || pt > .5;
@@ -3191,7 +3216,7 @@ function wxHTML(s){
   const now = new Date();
   let off = 0, sun = sunFor(s, 0);
   if(sun.blue2 && now > sun.blue2){ off = 1; sun = sunFor(s, 1); }
-  const evts = [['Aufgang', sun.rise], ['Golden Hour', sun.golden], ['Untergang', sun.sunset], ['Blaue Std.', sun.blue1]];
+  const evts = [['Aufgang', sun.rise], ['Goldene Std.', sun.golden], ['Untergang', sun.sunset], ['Blaue Std.', sun.blue1]];
   const nextI = evts.findIndex(x => x[1] && x[1] > now);
   const sunHTML = `<div class="wx-sun">${evts.map((x, i) => `<div class="${i === nextI ? 'next' : ''}"><span>${x[0]}</span><b>${hhmm(x[1])}</b></div>`).join('')}</div>`;
   const c = wxCache[wxKey(s)], w = c && c.data;
@@ -3505,7 +3530,7 @@ function renderEdit(){
     } else park = `<button class="btn park" data-act="park">${svg(UI.car,16)} Parkplatz auf Karte setzen</button>`;
   }
   $('#editView').innerHTML = `
-    <div class="top"><button class="txtbtn" data-act="cancel">Abbrechen</button><strong>${d.isNew ? 'Neuer Spot' : 'Spot bearbeiten'}</strong><button class="txtbtn bold" data-act="save">Sichern</button></div>
+    <div class="top"><button class="txtbtn" data-act="cancel">Abbrechen</button><strong>${d.isNew ? 'Neuer Spot' : 'Spot bearbeiten'}</strong><button class="txtbtn bold" data-act="save">Speichern</button></div>
     <div class="pad">
       <label class="f">Name<input class="inp" id="f-name" value="${esc(d.name)}" placeholder="z. B. Sonnenuntergang am Hang" maxlength="80">${editError ? `<span class="err">${editError}</span>` : ''}</label>
       <div style="display:flex;flex-direction:column;gap:6px"><span class="f" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Kategorie</span>
@@ -3720,7 +3745,7 @@ function renderOnb(){
       <li><b>🛣️ Fahrten aufzeichnen</b><span>Cockpit, Tempo-Verlauf, Rennstrecken und Geister-Rennen</span></li>
       <li><b>👥 Mit der Crew teilen</b><span>News, Bestzeiten, Live-Standort und Wochenrückblick</span></li></ul>
     <button class="btn primary wide" data-onb="next">Los geht's</button>
-    <button class="txtbtn" data-onb="restore" style="align-self:center">Ich habe schon ein Konto</button>`;
+    <button class="txtbtn" data-onb="restore" style="align-self:center">Ich nutze Spots schon auf einem anderen Gerät</button>`;
   if(k === 'install'){
     const ios = isIOS();
     body = `<div class="onb-head"><span class="onb-ic">📲</span><h2>Zum Home-Bildschirm</h2><p>Dann startet Spots wie eine normale App, im Vollbild und auch ohne Netz.</p></div>
@@ -3728,7 +3753,7 @@ function renderOnb(){
         ${onbInvite ? `<div class="onb-note"><b>Wichtig fürs iPhone:</b> Die Home-Bildschirm-App hat einen eigenen Speicher. Kopier jetzt den Einladungslink und füg ihn dort in der App wieder ein.<button class="btn wide" data-onb="copyinv">Einladungslink kopieren</button></div>` : ''}`
       : onbInstall ? `<button class="btn primary wide" data-onb="install">App installieren</button>`
       : `<ol class="onb-steps"><li>Im Browser-Menü <b>„App installieren“</b> oder <b>„Zum Startbildschirm“</b> wählen</li><li>Oder einfach hier im Browser weitermachen</li></ol>`}
-      <div class="onb-btns"><button class="btn" data-onb="next">Später</button><button class="btn primary" data-onb="next">Weiter</button></div>`;
+      <div class="onb-btns"><button class="btn primary" data-onb="next">Weiter</button></div>`;
   }
   if(k === 'me') body = `<div class="onb-head"><span class="onb-ic">👋</span><h2>Wie heißt du?</h2><p>So sehen dich deine Freunde in der Crew.</p></div>
       <button class="onb-av" data-onb="avatar" aria-label="Profilbild wählen">${avHTML(myId(), myName() || '?', 96)}<span>${prefs.avatar ? 'Bild ändern' : 'Profilbild wählen'}</span></button>
@@ -3751,7 +3776,8 @@ function renderOnb(){
   }
   if(k === 'done') body = `<div class="onb-head"><span class="onb-ic">🎉</span><h2>Fertig${myName() ? ', ' + esc(myName()) : ''}!</h2><p>Erlaub noch deinen Standort, damit die Karte weiß, wo du bist, und das Cockpit funktioniert.</p></div>
       <button class="btn primary wide" data-onb="gps">Standort erlauben und los</button><button class="txtbtn" data-onb="close" style="align-self:center">Ohne Standort weiter</button>`;
-  $('#onbBody').innerHTML = dots + `<div class="onb-card">${body}</div>`;
+  const backBtn = onbStep > 0 ? `<button class="txtbtn onb-back" data-onb="back">${svg(UI.back, 14)} Zurück</button>` : '';
+  $('#onbBody').innerHTML = backBtn + dots + `<div class="onb-card">${body}</div>`;
   if(k === 'me') setTimeout(() => { const i = $('#onb-name'); if(i && !i.value) i.focus(); }, 80);
 }
 async function onbJoinChecked(code, gname){
@@ -3771,6 +3797,7 @@ $('#onb').addEventListener('click', async e => {
   const b = e.target.closest('[data-onb]'); if(!b) return;
   const a = b.dataset.onb, next = () => { onbErr = ''; onbStep++; renderOnb(); };
   if(a === 'next') return next();
+  if(a === 'back'){ onbErr = ''; onbStep = Math.max(0, onbStep - 1); return renderOnb(); }
   if(a === 'restore'){ $('#onb').hidden = true; openBackup('restore'); return; }
   if(a === 'install' && onbInstall){ onbInstall.prompt(); try{ await onbInstall.userChoice; }catch(_){} onbInstall = null; return next(); }
   if(a === 'copyinv'){ copy(onbInviteLink()); return; }
@@ -4403,7 +4430,7 @@ function openCrew(dev){
       <div class="st-chart" id="crewChart">${chart}</div>` : '<div class="muted">Teilt noch keine Kilometer.</div>'}
       ${(() => { const g = new Map(); trophiesOf(dev).forEach(a => { const x = g.get(a.k) || {...a, n:0, ws:[]}; x.n++; x.ws.push(a.when); g.set(a.k, x); });
         const tr = [...g.values()].sort((a, b) => b.n - a.n);
-        return tr.length ? `<div class="st-h"><span>Awards</span><em>letzte 2 Monate</em></div><div class="trophies">${tr.map(a => `<span class="trophy"><i>${a.ic}</i><span><b>${esc(a.t)}${a.n > 1 ? ` <em>×${a.n}</em>` : ''}</b><small>${esc(a.ws.slice(0, 3).join(', '))}${a.ws.length > 3 ? ' …' : ''}</small></span></span>`).join('')}</div>` : ''; })()}
+        return tr.length ? `<div class="st-h"><span>Auszeichnungen</span><em>letzte 2 Monate</em></div><div class="trophies">${tr.map(a => `<span class="trophy"><i>${a.ic}</i><span><b>${esc(a.t)}${a.n > 1 ? ` <em>×${a.n}</em>` : ''}</b><small>${esc(a.ws.slice(0, 3).join(', '))}${a.ws.length > 3 ? ' …' : ''}</small></span></span>`).join('')}</div>` : ''; })()}
       ${bestRuns.length ? `<div class="st-h"><span>Bestzeiten</span></div><div class="st-list">${bestRuns.map(r => `<div class="st-row"><span class="k">${r.from}–${r.to} km/h</span><span class="v">${fmtS(r.time)}<small>Ø ${fmtGn(r.ga)} G</small></span></div>`).join('')}</div>` : ''}
       ${drives.length ? `<div class="st-h"><span>Geteilte Fahrten</span></div><div class="st-list">${drives.slice(0, 8).map(d => `<button class="st-row crew-link" data-crewdrv="${esc(d._id)}"><span class="k">${esc(d.name)}</span><span class="v">${fmtKmS(d.dist || 0)}<small>${new Date(d.created || d.at).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}</small></span></button>`).join('')}</div>` : ''}
       ${spots.length ? `<div class="st-h"><span>Geteilte Spots</span></div><div class="st-list">${spots.slice(0, 8).map(x => `<button class="st-row crew-link" data-crewspot="${esc(x._id)}"><span class="k">${esc(x.name)}</span><span class="v">${esc((x.cat && x.cat.name) || '')}</span></button>`).join('')}</div>` : ''}
@@ -4874,18 +4901,18 @@ function renderReview(){
   const empty = !R.tot.km && !R.bests.length && !R.spots.length && !R.drives.length;
   $('#rvBody').innerHTML = `
     <div class="rv-bar"><div class="rv-seg"><button data-rv="w" class="${rvKind === 'w' ? 'on' : ''}">Woche</button><button data-rv="m" class="${rvKind === 'm' ? 'on' : ''}">Monat</button></div><button class="dl-x" data-rv="close" aria-label="Schließen">${svg(UI.close, 15)}</button></div>
-    <header class="rv-head"><span class="rv-k">${rvKind === 'w' ? 'Wochenrückblick' : 'Monats-Awards'} · ${esc(grp() ? grp().name : '')}</span><h1>${esc(P.title)}</h1>
+    <header class="rv-head"><span class="rv-k">${rvKind === 'w' ? 'Wochenrückblick' : 'Monatsauszeichnungen'} · ${esc(grp() ? grp().name : '')}</span><h1>${esc(P.title)}</h1>
       <div class="rv-nav"><button data-rv="prev" aria-label="Davor" ${rvBack >= (rvKind === 'w' ? 7 : 2) ? 'disabled' : ''}>${svg(UI.back, 15)}</button><span>${esc(P.sub)}${P.now ? ' · läuft noch' : ''}</span><button data-rv="next" aria-label="Danach" ${rvBack <= 0 ? 'disabled' : ''}>${svg(UI.back, 15).replace('<svg', '<svg style="transform:scaleX(-1)"')}</button></div></header>
     <div class="rv-hero"><div><b>${Math.round(R.tot.km).toLocaleString('de-DE')}</b><span>km zusammen</span></div><div><b>${R.tot.n}</b><span>Fahrten</span></div><div><b>${R.tot.m >= 60 ? Math.round(R.tot.m / 60) + ' h' : Math.round(R.tot.m) + ' min'}</b><span>unterwegs</span></div></div>
     ${empty ? `<div class="rv-empty"><b>${P.now ? 'Noch nichts passiert' : 'Ruhige Zeit'}</b>In diesem Zeitraum hat niemand Kilometer, Bestzeiten oder Spots geteilt.</div>` : ''}
-    ${R.awards.length ? `<div class="rv-sec">${rvKind === 'w' ? 'Awards der Woche' : 'Awards des Monats'}${P.now ? ' (Stand jetzt)' : ''}</div>
+    ${R.awards.length ? `<div class="rv-sec">${rvKind === 'w' ? 'Auszeichnungen der Woche' : 'Auszeichnungen des Monats'}${P.now ? ' (Stand jetzt)' : ''}</div>
       <div class="rv-awards">${R.awards.map((a, i) => `<button class="rv-aw${i === 0 ? ' big' : ''}" data-crewrv="${esc(a.dev)}"><span class="rv-ic">${a.ic}</span><span class="rv-at">${esc(a.t)}</span><span class="rv-who">${avHTML(a.dev, '', i === 0 ? 34 : 26)}<b>${nm(a.dev)}</b></span><span class="rv-v">${esc(a.v)}</span></button>`).join('')}</div>` : ''}
     ${ranked.length ? `<div class="rv-sec">Kilometer</div><div class="rv-km">${ranked.map((m, i) => `<div class="rv-row"><span class="rv-rk">${i + 1}</span>${avHTML(m.dev, m.name, 30)}<span class="rv-main"><b>${nm(m.dev)}</b><i style="width:${Math.max(3, m.p.km / mx * 100).toFixed(1)}%"></i></span><span class="rv-n">${m.p.km >= 100 ? Math.round(m.p.km).toLocaleString('de-DE') : m.p.km.toFixed(1).replace('.', ',')} km${m.p.n ? `<small>${m.p.n} Fahrt${m.p.n > 1 ? 'en' : ''}</small>` : ''}</span></div>`).join('')}</div>` : ''}
     ${R.bests.length ? `<div class="rv-sec">Neue Bestzeiten</div><div class="rv-list">${R.bests.slice(0, 12).map(b => `<div class="rv-li">${avHTML(b.dev, b.by, 26)}<span><b>${nm(b.dev)}</b> ${esc(b.txt)}</span></div>`).join('')}</div>` : ''}
     <div class="rv-sec woa-t">Wall of Almost</div>
     <div class="woa">${R.almost.length ? `<div class="woa-head"><b>${R.almost.length}</b><span>${R.almost.length === 1 ? 'Fahrt' : 'Fahrten'} ${P.now ? (rvKind === 'w' ? 'diese Woche' : 'diesen Monat') : 'in ' + esc(P.title)}, die richtig hätten schiefgehen können</span></div>
       ${R.almost.map(d => { const lv = riskLevel(d.risk); return `<button class="woa-row" data-woa="${esc(d._id)}">${avHTML(d.dev, d.by, 34)}<span class="woa-tx"><b>${nm(d.dev)}</b><span>${esc(placeTxt(d) || d.name)} · ${new Date(d.created || d.at).toLocaleDateString('de-DE', {weekday:'short', day:'numeric', month:'numeric'})}</span></span><span class="woa-rk" style="--lv:${lv.col}"><b>${d.risk}</b><small>${lv.name}</small></span></button>`; }).join('')}`
-      : `<div class="woa-empty"><b>Niemand auf der Wall.</b>Genau so soll es sein.</div>`}
+      : `<div class="woa-empty"><b>Niemand auf der Warnwand.</b>Genau so soll es sein.</div>`}
       <p class="woa-foot">Kein Preis, sondern eine Warnung: Wer hier steht, hatte Glück. Zählt nur Fahrten, die in der Crew geteilt sind, ab Risk 70.</p></div>
     ${R.spots.length || R.drives.length || R.likes.length ? `<div class="rv-sec">Geteilt</div><div class="rv-chips">${R.drives.length ? `<span>🛣️ ${R.drives.length} Fahrt${R.drives.length > 1 ? 'en' : ''}</span>` : ''}${R.spots.length ? `<span>📍 ${R.spots.length} Spot${R.spots.length > 1 ? 's' : ''}</span>` : ''}${R.likes.length ? `<span>🔥 ${R.likes.length} Reaktion${R.likes.length > 1 ? 'en' : ''}</span>` : ''}</div>` : ''}
     <p class="rv-foot">Zählt nur, was in der Crew geteilt ist: Kilometer pro Woche (Einstellungen › Crew), Bestzeiten, Spots und Fahrten. Wer eine ältere App-Version hat, fehlt bei Fahrten und Awards.</p>`;
@@ -4906,12 +4933,12 @@ function reviewCardsHTML(){
   const W = revPeriod('w', 1), M = revPeriod('m', 1), rw = reviewData(W), rm = reviewData(M);
   const nw = prefs.rvSeenW !== W.s && (rw.tot.km || rw.bests.length), nm = prefs.rvSeenM !== M.s && rm.awards.length;
   return `<div class="rv-cards"><button class="rv-card w" data-rvopen="w"><span class="ic">📊</span><span class="tx"><b>${W.title}</b><small>Rückblick · ${Math.round(rw.tot.km)} km</small></span>${nw ? '<i class="nwd"></i>' : ''}</button>
-    <button class="rv-card m" data-rvopen="m"><span class="ic">🏆</span><span class="tx"><b>${esc(M.title)}</b><small>Awards & Wall</small></span>${nm ? '<i class="nwd"></i>' : ''}</button></div>`;
+    <button class="rv-card m" data-rvopen="m"><span class="ic">🏆</span><span class="tx"><b>${esc(M.title)}</b><small>Auszeichnungen & Warnwand</small></span>${nm ? '<i class="nwd"></i>' : ''}</button></div>`;
 }
 function reviewNotice(){
   if(!grp()) return null;
   const W = revPeriod('w', 1), M = revPeriod('m', 1);
-  if(prefs.rvNoteM !== M.s){ const first = prefs.rvNoteM == null; prefs.rvNoteM = M.s; savePrefs(); const r = reviewData(M); if(!first && r.awards.length) return `🏆 Die Monats-Awards für ${M.title} sind da – schau in die News`; }
+  if(prefs.rvNoteM !== M.s){ const first = prefs.rvNoteM == null; prefs.rvNoteM = M.s; savePrefs(); const r = reviewData(M); if(!first && r.awards.length) return `🏆 Die Monatsauszeichnungen für ${M.title} sind da – schau in die News`; }
   if(prefs.rvNoteW !== W.s){ const first = prefs.rvNoteW == null; prefs.rvNoteW = W.s; savePrefs(); const r = reviewData(W); if(!first && (r.tot.km || r.bests.length)) return `📊 Dein Wochenrückblick für ${W.title} ist da – schau in die News`; }
   return null;
 }
@@ -5131,6 +5158,7 @@ function sunRanking(){
 function sunCardHTML(){
   if(!data.spots.length) return '';
   const rk = sunRanking();
+  if(!rk && sunWx.err){ if(Date.now() - (sunWx.t || 0) > 5 * 60000) loadSunWx(false); return ''; }   // Wetter fehlt: Karte weglassen statt Fehlermeldung oben in der Liste
   if(!rk){ loadSunWx(false); return `<button class="sun-card" data-sun="open"><span class="t">Sonnenuntergang</span><span class="s">${sunWx.err ? 'Wetter gerade nicht erreichbar' : 'Suche den besten Spot …'}</span></button>`; }
   if(Date.now() - sunWx.t > 30 * 60000) loadSunWx(false);
   const b = rk[0]; if(!b) return '';
@@ -5147,7 +5175,7 @@ function renderSunView(){
     <div class="sun-list">${rk.map((x, i) => `<button class="sun-row" data-sunid="${x.s.id}">
       <span class="sun-n">${i + 1}</span>
       <span class="sun-b"><span class="sun-name">${esc(x.s.name)}</span>
-        <span class="sun-meta"><span>${x.off ? 'Morgen' : 'Heute'} ${hhmm(x.sun.sunset)}</span><span>Golden Hour ${hhmm(x.sun.golden)}</span>${me ? `<span>${fmtDist(dist(me, x.s))}</span>` : ''}</span>
+        <span class="sun-meta"><span>${x.off ? 'Morgen' : 'Heute'} ${hhmm(x.sun.sunset)}</span><span>Goldene Std. ${hhmm(x.sun.golden)}</span>${me ? `<span>${fmtDist(dist(me, x.s))}</span>` : ''}</span>
         <span class="sun-meta"><span>Sicht ${x.vis == null ? '–' : Math.round(x.vis / 1000) + ' km'}</span><span>Wolken ${x.low} / ${x.mid} / ${x.high} %</span><span>Regen ${x.pp || 0} %</span></span>
         ${x.late ? '<span class="sun-late">Schaffst du heute vermutlich nicht mehr rechtzeitig</span>' : ''}
         <span class="sun-bar"><i style="width:${x.score}%"></i></span></span>
@@ -5168,7 +5196,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.16';
+const VERSION = '2026.10.06.17';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -5245,7 +5273,7 @@ function renderSettings(){
 }
 async function storageInfo(){
   let txt = '–';
-  try{ if(navigator.storage && navigator.storage.estimate){ const e = await navigator.storage.estimate(); txt = fmtMB((e.usage || 0) / 1048576); } }catch(e){}
+  try{ if(navigator.storage && navigator.storage.estimate){ const e = await navigator.storage.estimate(); let ls = 0; try{ for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); ls += (k.length + (localStorage.getItem(k) || '').length) * 2; } }catch(_){} txt = fmtMB(((e.usage || 0) + ls) / 1048576); } }catch(e){}
   const el = $('#stStore'); if(el) el.textContent = txt;
 }
 $('#modal').addEventListener('click', e => {
@@ -5256,7 +5284,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'accent'){ prefs.accent = b.dataset.v; savePrefs(); applyTheme(); renderSettings(); if(view === 'track') updateTrackLayers(); }
   if(a === 'cam'){ prefs.cam = b.dataset.v; savePrefs(); renderSettings(); }
   if(a === 'cknight'){ prefs.ckNight = b.dataset.v; savePrefs(); renderSettings(); ckNightCheck(true); }
-  if(a === 'tg'){ const k = b.dataset.k; prefs[k] = !onOff(k); savePrefs(); b.classList.toggle('on', prefs[k]); b.setAttribute('aria-checked', prefs[k]); if(k === 'gforce' && prefs[k]) gStart(); if(k === 'shareStats' && grp()) pushMember().then(wsCache).catch(() => {}); }
+  if(a === 'tg'){ const k = b.dataset.k; prefs[k] = !onOff(k); savePrefs(); b.classList.toggle('on', prefs[k]); b.setAttribute('aria-checked', prefs[k]); if(k === 'gforce'){ if(prefs[k]){ gStart(); setTimeout(() => { if(!ckOn && !(rec && !rec.stopped)) gStop(); }, 2000); } else gStop(); } if(k === 'shareStats' && grp()) pushMember().then(wsCache).catch(() => {}); }
   if(a === 'avatar'){ $('#avFile').click(); return; }
   if(a === 'car'){ openCarPicker(); return; }
   if(a === 'garage'){ openGarage(); return; }
@@ -5451,11 +5479,6 @@ $('#modal').addEventListener('click', e => {
     if(o.bk && o.code) setTimeout(() => bkOffer({g:o.code, gn:o.g, d:o.dev, n:o.name, k:o.bk}, false), 900);
   }
 });
-function copyText(t, okMsg){
-  const done = () => toast(okMsg);
-  if(navigator.clipboard?.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb();
-  function fb(){ const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){ toast(t); } ta.remove(); }
-}
 
 /* ================= Haptik: kurzes Feedback beim Tippen =================
    iPhone (ab iOS 18): ein verstecktes System-Schalterchen löst das Haptik-Klicken aus. Android: kurze Vibration. */
@@ -5664,7 +5687,7 @@ function bkUI(){
 function renderBackup(){
   const ti = $('#bk-in'); if(ti) bkCodeIn = ti.value;
   const has = window.crypto && crypto.subtle, n = bk.n;
-  const head = `<div class="top"><strong>${bkMode === 'restore' ? 'Mit deinem Konto anmelden' : 'Backup'}</strong><button class="icon-btn press" data-bk="close" aria-label="Schließen">${svg(UI.close, 14)}</button></div>`;
+  const head = `<div class="top"><strong>${bkMode === 'restore' ? 'Von anderem Gerät übernehmen' : 'Backup'}</strong><button class="icon-btn press" data-bk="close" aria-label="Schließen">${svg(UI.close, 14)}</button></div>`;
   const restore = `<label class="f">Code oder Geräte-Link<textarea class="inp bk-code-in" id="bk-in" rows="3" placeholder="SPOTS-… oder https://…#link=…" autocomplete="off" spellcheck="false">${esc(bkCodeIn)}</textarea></label>
     ${navigator.clipboard && navigator.clipboard.readText ? '<button class="txtbtn" data-bk="paste" style="align-self:flex-start">Aus der Zwischenablage einfügen</button>' : ''}
     <div class="err">${esc(bkErr)}</div>
@@ -5842,7 +5865,7 @@ function openGarageCar(id){
   const e = gEdit, isNew = !c, tr = c ? gTracks(c) : [];
   const fld = (k, label, attrs = '') => `<label class="f">${label}<input class="inp" data-gf="${k}" value="${esc(e[k] == null ? '' : e[k])}" ${attrs}></label>`;
   $('#modal').innerHTML = `<div class="dlg gar-dlg" role="dialog" aria-modal="true" aria-label="Auto">
-    <div class="top" style="padding:12px 14px"><button class="txtbtn" data-g="back">${svg(UI.back, 14)} Garage</button><strong style="font-size:17px">${isNew ? 'Neues Auto' : esc(gTitle(e))}</strong><button class="txtbtn bold" data-g="save">Sichern</button></div>
+    <div class="top" style="padding:12px 14px"><button class="txtbtn" data-g="back">${svg(UI.back, 14)} Garage</button><strong style="font-size:17px">${isNew ? 'Neues Auto' : esc(gTitle(e))}</strong><button class="txtbtn bold" data-g="save">Speichern</button></div>
     <div class="pad" style="padding-top:2px;gap:12px">
       <button class="gphoto" data-g="photo">${e.photo ? `<img data-ph="${esc(e.photo)}" alt="">` : `${carSideSVG(CAR_TYPES[e.type] ? e.type : 'limo', CAR_COLORS[e.color] ? e.color : 'carbon')}<span>Foto hinzufügen</span>`}</button>
       ${fld('nick', 'Spitzname', 'placeholder="z. B. Golfi" maxlength="24"')}
@@ -6150,6 +6173,25 @@ function renderNearest(){
 $('#near').addEventListener('click', e => { const id = e.currentTarget.dataset.id; if(id && !mode && view !== 'edit') openDetail(id, true); });
 $('#b-locate').addEventListener('click', () => { if(rec && !rec.stopped) followMe = true; startGPS(true); });
 $('#b-labels').addEventListener('click', () => { prefs.labels = !prefs.labels; savePrefs(); applyLabels(); });
+// Dialoge: Fokus hinein beim Öffnen, Tab bleibt drin, beim Schließen zurück zum Auslöser
+['#modal', '#onb'].forEach(sel => {
+  const el = $(sel); if(!el) return; let back = null;
+  new MutationObserver(() => {
+    if(!el.hidden){
+      if(!back) back = document.activeElement;
+      setTimeout(() => { if(el.hidden || el.contains(document.activeElement)) return; const f = el.querySelector('[autofocus],h2,h1,button,input,select,textarea,[tabindex]'); if(f){ if(/^H[12]$/.test(f.tagName)) f.setAttribute('tabindex', '-1'); f.focus({preventScroll:true}); } }, 60);
+    } else if(back){ const b = back; back = null; if(b.isConnected && b.focus) try{ b.focus({preventScroll:true}); }catch(e){} }
+  }).observe(el, {attributes:true, attributeFilter:['hidden']});
+  el.addEventListener('keydown', e => {
+    if(e.key !== 'Tab' || el.hidden) return;
+    const fs = [...el.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])')].filter(x => !x.disabled && x.offsetParent);
+    if(!fs.length) return;
+    const first = fs[0], last = fs[fs.length - 1];
+    if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  });
+});
+new MutationObserver(() => document.body.classList.toggle('popopen', !$('#layersPop').hidden)).observe($('#layersPop'), {attributes:true, attributeFilter:['hidden']});
 $('#b-layers').addEventListener('click', e => {
   e.stopPropagation();
   const pop = $('#layersPop'); pop.hidden = !pop.hidden;
@@ -6433,7 +6475,7 @@ function openTrackSave(){
   const def = `Strecke ${new Date(rec.start).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}, ${new Date(rec.start).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})}`;
   const avg = rec.active > 0 ? rec.dist / (rec.active / 1000) : 0;
   $('#trackSaveView').innerHTML = `
-    <div class="top"><button class="txtbtn" data-ts="discard">Verwerfen</button><strong>Fahrt speichern</strong><button class="txtbtn bold" data-ts="save">Sichern</button></div>
+    <div class="top"><button class="txtbtn" data-ts="discard">Verwerfen</button><strong>Fahrt speichern</strong><button class="txtbtn bold" data-ts="save">Speichern</button></div>
     <div class="pad">
       <label class="f">Name<input class="inp" id="t-name" value="${esc(def)}" maxlength="80"></label>
       <div class="tstats">
@@ -6813,7 +6855,7 @@ function renderWay(){
   const pl = (k, p) => `<button class="wy-pl" data-wy="ed" data-k="${k}"><i class="${k}"></i><b>${esc(placeName(p) || (k === 'A' ? 'Start' : 'Ziel'))}</b><span>Umbenennen</span></button>`;
   const ed = wayEdit ? `<div class="wy-ed"><input class="inp" id="wy-name" maxlength="30" value="${esc(placeName(w[wayEdit]) || '')}" placeholder="Name für diesen Ort">
       <div class="chips">${['Zuhause', 'Arbeit', 'Schule', 'Freunde'].map(n => `<button class="chip" data-wy="pick" data-n="${n}">${n}</button>`).join('')}</div>
-      <div class="btns"><button class="btn" data-wy="edx">Abbrechen</button><button class="btn primary" data-wy="edok">Sichern</button></div></div>` : '';
+      <div class="btns"><button class="btn" data-wy="edx">Abbrechen</button><button class="btn primary" data-wy="edok">Speichern</button></div></div>` : '';
   let best;
   if(sl.best && sl.worst.med - sl.best.med >= 1) best = `<b>Beste Abfahrt: ${hm(sl.best.b)}–${hm(sl.best.b + 30)}</b><span>Typisch ${fmtMn(sl.best.med)}. Wer ${hm(sl.worst.b)}–${hm(sl.worst.b + 30)} losfährt, braucht ${fmtMn(sl.worst.med)} – ${fmtMn(sl.worst.med - sl.best.med)} mehr.</span>`;
   else if(sl.best) best = `<b>Die Abfahrtszeit ist fast egal</b><span>Zwischen ${hm(sl.list[0].b)} und ${hm(sl.list[sl.list.length - 1].b + 30)} brauchst du überall etwa ${fmtMn(w.typ)}.</span>`;
@@ -9588,7 +9630,7 @@ function osmRings(members){
 }
 function simplifyRing(r, m = 35){ const out = [r[0]]; let l = r[0]; for(let i = 1; i < r.length - 1; i++){ if(dist({lng:l[0], lat:l[1]}, {lng:r[i][0], lat:r[i][1]}) >= m){ out.push(r[i]); l = r[i]; } } out.push(r[r.length - 1]); return out.map(c => [+c[0].toFixed(5), +c[1].toFixed(5)]); }
 const ringBox = r => r.reduce((b, c) => [Math.min(b[0], c[0]), Math.min(b[1], c[1]), Math.max(b[2], c[0]), Math.max(b[3], c[1])], [180, 90, -180, -90]);
-function inRing(p, r){ let ins = false; for(let i = 0, j = r.length - 1; i < r.length; j = i++){ const a = r[i], b = r[j]; if((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) ins = !ins; } return ins; }
+// inRing(p, r): siehe Reichweite oben
 const inGem = (p, g) => g.rings.some((r, k) => { const b = g.box[k]; return p[0] >= b[0] && p[0] <= b[2] && p[1] >= b[1] && p[1] <= b[3] && inRing(p, r); });
 async function gemLoad(pt){
   if(gemBusy) return; gemBusy = true; gemErr = ''; gemRefresh();
@@ -10835,7 +10877,7 @@ function renderDraw(){
   if(!draw) return;
   const pts = drawPts(), L = pts.length > 1 ? lineLen(pts) : 0, ok = L >= 100 && !draw.busy;
   $('#drawView').innerHTML = `
-    <div class="top"><button class="txtbtn" data-dr="cancel">Abbrechen</button><strong>Rennstrecke</strong><button class="txtbtn bold" data-dr="save" ${ok ? '' : 'disabled style="opacity:.4"'}>Sichern</button></div>
+    <div class="top"><button class="txtbtn" data-dr="cancel">Abbrechen</button><strong>Rennstrecke</strong><button class="txtbtn bold" data-dr="save" ${ok ? '' : 'disabled style="opacity:.4"'}>Speichern</button></div>
     <div class="pad">
       <div class="mode" style="padding:0"><div class="big"><span class="pulse"></span>${!draw.wps.length ? 'Tippe auf der Karte den Startpunkt.' : draw.busy ? 'Suche Straßenverlauf …' : 'Tippe weitere Punkte bis zum Ziel.'}</div></div>
       <div class="stats"><div><b>${fmtKm(L)}</b><span>Länge</span></div><div><b>${draw.wps.length}</b><span>Punkte</span></div></div>

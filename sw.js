@@ -1,11 +1,11 @@
 /* Spots – Service Worker: App offline starten + Kartenkacheln zwischenspeichern */
-const V = 'v54';
+const V = 'v55';
 const APP = 'app-' + V, RT = 'tiles-rt', SAVED = 'tiles-saved';
 const SHELL = ['./', './index.html', './lib/maplibre-gl.js', './lib/maplibre-gl.css', './lib/fonts/geist-latin-wght-normal.woff2', './lib/fonts/geist-latin-ext-wght-normal.woff2', './lib/fonts/grenze-gotisch-latin-800-normal.woff2', './lib/fonts/grenze-gotisch-latin-900-normal.woff2', './manifest.webmanifest', './icon-192.png', './apple-touch-icon.png', './favicon.png'];
 const isTile = u => /(^|\.)arcgisonline\.com$/.test(u.hostname) || /elevation-tiles-prod/.test(u.pathname);
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(APP).then(c => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(APP).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()
@@ -68,10 +68,16 @@ self.addEventListener('fetch', e => {
   if(url.origin === location.origin){
     // Seite selbst: immer zuerst Netz, damit Updates sofort ankommen
     if(req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('/index.html')){
-      e.respondWith(fetch(req).then(res => {
+      // bei schlechtem Netz nach 4 s die gespeicherte Version zeigen (das Netz-Ergebnis landet trotzdem im Speicher)
+      const net = fetch(req).then(res => {
         if(res.ok){ const copy = res.clone(); caches.open(APP).then(c => c.put('./index.html', copy)); }
         return res;
-      }).catch(() => caches.match('./index.html')));
+      });
+      e.respondWith(new Promise(resolve => {
+        let done = false; const fin = r => { if(!done && r){ done = true; resolve(r); } };
+        const t = setTimeout(() => caches.match('./index.html').then(fin), 4000);
+        net.then(r => { clearTimeout(t); fin(r); }).catch(() => { clearTimeout(t); caches.match('./index.html').then(r => fin(r || new Response('Offline', {status:503}))); });
+      }));
       return;
     }
     // Rest (Bibliothek, Icons): Speicher sofort, im Hintergrund aktualisieren
