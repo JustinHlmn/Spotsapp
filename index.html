@@ -2283,19 +2283,59 @@ function inRing(p, r){ let c = false; for(let i = 0, j = r.length - 1; i < r.len
 const inPoly = (p, g) => (g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : []).some(P => inRing(p, P[0]) && !P.slice(1).some(h => inRing(p, h)));
 async function reachLoad(at){
   reach.at = at; reach.busy = true; reach.err = ''; reach.fc = null; reachUI(); reachDraw();
-  const q = {locations:[{lat:+at.lat.toFixed(5), lon:+at.lng.toFixed(5)}], costing:'auto', costing_options:{auto:{use_highways:reach.land ? 0 : 1}}, contours:REACH.map(([m]) => ({time:m})), polygons:true, denoise:.4, generalize:120};
-  let fc = null;
-  try{
-    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 25000);
-    const r = await fetch('https://valhalla1.openstreetmap.de/isochrone?json=' + encodeURIComponent(JSON.stringify(q)), {signal:ctl.signal});
-    clearTimeout(to); const j = await r.json(); if(j && j.features && j.features.length) fc = j;
-  }catch(e){}
+  const iso = async mins => {
+    const q = {locations:[{lat:+at.lat.toFixed(5), lon:+at.lng.toFixed(5)}], costing:'auto', costing_options:{auto:{use_highways:reach.land ? 0 : 1}}, contours:mins.map(m => ({time:m})), polygons:true, denoise:.4, generalize:150};
+    try{
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 20000);
+      const r = await fetch('https://valhalla1.openstreetmap.de/isochrone?json=' + encodeURIComponent(JSON.stringify(q)), {signal:ctl.signal});
+      clearTimeout(to); const j = await r.json().catch(() => null);
+      if(j && j.features && j.features.length) return j.features;
+      reach.why = (j && (j.error || j.status)) ? `${j.error || j.status}${j.error_code ? ' (' + j.error_code + ')' : ''}` : `HTTP ${r.status}`; reach.srv = !!(j && j.error_code);
+    }catch(e){ reach.why = e && e.name === 'AbortError' ? 'Zeitüberschreitung' : 'keine Verbindung'; reach.srv = false; }
+    return null;
+  };
+  // erst alles auf einmal, sonst einzeln (der Server begrenzt teils Zeit oder Fläche)
+  let feats = await iso(REACH.map(([m]) => m));
+  if(!feats){ feats = []; if(reach.srv) for(const [m] of REACH){ if(reach.at !== at) return; const f = await iso([m]); if(f) feats.push(...f); else break; } }
+  reach.approx = false;
+  const miss = REACH.map(([m]) => m).filter(m => !feats.some(f => +(f.properties || {}).contour === m));
+  if(miss.length){ const f = await reachOsrm(at); if(reach.at !== at) return; if(f){ feats.push(...f.filter(x => miss.includes(x.properties.contour))); reach.approx = miss.length === REACH.length ? 'all' : miss.map(m => m + ' Min').join(', '); } }
+  const fc = feats.length ? {type:'FeatureCollection', features:feats} : null;
   if(reach.at !== at || !reach.on) return;
   reach.busy = false;
-  if(!fc){ reach.err = 'Reichweite gerade nicht berechenbar. Prüfe dein Internet.'; reachUI(); return; }
+  if(!fc){ reach.err = `Reichweite gerade nicht berechenbar${reach.why ? ` (${reach.why})` : ''}.`; reachUI(); return; }
   reach.fc = fc; reachUI(); reachDraw();
   const b = new maplibregl.LngLatBounds(); fc.features.forEach(f => (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates).forEach(P => P[0].forEach(c => b.extend(c))));
   if(!b.isEmpty()) map.fitBounds(b, {padding:camPad(), duration:900});
+}
+// Ersatz, wenn der Isochronen-Dienst nicht antwortet: Fahrzeiten in 16 Richtungen × 6 Abständen (OSRM-Tabelle) und daraus Flächen
+async function reachOsrm(at){
+  const R = [8, 20, 38, 60, 90, 130], D = 16, kx = 111.32 * Math.cos(at.lat * Math.PI / 180), pts = [at];
+  for(let d = 0; d < D; d++){ const a = d / D * 2 * Math.PI; R.forEach(km => pts.push({lat:at.lat + Math.cos(a) * km / 110.57, lng:at.lng + Math.sin(a) * km / kx})); }
+  const co = pts.map(p => `${p.lng.toFixed(5)},${p.lat.toFixed(5)}`).join(';');
+  let dur = null;
+  for(const base of ROUTERS){
+    try{
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 20000);
+      const r = await fetch(base.replace('/route/', '/table/') + co + '?sources=0', {signal:ctl.signal}); clearTimeout(to);
+      const j = await r.json(); if(j.code === 'Ok' && j.durations && j.durations[0]){ dur = j.durations[0]; break; }
+    }catch(e){}
+  }
+  if(!dur) return null;
+  return REACH.map(([m]) => {
+    const T = m * 60, ring = [];
+    for(let d = 0; d < D; d++){
+      let prevKm = 0, prevT = 0, rk = 0;
+      for(let k = 0; k < R.length; k++){
+        const t = dur[1 + d * R.length + k]; if(t == null) continue;
+        if(t >= T){ rk = prevKm + (R[k] - prevKm) * Math.max(0, Math.min(1, (T - prevT) / Math.max(1, t - prevT))); break; }
+        prevKm = R[k]; prevT = t; rk = R[k];
+      }
+      const a = d / D * 2 * Math.PI; ring.push([at.lng + Math.sin(a) * rk / kx, at.lat + Math.cos(a) * rk / 110.57]);
+    }
+    ring.push(ring[0]);
+    return {type:'Feature', properties:{contour:m}, geometry:{type:'Polygon', coordinates:[ring]}};
+  });
 }
 function reachRings(){
   if(!reach.fc) return [];
@@ -2315,7 +2355,7 @@ function reachUI(){
   const cnt = rings.map(x => spots.filter(s => inPoly([s.lng, s.lat], x.f.geometry)).length);
   const body = reach.busy ? '<div class="rc-load"><i class="bk-spin"></i>Wird berechnet …</div>'
     : reach.err ? `<div class="err">${esc(reach.err)}</div>`
-    : `<div class="rc-k">${rings.map((x, i) => `<span style="--c:${x.c}"><b>${x.m} Min</b><small>${cnt[i] === 1 ? '1 Spot' : `${cnt[i]} Spots`}</small></span>`).join('')}</div>`;
+    : `<div class="rc-k">${rings.map((x, i) => `<span style="--c:${x.c}"><b>${x.m} Min</b><small>${cnt[i] === 1 ? '1 Spot' : `${cnt[i]} Spots`}</small></span>`).join('')}</div>${reach.approx ? `<small class="muted">${reach.approx === 'all' ? 'Grob geschätzt – der genaue Dienst antwortet gerade nicht.' : `${reach.approx} grob geschätzt.`}</small>` : ''}`;
   el.innerHTML = `<div class="rc-h">${svg(UI.nav, 16)}<b>Reichweite</b><button class="rd-x" data-rc="off" aria-label="Reichweite ausblenden">${svg(UI.close, 12)}</button></div>${body}
     <div class="rc-f"><div class="seg2"><button class="${reach.land ? '' : 'on'}" data-rc="hw">Autobahn</button><button class="${reach.land ? 'on' : ''}" data-rc="land">Landstraße</button></div><button class="rc-mid" data-rc="mid">Kartenmitte</button></div>`;
 }
@@ -5008,7 +5048,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.10';
+const VERSION = '2026.10.06.11';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
