@@ -877,7 +877,7 @@ body.cockpit.cknight .glass{background:rgba(3,7,12,.88)}
 .rd-load i{width:9px;height:9px;border-radius:50%;background:var(--accent);animation:rwpulse 1.2s ease-in-out infinite}
 
 /* ---------- Straßenwetter ---------- */
-.rwk-dry{--rw:#30d158}.rwk-cold{--rw:#5eb0ff}.rwk-wet{--rw:#6aa7d4}.rwk-rain{--rw:#32ade6}.rwk-heavy{--rw:#0a84ff}.rwk-frost{--rw:#c38cff}.rwk-snow{--rw:#9fb3c8}.rwk-ice{--rw:#bf5af2}.rwk-load{--rw:var(--muted)}
+.rwk-dry{--rw:#30d158}.rwk-cold{--rw:#5eb0ff}.rwk-wet{--rw:#6aa7d4}.rwk-rain{--rw:#32ade6}.rwk-heavy{--rw:#0a84ff}.rwk-frost{--rw:#c38cff}.rwk-snow{--rw:#9fb3c8}.rwk-ice{--rw:#bf5af2}.rwk-load{--rw:var(--muted)}.rwk-wild{--rw:#f59e0b}
 .rw-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:18px;background:var(--solid);border:1px solid var(--line)}
 .rw-row.rwk-ice,.rw-row.rwk-snow,.rw-row.rwk-frost,.rw-row.rwk-heavy{border-color:color-mix(in srgb,var(--rw) 50%,var(--line))}
 .rw-i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--rw) 18%,transparent);color:var(--rw)}
@@ -2050,6 +2050,9 @@ function onMapStyle(){
   map.addSource('nav-wx', {type:'geojson', data:FC([])});
   map.addLayer({id:'nav-wx-ice', type:'line', source:'nav-wx', layout:rl, filter:['in', ['get', 'k'], ['literal', ['ice', 'frost', 'snow']]], paint:{'line-color':['get', 'c'], 'line-width':7.5}});
   map.addLayer({id:'nav-wx-rain', type:'line', source:'nav-wx', layout:rl, filter:['in', ['get', 'k'], ['literal', ['rain', 'heavy']]], paint:{'line-color':'#ffffff', 'line-width':['case', ['==', ['get', 'k'], 'heavy'], 3.6, 3], 'line-dasharray':[.5, 1.7], 'line-opacity':.95}});
+  map.addSource('nav-wild', {type:'geojson', data:FC([])});
+  map.addLayer({id:'nav-wild-line', type:'line', source:'nav-wild', layout:rl, filter:['==', ['geometry-type'], 'LineString'], paint:{'line-color':'#f59e0b', 'line-width':3.2, 'line-dasharray':[1, 1.3]}});
+  map.addLayer({id:'nav-wild-sign', type:'circle', source:'nav-wild', filter:['==', ['geometry-type'], 'Point'], paint:{'circle-radius':5.5, 'circle-color':'#f59e0b', 'circle-stroke-color':'#1c1c1e', 'circle-stroke-width':2}});
   for(const id of ['course-all','course-view','course-ends','draw-line','draw-pts']) map.addSource(id, {type:'geojson', data:FC([])});
   map.addLayer({id:'course-all-line', type:'line', source:'course-all', layout:rl, paint:{'line-color':'#bf5af2', 'line-width':3.5, 'line-opacity':.75}});
   map.addLayer({id:'course-all-hit', type:'line', source:'course-all', layout:rl, paint:{'line-color':'#000', 'line-width':20, 'line-opacity':0}});
@@ -4915,7 +4918,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.08';
+const VERSION = '2026.10.06.09';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -8985,9 +8988,72 @@ function rwCkRender(){
   }
   const r = rwCk.r;
   if(r && r.k !== 'dry' && (!k || r.lv > RW_LV[k])){ k = r.k; txt = r.t; }
-  const html = k ? `<span class="rw-i">${svg(RWI[k], 15, 2.2)}</span><b>${esc(txt)}</b>` : '';
+  const wa = (!k || RW_LV[k] < RW_LV.rain) ? wildAhead() : null; if(wa){ k = 'wild'; txt = wa; }
+  const html = k ? `<span class="rw-i">${svg(k === 'wild' ? WILD_IC : RWI[k], 15, 2.2)}</span><b>${esc(txt)}</b>` : '';
   el.hidden = !k || !ckOn;
   if(html !== rwCk.html){ rwCk.html = html; el.className = `glass rwk-${k || 'dry'}`; el.innerHTML = html; }
+}
+
+/* ================= Wildwechsel: Waldstücke auf der Route, die man in der Dämmerung oder bei Dunkelheit durchfährt =================
+   Wald aus OpenStreetMap (is_in je Messpunkt), dazu Wildwechsel-Schilder an der Strecke. Nur ein Hinweis – keine Garantie. */
+const WILD_IC = '<path d="M8 3v3.5L10 8M5.5 4.5 8 6M16 3v3.5L14 8M18.5 4.5 16 6"/><path d="M10 8h4l1.5 3-1 1.5V17a2.5 2.5 0 0 1-5 0v-4.5l-1-1.5z"/><path d="M11 18.5h2"/>';
+function dayPhase(t, lat, lng){
+  const d = new Date(t); d.setHours(12, 0, 0, 0);
+  const S = SUN(d, lat, lng); if(!S.rise || !S.sunset) return 'day';
+  const r = S.rise.getTime(), s = S.sunset.getTime(), M = 60000;
+  if((t >= s - 40 * M && t <= s + 80 * M) || (t >= r - 80 * M && t <= r + 40 * M)) return 'dusk';
+  return t > s + 80 * M || t < r - 80 * M ? 'night' : 'day';
+}
+async function wildLoad(){
+  const n = nav; if(!n || !n.route || n.busy) return;
+  const R = n.route;
+  if(n.wild && n.wild.R === R) return;
+  const W = n.wild = {R, segs:null, signs:[]};
+  const st = Math.max(300, R.L / 220), t0 = Date.now(), S = [];
+  for(let a = st / 2; a < R.L; a += st){ const q = routeAt(R, a), t = t0 + R.dur * 1000 * a / R.L, ph = dayPhase(t, q.lat, q.lng); if(ph !== 'day') S.push({a, lat:q.lat, lng:q.lng, t, ph}); }
+  if(!S.length){ W.segs = []; return wildDone(n, W); }
+  const pts = S.map(q => `${q.lat.toFixed(5)},${q.lng.toFixed(5)}`).join(',');
+  const q = '[out:json][timeout:40];' + S.map((p, i) => `is_in(${p.lat.toFixed(5)},${p.lng.toFixed(5)})->.a;(area.a["landuse"="forest"];area.a["natural"="wood"];);make w i="${i}",n=count(areas);out;`).join('') +
+    `(node["hazard"="animal_crossing"](around:40,${pts});node["traffic_sign"~"DE:142-10"](around:40,${pts}););out 60;`;
+  let j = null;
+  for(const base of OVERPASS){ try{ const r = await fetch(base, {method:'POST', body:'data=' + encodeURIComponent(q)}); if(r.ok){ j = await r.json(); break; } }catch(e){} }
+  if(nav !== n || n.wild !== W) return;
+  if(!j){ W.segs = []; W.err = true; return wildDone(n, W); }
+  const forest = new Set();
+  (j.elements || []).forEach(e => {
+    if(e.type === 'w' && e.tags && +e.tags.n > 0) forest.add(+e.tags.i);
+    else if(e.type === 'node' && e.lat != null){ const pr = routeProject(R, R.toXY(e.lon, e.lat)); if(pr.off < 60 && !W.signs.some(x => Math.abs(x.a - pr.along) < 150)) W.signs.push({a:pr.along, lat:e.lat, lng:e.lon}); }
+  });
+  const segs = [];
+  S.forEach((p, i) => {
+    if(!forest.has(i)) return;
+    const a = Math.max(0, p.a - st / 2), b = Math.min(R.L, p.a + st / 2), last = segs[segs.length - 1];
+    if(last && a - last.b < st * 1.6){ last.b = b; if(p.ph === 'dusk') last.ph = 'dusk'; } else segs.push({a, b, ph:p.ph, t:p.t});
+  });
+  W.segs = segs.filter(x => x.b - x.a >= 400 || W.signs.some(g => g.a >= x.a && g.a <= x.b));
+  W.signs.sort((x, y) => x.a - y.a);
+  wildDone(n, W);
+}
+function wildDone(n, W){ if(nav !== n) return; wildDraw(); if(navPrevOn && !n.pick) renderNavPrev(); }
+function wildDraw(){
+  const W = nav && nav.wild; if(!W || !W.segs || W.R !== nav.route){ setSrc('nav-wild', FC([])); return; }
+  const R = nav.route, from = nav.active ? nav.prog : 0;
+  setSrc('nav-wild', FC([
+    ...W.segs.filter(x => x.b > from + 5).map(x => ({type:'Feature', properties:{}, geometry:{type:'LineString', coordinates:routeSlice(R, Math.max(x.a, from), x.b)}})),
+    ...W.signs.filter(g => g.a > from).map(g => ({type:'Feature', properties:{}, geometry:{type:'Point', coordinates:[g.lng, g.lat]}}))]));
+}
+function wildNavHTML(){
+  const W = nav.wild; if(!W || W.R !== nav.route || !W.segs || !W.segs.length) return '';
+  const km = W.segs.reduce((t, x) => t + x.b - x.a, 0), f = W.segs[0], dusk = W.segs.some(x => x.ph === 'dusk');
+  const where = f.a < 500 ? 'ab Start' : `ab km ${Math.round(f.a / 1000)} · ca. ${hhmm(new Date(f.t))}`;
+  return `<div class="rw-route wild-route"><span class="rw-sum rwk-wild">${svg(WILD_IC, 15, 2)}Wildwechsel möglich: ${fmtKmS(km)} Wald ${dusk ? 'in der Dämmerung' : 'bei Dunkelheit'} · ${where}</span>${W.signs.length ? `<small class="muted">${W.signs.length === 1 ? '1 Wildwechsel-Schild' : `${W.signs.length} Wildwechsel-Schilder`} an der Strecke</small>` : ''}</div>`;
+}
+// Cockpit: Wald voraus (bis 1,5 km) oder gerade drin
+function wildAhead(){
+  if(!nav || !nav.active || !nav.wild || !nav.wild.segs || nav.wild.R !== nav.route) return null;
+  const p = nav.prog, x = nav.wild.segs.find(s => s.b > p && s.a - p < 1500); if(!x) return null;
+  if(dayPhase(Date.now(), me ? me.lat : nav.dest.lat, me ? me.lng : nav.dest.lng) === 'day') return null;
+  return x.a <= p ? 'Wald · Wildwechsel möglich' : `Wald in ${fmtNav(x.a - p)} · Wildwechsel möglich`;
 }
 
 /* Vorschau & Start */
@@ -9066,8 +9132,9 @@ function renderNavPrev(){
     ${nav.busy ? '' : seasonNavHTML()}
     ${nav.busy ? '' : navSightsHTML()}
     ${rwNavHTML()}
+    ${nav.busy ? '' : wildNavHTML()}
     <div class="btns"><button class="btn" data-nav="cancel">Abbrechen</button><button class="btn primary" data-nav="go" ${nav.busy ? 'disabled' : ''}>${svg(UI.nav, 16)} Los</button></div>`;
-  navSightsLoad(); navSightMarks(); seasonNavLoad();
+  navSightsLoad(); navSightMarks(); seasonNavLoad(); wildLoad(); wildDraw();
 }
 /* ================= Gemeinden sammeln =================
    Gemeindegrenzen des Landkreises aus OpenStreetMap (Overpass), vereinfacht und auf dem Gerät gespeichert.
@@ -9604,7 +9671,7 @@ function endNav(fromExit){
   const wasActive = nav.active;
   nav = null; navPrevOn = false; navStopMarks(); navSightMk.forEach(m => m.remove()); navSightMk = [];
   document.body.classList.remove('nav', 'navprev');
-  setSrc('nav-route', FC([])); setSrc('nav-wx', FC([])); setSrc('nav-alt', FC([]));
+  setSrc('nav-route', FC([])); setSrc('nav-wx', FC([])); setSrc('nav-wild', FC([])); setSrc('nav-alt', FC([]));
   if(wasActive && !fromExit && ckOn) exitCockpit();
   if(mobile()) setSnap(snap, false);
 }
@@ -9625,6 +9692,7 @@ function onNavFix(pt, acc){
   if(R.L - nav.prog < 30 || (dist(pt, nav.dest) < 25 && (!nav.tour || nav.prog > R.L * .8))){ arrive(); return; }
   setSrc('nav-route', routeFC(remainingCoords(R, nav.prog)));
   if(nav.rw) rwNavDraw();
+  wildDraw();
   renderNav();
 }
 async function reroute(pt){
@@ -9636,11 +9704,11 @@ async function reroute(pt){
   if(!nav || !nav.active) return;
   if(!r){ toast('Neue Route gerade nicht verfügbar.'); return; }
   nav.route = prepRoute(r, names); nav.route.viaStops = navUser(); nav.prog = 0; navStopMarks();
-  setSrc('nav-route', routeFC(nav.route.coords)); renderNav(); rwNav();
+  setSrc('nav-route', routeFC(nav.route.coords)); renderNav(); rwNav(); wildLoad();
 }
 function arrive(){
   nav.arrived = true;
-  setSrc('nav-route', FC([])); setSrc('nav-wx', FC([]));
+  setSrc('nav-route', FC([])); setSrc('nav-wx', FC([])); setSrc('nav-wild', FC([]));
   const walk = nav.walkTo ? dist(nav.dest, nav.walkTo) : 0;
   renderNav();
 }
