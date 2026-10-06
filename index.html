@@ -553,6 +553,10 @@ body.cockpit.cknight .glass{background:rgba(3,7,12,.88)}
 .tour-c small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tour-hint{font-size:12px}
 .tour-note{display:flex;align-items:center;gap:6px}
+#navBusy{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(30px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:22px;color:var(--fg);font-weight:600;font-size:14px;animation:viewin .3s var(--ease)}
+#navBusy[hidden]{display:none}
+.nbtn.end.armed{width:auto;padding:0 14px;font-weight:700;font-size:14px;white-space:nowrap}
+#navBusy .bk-spin{border-color:color-mix(in srgb,var(--fg) 25%,transparent);border-top-color:var(--accent)}
 .fav-btn{color:var(--muted)}
 .fav-btn.on{color:#ffd60a}
 .fav-btn.on svg{fill:currentColor}
@@ -757,7 +761,8 @@ body.cockpit.cknight .glass{background:rgba(3,7,12,.88)}
 .ts-cars{flex-wrap:wrap}
 
 /* ---------- Routenwahl & Zwischenstopps ---------- */
-#navPrev{max-height:calc(100% - 90px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain}
+#navPrev{max-height:min(62vh,calc(100% - 90px - env(safe-area-inset-top,0px)));overflow-y:auto;overscroll-behavior:contain}
+#navPrev > .btns{position:sticky;bottom:-16px;margin:0 -16px -16px;padding:12px 16px 16px;background:var(--glass-strong);z-index:2;border-radius:0 0 24px 24px}
 .nopts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .nopt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--solid);color:var(--fg);text-align:left;font-variant-numeric:tabular-nums}
 .nopt b{font-size:14px}
@@ -1604,7 +1609,8 @@ body.cockpit #ckRace.show~#liveCard{top:calc(180px + env(safe-area-inset-top,0px
 #ckLive{position:absolute;z-index:20;right:14px;bottom:calc(240px + env(safe-area-inset-bottom,0px));height:40px;padding:0 13px 0 12px;border-radius:20px;display:none;align-items:center;gap:7px;font-weight:700;font-size:13.5px;color:var(--fg);border:1px solid var(--line);animation:viewin .4s var(--ease);transition:background-color .25s,color .25s}
 body.cockpit #ckLive:not([hidden]){display:inline-flex}
 body.cockpit:not(.gon) #ckLive{bottom:calc(102px + env(safe-area-inset-bottom,0px))}
-body.nav #ckLive,body.replay #ckLive{display:none!important}
+body.replay #ckLive{display:none!important}
+body.cockpit.nav #ckLive{bottom:calc(176px + env(safe-area-inset-bottom,0px))!important}
 #ckLive.on{background:#30d158;color:#04260f;border-color:transparent}
 #ckLive.on .lv-dot{background:#fff}
 #ckLive.on .lv-avs .uav{box-shadow:0 0 0 1.5px #30d158}
@@ -2338,17 +2344,21 @@ async function reachOsrm(at){
     }catch(e){}
   }
   if(!dur) return null;
+  const slow = reach.land ? 1.25 : 1;   // ohne Autobahn grob langsamer
   return REACH.map(([m]) => {
-    const T = m * 60, ring = [];
+    const T = m * 60, ring = [], rks = [];
     for(let d = 0; d < D; d++){
-      let prevKm = 0, prevT = 0, rk = 0;
+      let prevKm = 0, prevT = 0, rk = null;
       for(let k = 0; k < R.length; k++){
-        const t = dur[1 + d * R.length + k]; if(t == null) continue;
+        let t = dur[1 + d * R.length + k]; if(t == null) continue; t *= slow;
         if(t >= T){ rk = prevKm + (R[k] - prevKm) * Math.max(0, Math.min(1, (T - prevT) / Math.max(1, t - prevT))); break; }
         prevKm = R[k]; prevT = t; rk = R[k];
       }
-      const a = d / D * 2 * Math.PI; ring.push([at.lng + Math.sin(a) * rk / kx, at.lat + Math.cos(a) * rk / 110.57]);
+      rks.push(rk);
     }
+    // Richtungen ohne Daten (Wasser, Grenze …) aus den Nachbarn schätzen statt auf 0 zu fallen
+    rks.forEach((rk, d) => { if(rk == null){ const a = rks[(d + D - 1) % D], b = rks[(d + 1) % D]; rks[d] = a != null && b != null ? (a + b) / 2 : a ?? b ?? 0; } });
+    for(let d = 0; d < D; d++){ const rk = rks[d], a = d / D * 2 * Math.PI; ring.push([at.lng + Math.sin(a) * rk / kx, at.lat + Math.cos(a) * rk / 110.57]); }
     ring.push(ring[0]);
     return {type:'Feature', properties:{contour:m}, geometry:{type:'Polygon', coordinates:[ring]}};
   });
@@ -2965,7 +2975,7 @@ function renderPlace(){
     <div class="pad">
       <div class="pl-head"><span class="pl-ic k-${k}">${svg(GEO_IC[k], 22, 2)}</span><div><h2>${esc(r.name)}</h2>${r.sub ? `<span class="muted">${esc(r.sub)}</span>` : ''}</div></div>
       ${d != null ? `<div class="pl-dist">${fmtDist(d)} Luftlinie von dir</div>` : ''}
-      <button class="btn primary wide" data-pl="route">${svg(UI.nav, 16)} Route starten</button>
+      <button class="btn primary wide" data-pl="route">${svg(UI.nav, 16)} Route planen</button>
       <div class="btns"><button class="btn" data-pl="spot">${svg(UI.plus, 15)} Als Spot speichern</button><button class="btn" data-pl="copy">Koordinaten kopieren</button></div>
       <div class="coords"><span>${co}</span></div>
     </div>`;
@@ -5104,7 +5114,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.13';
+const VERSION = '2026.10.06.14';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -6357,7 +6367,7 @@ document.addEventListener('click', e => {
 document.addEventListener('click', e => {
   if(e.target.closest('[data-ck-open]')) return enterCockpit();
   if(e.target.closest('[data-ck="close"]')) return exitCockpit();
-  if(e.target.closest('[data-ck="dest"]')){ exitCockpit(); openSearch(); return; }
+  if(e.target.closest('[data-ck="dest"]')){ liveResume = live.on ? Date.now() + 10 * 60000 : 0; exitCockpit(); openSearch(); return; }
 });
 
 /* Speichern */
@@ -7667,8 +7677,10 @@ function camStep(now, dt){
   updateGhost();
   if(document.body.classList.contains('gon')) gRender(gNow());
 }
+let liveResume = 0;   // Live war an, als man aus dem Cockpit ein Ziel gesucht hat → beim Zurückkommen wieder an
 function enterCockpit(){
   if(ckOn) return;
+  if(liveResume > Date.now() && grp()){ liveResume = 0; setTimeout(() => { if(ckOn && !live.on) liveStart(); }, 800); }
   if(!navigator.geolocation){ toast('Standort wird von diesem Browser nicht unterstützt.'); return; }
   if(mode || view === 'edit'){ toast('Erst den Spot fertig bearbeiten.'); return; }
   ckOn = true; document.body.classList.add('cockpit'); xplHeatApply();
@@ -7853,7 +7865,7 @@ $('#modal').addEventListener('click', e => {
 $('#b-park').addEventListener('click', () => {
   $('#layersPop').hidden = true; $('#b-layers').classList.remove('on'); $('#b-layers').setAttribute('aria-expanded', 'false');
   if(prefs.park && (!me || dist(me, prefs.park) > 30)) return openPark();
-  if(!me){ toast('Warte auf deinen Standort …'); startGPS(true); return; }
+  if(!me){ getHere().then(p => { if(p) parkSave(p); }); return; }
   parkSave(me);
 });
 function parkPopUI(){ const b = $('#b-park'); if(b) b.querySelector('span').textContent = prefs.park && (!me || dist(me, prefs.park) > 30) ? 'Mein Auto' : 'Hier geparkt'; }
@@ -9000,6 +9012,7 @@ async function offSave(){
   await Promise.all(Array.from({length:6}, worker));
   offJob = null;
   if(job.stop){ toast('Download abgebrochen'); }
+  else if(job.fail > urls.length * .5){ toast(`Download fehlgeschlagen – ${job.fail} von ${urls.length} Kacheln kamen nicht an. Prüfe dein Internet.`); }
   else {
     offAreas.unshift({id:uid(), name, ...a, n:urls.length, bytes:job.bytes, date:Date.now()}); saveOff();
     toast(`„${name}“ offline gespeichert${job.fail ? ` (${job.fail} Kacheln fehlen)` : ''}`);
@@ -9271,7 +9284,8 @@ function blkClassify(t){
   }
   if(t.seasonal && t.seasonal !== 'no') out.push({k:'winter', txt:t.seasonal === 'summer' ? 'Nur im Sommer offen' : t.seasonal === 'winter' ? 'Nur im Winter offen' : 'Saisonal gesperrt', when:'', on:t.seasonal === 'winter' ? !blkWinter() : t.seasonal === 'summer' || t.seasonal === 'yes' ? blkWinter() : null});
   for(const k of ['motor_vehicle', 'motorcar', 'vehicle', 'access']){ const v = t[k]; if(v && BLK_VAL[v] && !out.some(x => x.k === v)){ out.push({k:v, txt:BLK_VAL[v], when:'', on:true}); break; } }
-  if(t.highway === 'construction') out.push({k:'build', txt:'Baustelle – gesperrt', when:'', on:true});
+  if(t.highway === 'construction'){ const e = t.opening_date || t['construction:end_date'] || ''; const d = /^\d{4}-\d{2}-\d{2}$/.test(e) ? new Date(e + 'T12:00') : null;
+    out.push({k:'build', txt:'Baustelle – gesperrt', when:d ? 'bis ' + d.toLocaleDateString('de-DE', {day:'numeric', month:'short', year:'numeric'}) : '', on:true}); }
   if(t.winter_service === 'no' && blkWinter()) out.push({k:'nows', txt:'Kein Winterdienst', when:'', on:true, lo:true});
   return out;
 }
@@ -9386,17 +9400,39 @@ function wildAhead(){
 const navLeft = () => nav.stops.filter(x => !x.done);
 const navUser = () => navLeft().filter(x => !x.sh);   // sichtbare Zwischenstopps (ohne Stützpunkte einer Lieblingsstrecke)
 const navPts = from => [from, ...navLeft(), nav.dest];
+let planBusy = 0;
 async function planNav(target, name, walkTo, o = {}){
+  if(planBusy && Date.now() - planBusy < 30000) return;   // Doppeltipp: nicht zweimal planen
+  planBusy = Date.now();
+  try{ await planNavRun(target, name, walkTo, o); } finally { planBusy = 0; }
+}
+async function planNavRun(target, name, walkTo, o){
   if(ckOn) exitCockpit();
   if(nav) endNav();
   const here = await getHere(); if(!here) return;
-  toast('Route wird berechnet …');
+  navStatus('Route wird berechnet …');
   const stops = (o.stops || []).filter(x => dist(x, here) > 300).map(x => ({...x}));   // Zwischenstopp, an dem ich schon stehe, weglassen
   nav = {active:false, start:{lat:here.lat, lng:here.lng}, dest:{lat:target.lat, lng:target.lng}, name, walkTo, stops, mode:(o.mode || prefs.navMode) === 'land' ? 'land' : 'fast', opts:null, route:null, prog:0, off:0, lastReroute:0, arrived:false, pick:null};
-  if(!(await navReplan(true))){ nav = null; toast('Route konnte nicht berechnet werden. Prüfe deine Internetverbindung.'); return; }
-  hideToast();
+  const n = nav;
+  const ok = await navReplan(true);
+  if(nav !== n) return;
+  if(!ok){ nav = null; navStatus(''); toast('Route konnte nicht berechnet werden. Prüfe deine Internetverbindung.'); return; }
+  navStatus(''); hideToast();
   navPrevOn = true; document.body.classList.add('navprev');
-  navFit();
+  navFit(); navRefit(n);
+}
+// Wenn Hinweise nachgeladen sind, ist die Vorschau höher – einmal nachjustieren, solange niemand die Karte bewegt hat
+function navRefit(n){
+  let moved = false; const mv = e => { if(e.originalEvent) moved = true; };
+  map.on('movestart', mv);
+  setTimeout(() => { map.off('movestart', mv); if(!moved && nav === n && navPrevOn) navFit(); }, 2600);
+}
+// Dauerhafter Hinweis, solange eine Route gerechnet wird (Toasts verschwinden nach 3 s)
+function navStatus(t){
+  let el = $('#navBusy');
+  if(!t){ if(el) el.hidden = true; return; }
+  if(!el){ el = document.createElement('div'); el.id = 'navBusy'; el.className = 'glass'; document.body.appendChild(el); }
+  el.innerHTML = `<i class="bk-spin"></i>${esc(t)}`; el.hidden = false;
 }
 // Routen neu holen (z. B. nach neuem Zwischenstopp) und anzeigen
 async function navReplan(first){
@@ -9425,7 +9461,8 @@ function navPick(mode, quiet){
 }
 function navFit(){
   const c = [...nav.route.coords, ...((nav.opts.land && nav.opts.land.coords) || [])], b = c.reduce((bb, q) => bb.extend(q), new maplibregl.LngLatBounds(c[0], c[0]));
-  map.fitBounds(b, {padding:{top:80, bottom:mobile() ? Math.min(innerHeight * .55, 420) : 250, left:50, right:mobile() ? 50 : 80}, maxZoom:16, duration:1200});
+  const np = $('#navPrev'), h = np && navPrevOn ? np.offsetHeight + 30 : 0;
+  map.fitBounds(b, {padding:{top:80, bottom:Math.max(mobile() ? 200 : 120, Math.min(h || 420, innerHeight * .64)), left:50, right:mobile() ? 70 : 90}, maxZoom:16, duration:1200});
 }
 let navStopMk = [];
 function navStopMarks(){
@@ -9443,8 +9480,8 @@ function renderNavPrev(){
   const mwTxt = r => r.mw >= 800 ? `${fmtKmS(r.mw)} Autobahn` : 'ohne Autobahn';
   const card = (k, r) => {
     const f = o.fast, dd = k === 'land' ? Math.round((r.dur - f.dur) / 60) : 0, dk = k === 'land' ? r.L - f.L : 0;
-    return `<button class="nopt${nav.mode === k ? ' on' : ''}" data-nav="mode" data-m="${k}"><b>${k === 'fast' ? 'Schnellste' : 'Landstraße'}</b><span class="nt">${fmtDurNav(r.dur)} · ${fmtKmS(r.L)}</span>
-      <small>${k === 'land' ? [`${dd >= 0 ? '+' : ''}${dd} Min`, Math.abs(dk) >= 100 ? `${dk >= 0 ? '+' : '−'}${fmtKmS(Math.abs(dk))}` : ''].filter(Boolean).join(' · ') + ' · ohne Autobahn' : mwTxt(r)}</small></button>`;
+    return `<button class="nopt${nav.mode === k ? ' on' : ''}" data-nav="mode" data-m="${k}"><b>${k === 'fast' ? (o.land && o.land.dur < r.dur ? 'Mit Autobahn' : 'Schnellste') : 'Landstraße'}</b><span class="nt">${fmtDurNav(r.dur)} · ${fmtKmS(r.L)}</span>
+      <small>${k === 'land' ? [`${dd >= 0 ? '+' : '−'}${Math.abs(dd)} Min`, Math.abs(dk) >= 100 ? `${dk >= 0 ? '+' : '−'}${fmtKmS(Math.abs(dk))}` : ''].filter(Boolean).join(' · ') + ' · ohne Autobahn' : mwTxt(r)}</small></button>`;
   };
   const opts = nav.tour && nav.tour.fav ? `<div class="nopt-note tour-note">${svg(ICONS.star, 15)} Folgt deiner Fahrt „${esc(nav.tour.name)}“${nav.tour.toStart > 300 ? ` · ${fmtKmS(nav.tour.toStart)} bis zum Start` : ''}</div>` : nav.tour ? `<div class="nopt-note tour-note">${svg(TOUR_IC, 15)} Rundtour · ${tourDots(nav.tour.curv)} · ${esc(nav.tour.via || 'Landstraßen')}</div>` : o.land ? `<div class="nopts">${card('fast', o.fast)}${card('land', o.land)}</div>`
     : `<div class="nopt-note">${o.fast.mw >= 800 ? 'Keine sinnvolle Strecke ohne Autobahn gefunden.' : 'Die schnellste Route fährt schon ohne Autobahn.'}</div>`;
@@ -9455,13 +9492,12 @@ function renderNavPrev(){
     <div class="nsum"><div><b>${fmtDurNav(R.dur)}</b><span>Fahrzeit</span></div><div><b>${fmtNav(R.L).replace('Jetzt', '0 m')}</b><span>Strecke</span></div><div><b>${clock(R.dur)}</b><span>Ankunft</span></div></div>
     <div class="nstops">${stops.map((x, k) => `<div class="nstop"><span class="nsi">${k + 1}</span><span class="nsic">${svg(STOP_IC[x.kind] || STOP_IC.place, 14, 2.2)}</span><span class="nsn">${esc(x.name)}</span><button class="nsx" data-nav="rmstop" data-i="${k}" aria-label="Zwischenstopp entfernen">${svg(UI.close, 12)}</button></div>`).join('')}
       ${stops.length < 3 ? `<button class="nadd" data-nav="addstop">${svg(UI.plus, 14)} Zwischenstopp</button>` : ''}</div>
-    ${nav.busy ? '' : seasonNavHTML()}
     ${nav.busy ? '' : navSightsHTML()}
     ${rwNavHTML()}
     ${nav.busy ? '' : blockNavHTML()}
     ${nav.busy ? '' : wildNavHTML()}
     <div class="btns"><button class="btn" data-nav="cancel">Abbrechen</button><button class="btn primary" data-nav="go" ${nav.busy ? 'disabled' : ''}>${svg(UI.nav, 16)} Los</button></div>`;
-  navSightsLoad(); navSightMarks(); seasonNavLoad(); wildLoad(); wildDraw(); blockLoad(); blockDraw();
+  navSightsLoad(); navSightMarks(); wildLoad(); wildDraw(); blockLoad(); blockDraw();
 }
 /* ================= Gemeinden sammeln =================
    Gemeindegrenzen des Landkreises aus OpenStreetMap (Overpass), vereinfacht und auf dem Gerät gespeichert.
@@ -9860,29 +9896,36 @@ function trkSample(t){
   return {start:pts[0], end:pts[pts.length - 1], via:out, L};
 }
 async function favGo(t){
+  if(planBusy && Date.now() - planBusy < 30000) return;
+  planBusy = Date.now();
+  try{ await favGoRun(t); } finally { planBusy = 0; navStatus(''); }
+}
+async function favGoRun(t){
   if(ckOn) exitCockpit();
   if(nav) endNav();
   const P = trkSample(t); if(!P){ toast('Diese Fahrt hat zu wenig Punkte.'); return; }
   const here = await getHere(); if(!here) return;
-  toast('Route wird berechnet …');
+  navStatus('Route wird berechnet …');
   const toStart = dist(here, P.start), loop = dist(P.start, P.end) < 400;
   // Startpunkt nur anfahren, wenn man nicht schon dort steht
   const sh = [...(toStart > 250 ? [P.start] : []), ...P.via].map((x, i) => ({lat:x.lat, lng:x.lng, name:'Strecke', kind:'place', sh:true, along:-1000 + i}));
   nav = {active:false, start:{lat:here.lat, lng:here.lng}, dest:{lat:P.end.lat, lng:P.end.lng}, name:t.name || 'Lieblingsstrecke', walkTo:null, stops:sh, mode:'land', opts:null, route:null, prog:0, off:0, lastReroute:0, arrived:false, pick:null,
     tour:{fav:true, name:t.name || 'Fahrt', toStart, loop}};
-  if(!(await navReplan(true))){ nav = null; toast('Route konnte nicht berechnet werden. Prüfe deine Internetverbindung.'); return; }
+  const n = nav, ok = await navReplan(true);
+  if(nav !== n) return;
+  if(!ok){ nav = null; toast('Route konnte nicht berechnet werden. Prüfe deine Internetverbindung.'); return; }
   const R = nav.opts.fast; nav.stops.forEach(x => { x.along = routeProject(R, R.toXY(x.lng, x.lat)).along; });
-  hideToast(); navPrevOn = true; document.body.classList.add('navprev'); navFit();
+  hideToast(); navPrevOn = true; document.body.classList.add('navprev'); navFit(); navRefit(nav);
 }
 function tourGo(t){
   if(ckOn) exitCockpit();
   if(nav) endNav();
   const names = t.way.map(w => w.name || 'Kurvenstück');
   nav = {active:false, start:{lat:t.S.lat, lng:t.S.lng}, dest:{lat:t.S.lat, lng:t.S.lng}, name:'Kurvige Rundtour', walkTo:null,
-    stops:t.way.map((w, i) => ({lat:w.mid.lat, lng:w.mid.lng, name:names[i], kind:'place', along:i})), mode:'land', opts:null, route:null, prog:0, off:0, lastReroute:0, arrived:false, pick:null,
+    stops:t.way.map((w, i) => ({lat:w.mid.lat, lng:w.mid.lng, name:names[i], kind:'place', along:-1000 + i, sh:true})), mode:'land', opts:null, route:null, prog:0, off:0, lastReroute:0, arrived:false, pick:null,
     tour:{curv:t.curv, via:t.via}};
   const R = prepRoute(t.route, names);
-  nav.opts = {fast:R, land:R}; R.viaStops = navLeft();
+  nav.opts = {fast:R, land:R}; R.viaStops = navUser();
   $('#modal').hidden = true;
   navPick('land', true);
   navPrevOn = true; document.body.classList.add('navprev');
@@ -9930,7 +9973,7 @@ async function navSightsLoad(){
 }
 function navSightsList(){
   const S = nav.sights; if(!S || !S.all) return null;
-  const R = nav.opts.fast, stops = navUser(), out = [];
+  const R = nav.route || nav.opts.fast, stops = navUser(), out = [];
   S.all.map(x => { const pr = routeProject(R, R.toXY(x.lng, x.lat)); return {...x, along:pr.along, off:pr.off}; })
     .filter(x => x.along > 1000 && x.along < R.L - 800 && x.off <= (x.kind === 'lake' ? 1200 : x.kind === 'pass' ? 300 : 1600) && !stops.some(y => dist(x, y) < 300))
     .sort((a, b) => (b.named - a.named) || ({pass:0, view:1, lake:2}[a.kind] - {pass:0, view:1, lake:2}[b.kind]) || a.off - b.off)
@@ -9958,7 +10001,7 @@ function navSightMarks(){
 /* Zwischenstopp wählen: Tankstelle an der Strecke, eigener Spot oder ein Freund, der gerade live ist */
 async function stopPickLoad(kind){
   const P = nav.pick = {kind, list:null, err:''}; renderNavPrev();
-  const R = nav.opts.fast, near = x => { const pr = routeProject(R, R.toXY(x.lng, x.lat)); return {...x, along:pr.along, off:pr.off}; };
+  const R = nav.route || nav.opts.fast, near = x => { const pr = routeProject(R, R.toXY(x.lng, x.lat)); return {...x, along:pr.along, off:pr.off}; };
   try{
     if(kind === 'fuel'){
       const pts = []; for(let a = 0; a <= R.L; a += Math.max(1500, R.L / 120)){ const q = routeAt(R, a); pts.push(`${q.lat.toFixed(5)},${q.lng.toFixed(5)}`); }
@@ -9993,21 +10036,24 @@ function startNav(){
   if(!ckOn){ endNav(); return; }
   renderNav();
 }
-function endNav(fromExit){
+function endNav(fromExit, keepCk){
   if(!nav) return;
   const wasActive = nav.active;
   nav = null; navPrevOn = false; navStopMarks(); navSightMk.forEach(m => m.remove()); navSightMk = [];
   document.body.classList.remove('nav', 'navprev');
   setSrc('nav-route', FC([])); setSrc('nav-wx', FC([])); setSrc('nav-wild', FC([])); setSrc('nav-block', FC([])); setSrc('nav-alt', FC([]));
-  if(wasActive && !fromExit && ckOn) exitCockpit();
+  if(wasActive && !fromExit && ckOn && !keepCk) exitCockpit();
+  if(keepCk && ckOn){ try{ updateCockpitUI(); }catch(e){} }
   if(mobile()) setSnap(snap, false);
 }
 
 /* Fortschritt */
 function onNavFix(pt, acc){
   if(!nav || !nav.active || nav.arrived) return;
-  const R = nav.route, pr = routeProject(R, R.toXY(pt.lng, pt.lat), nav.prog, 80, 600);
-  if(pr.off > 45 && acc <= 40) nav.off++; else nav.off = 0;
+  const R = nav.route, xy = R.toXY(pt.lng, pt.lat);
+  let pr = routeProject(R, xy, nav.prog, 80, 600);
+  if(pr.off > 45){ const all = routeProject(R, xy, nav.prog, 80, 1e9); if(all.off <= 45) pr = all; }   // GPS-Lücke (Tunnel, Bildschirm aus): weiter vorne wieder auf der Route
+  if(pr.off > 45 && acc <= 40) nav.off++; else if(pr.off <= 45) nav.off = 0;   // ungenaue Punkte zählen nicht, setzen aber auch nicht zurück
   if(pr.off <= 45 && pr.along > nav.prog) nav.prog = pr.along;
   if(nav.off >= 3 && Date.now() - nav.lastReroute > 10000){ reroute(pt); return; }
   let hit = false;
@@ -10023,12 +10069,14 @@ function onNavFix(pt, acc){
   renderNav();
 }
 async function reroute(pt){
-  nav.lastReroute = Date.now(); nav.off = 0;
+  const n = nav; n.lastReroute = Date.now(); n.off = 0;
   toast('Neue Route wird berechnet …');
-  const pts = navPts({lat:pt.lat, lng:pt.lng}), names = navUser().map(x => x.name), fav = nav.tour && nav.tour.fav;
-  const rs = fav || nav.mode === 'land' ? await valhalla(pts, !fav) : await osrm(pts);
-  const r = rs ? rs[0] : await osrm(pts.filter(x => !x.sh)).then(x => x && x[0]);
-  if(!nav || !nav.active) return;
+  const pts = navPts({lat:pt.lat, lng:pt.lng}), names = navUser().map(x => x.name), fav = n.tour && n.tour.fav, land = fav || n.tour || n.mode === 'land';
+  // erster Dienst passend zum Modus, bei Ausfall der jeweils andere
+  let rs = land ? await valhalla(pts, !fav) : await osrm(pts.filter(x => !x.sh));
+  if(!rs && nav === n) rs = land ? await osrm(pts.filter(x => !x.sh)) : await valhalla(pts, false);
+  const r = rs && rs[0];
+  if(nav !== n || !n.active) return;
   if(!r){ toast('Neue Route gerade nicht verfügbar.'); return; }
   nav.route = prepRoute(r, names); nav.route.viaStops = navUser(); nav.prog = 0; navStopMarks();
   setSrc('nav-route', routeFC(nav.route.coords)); renderNav(); rwNav(); wildLoad(); blockLoad();
@@ -10053,7 +10101,7 @@ function renderNav(){
   const html = `<span class="mi">${svg(navIcon(s.st), 32, 2.4)}</span><div class="tx"><div class="md">${fmtNav(s.d)}</div><div class="mt">${esc(instr(s.st))}</div>${thenHTML}</div>`;
   if(top._h !== html){ top.innerHTML = html; top._h = html; }
   const bh = `<div class="eta"><b>${clock(s.remTime)}</b><span>${fmtDurNav(s.remTime)} · ${fmtNav(s.remDist).replace('Jetzt', '0 m')}</span></div>
-    <button class="nbtn end" data-nav="end" aria-label="Navigation beenden">${svg(UI.close, 18, 2.6)}</button>`;
+    ${Date.now() - (nav.endArm || 0) < 3000 ? `<button class="nbtn end armed" data-nav="end" aria-label="Navigation wirklich beenden">Beenden?</button>` : `<button class="nbtn end" data-nav="end" aria-label="Navigation beenden">${svg(UI.close, 18, 2.6)}</button>`}`;
   if(bot._h !== bh){ bot.innerHTML = bh; bot._h = bh; }
 }
 document.addEventListener('click', e => {
@@ -10080,9 +10128,16 @@ document.addEventListener('click', e => {
     toast(`„${x.name}“ ist jetzt Zwischenstopp`);
     navReplan().then(ok => { if(ok) navFit(); });
   }
-  if(a === 'end') endNav();
+  if(a === 'end'){
+    // laufende Navi: erst nachfragen (ein Fehltipp beim Fahren soll nichts beenden), dann nur die Navi beenden – das Cockpit bleibt
+    if(nav && nav.active && !nav.arrived){
+      if(Date.now() - (nav.endArm || 0) > 3000){ nav.endArm = Date.now(); renderNav(); const n = nav; setTimeout(() => { if(nav === n) renderNav(); }, 3100); return; }
+      endNav(false, true); toast('Navigation beendet'); return;
+    }
+    endNav();
+  }
 });
-document.addEventListener('keydown', e => { if(e.key === 'Escape' && navPrevOn) endNav(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && navPrevOn){ if(nav && nav.pick){ nav.pick = null; renderNavPrev(); } else endNav(); } });
 /* Zurück-Taste (Android, Browser-Geste) und Escape: erst Overlays schließen, dann eine Ansicht zurück, erst danach die App verlassen */
 const overlayOpen = () => !!(searching || lb || !$('#modal').hidden || incoming || (wrap && !$('#wrap').hidden) || ckOn || !$('#death').hidden || rp || navPrevOn || perfOn);
 window.addEventListener('keydown', e => { if(e.key === 'Escape') e.__ov = overlayOpen(); }, true);
