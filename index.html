@@ -248,7 +248,9 @@ body.cockpit.nav #ckRecenter{bottom:calc(118px + env(safe-area-inset-bottom,0px)
 .top{display:flex;align-items:center;justify-content:space-between;padding:10px 10px 0}
 .pad{padding:8px 16px 16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;min-height:0;overscroll-behavior:contain}
 .pad>*{flex-shrink:0}
-.badge{display:inline-flex;align-items:center;gap:6px;color:var(--c);font-weight:600;font-size:13px}
+.badge{display:inline-flex;align-items:center;gap:6px;color:var(--c);font-weight:600;font-size:13px;max-width:100%;min-width:0}
+.badge .bn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.view h2,.pad h2,.view .note,.notes{overflow-wrap:anywhere}
 .badge .ic{width:22px;height:22px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center}
 .notes{margin:0;white-space:pre-wrap;line-height:1.5}
 .card{background:var(--solid);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
@@ -306,7 +308,10 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 #near .l{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 #near .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #near .d{font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);white-space:nowrap;margin-left:auto;padding-left:6px}
-@media (min-width:641px){#near{left:calc(50% + 182px)}}
+@media (min-width:641px){#near{left:calc(50% + 182px);max-width:calc(100% - 540px)}}
+@media (min-width:641px) and (max-width:900px){body:not(.pcol) #near{display:none!important}}
+@media (max-width:640px){body.sheetfull #near,body:not(.vlist) #near{display:none!important}}
+@media (min-width:641px){.chips{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}}
 
 /* MapLibre-Steuerelemente im Glas-Look */
 .maplibregl-ctrl-top-right{top:152px}
@@ -364,7 +369,7 @@ textarea.inp{resize:vertical;min-height:68px;line-height:1.4}
 .catrow{display:flex;align-items:center;gap:8px}
 .catrow input[type=color]{width:34px;height:34px;border:0;padding:0;background:none;border-radius:50%;flex:none;cursor:pointer}
 .catrow .inp{padding:7px 10px;font-size:15px}
-.iconsel{display:flex;gap:4px;flex-wrap:wrap}
+.iconsel{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
 .iconsel button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:none;display:grid;place-items:center;color:var(--muted)}
 .iconsel button.on{background:var(--c);color:#fff;border-color:var(--c)}
 .catblock{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
@@ -553,6 +558,8 @@ body.cockpit.cknight .glass{background:rgba(3,7,12,.88)}
 .tour-c small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tour-hint{font-size:12px}
 .tour-note{display:flex;align-items:center;gap:6px}
+#xhair{position:absolute;z-index:4;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;pointer-events:none;display:none;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+body.placing #xhair{display:block}
 #navBusy{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(30px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:22px;color:var(--fg);font-weight:600;font-size:14px;animation:viewin .3s var(--ease)}
 #navBusy[hidden]{display:none}
 .nbtn.end.armed{width:auto;padding:0 14px;font-weight:700;font-size:14px;white-space:nowrap}
@@ -1006,7 +1013,8 @@ body.cockpit #ckLimit.show{display:grid}
 .ph-edit{display:flex;flex-wrap:wrap;gap:8px}
 .ph-thumb{position:relative;width:72px;height:72px;border-radius:12px;overflow:hidden;background:var(--fill)}
 .ph-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.ph-thumb button{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;display:grid;place-items:center;padding:0}
+.ph-thumb button::after{content:"";position:absolute;inset:-8px}
+.ph-thumb button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;display:grid;place-items:center;padding:0}
 .ph-add{width:72px;height:72px;border-radius:12px;border:1.5px dashed var(--fill-2);background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11.5px;font-weight:600}
 .ph-add.busy{opacity:.5;pointer-events:none}
 #lightbox{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.94);display:flex;align-items:center;justify-content:center;animation:fadein .2s;touch-action:pan-y}
@@ -1718,6 +1726,7 @@ body.cockpit.nav #ckLive{bottom:calc(176px + env(safe-area-inset-bottom,0px))!im
   <div class="name">Spots</div>
 </div>
 <div id="map" aria-label="Karte"></div>
+<svg id="xhair" viewBox="0 0 34 34" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="17" cy="17" r="6"/><path d="M17 2v8M17 24v8M2 17h8M24 17h8"/></g></svg>
 <div id="ckTop" class="glass"></div>
 <div id="ckLimit" aria-label="Tempolimit"></div>
 <div id="ckRoad" class="glass" hidden aria-live="polite"></div>
@@ -1893,9 +1902,11 @@ const ICONS = {
   car:'<path d="M5 16v-5l2-5h10l2 5v5M3 16h18v3H3zM7 19v2M17 19v2"/>',
   heart:'<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
   drop:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
-  pin:'<circle cx="12" cy="11" r="4"/>'
+  pin:'<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>'
 };
+const ICON_DE = {mountain:'Berg', camera:'Kamera', flag:'Flagge', waves:'Wasser', tent:'Zelt', food:'Essen', star:'Stern', tree:'Baum', car:'Auto', heart:'Herz', drop:'Tropfen', pin:'Markierung'};
 const UI = {
+  pencil:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
   plus:'<path d="M12 5v14M5 12h14"/>', search:'<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>',
   route:'<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/>',
   pause:'<path d="M8.5 5v14M15.5 5v14"/>', play:'<path d="M8 5.5v13l11-6.5z" fill="currentColor"/>',
@@ -1968,7 +1979,7 @@ function save(){
 let prefs = {labels:true, gps:false, terrain:false, base:'sat'};
 try{ Object.assign(prefs, JSON.parse(localStorage.getItem(PREF) || '{}')); }catch(e){}
 const savePrefs = () => { try{ localStorage.setItem(PREF, JSON.stringify(prefs)); }catch(e){} };
-const catById = id => data.cats.find(c => c.id === id) || data.cats[data.cats.length - 1] || {id:'?', name:'Ohne', color:'#868e96', icon:'pin'};
+const catById = id => data.cats.find(c => c.id === id) || {id:'?', name:'Ohne Kategorie', color:'#868e96', icon:'pin'};
 
 /* ================= Geo ================= */
 function dist(a, b){
@@ -2537,7 +2548,7 @@ let filter = new Set();
 let selected = null;
 let draft = null;
 let mode = null;
-let view = 'list';
+let view = 'list'; document.body.classList.add('vlist');
 let geoResults = [], geoState = 'idle';
 let editError = '';
 let me = null, searching = false, panelCollapsed = false;
@@ -2664,7 +2675,11 @@ function peekVisible(){
   const head = view === 'list' ? $('#listView .ph') : null;
   const grab = $('.grabwrap').offsetHeight;
   const safe = parseFloat(getComputedStyle(panel).paddingBottom) || 0;
-  return head ? grab + head.offsetHeight + safe : 150 + safe;
+  if(head) return grab + head.offsetHeight + safe;
+  // Platzieren / Einzeichnen: so viel zeigen, dass alle Knöpfe sichtbar sind
+  const body = (view === 'mode' || view === 'draw') ? $('#' + view + 'View') : null;
+  if(body && body.firstElementChild) return Math.min(innerHeight * .6, grab + body.firstElementChild.offsetHeight + safe + 8);
+  return 150 + safe;
 }
 function snapY(name){
   const H = panel.offsetHeight;
@@ -2683,7 +2698,7 @@ function setSheetY(y, animate){
 }
 function setSnap(name, animate = true){
   if(!mobile()) return;
-  snap = name;
+  snap = name; document.body.classList.toggle('sheetfull', name === 'full');
   panel.classList.toggle('full', name === 'full');
   setSheetY(snapY(name), animate);
 }
@@ -2727,7 +2742,13 @@ function camPad(){
       const a = samples[0], b = samples[samples.length - 1];
       const v = (b.y - a.y) / Math.max(1, b.t - a.t); // px/ms, + = nach unten
       let idx;
-      if(Math.abs(v) > .45) idx = SNAPS.indexOf(snap) + (v > 0 ? -1 : 1);
+      if(Math.abs(v) > .45){
+        // Schwung: Endposition hochrechnen und dorthin schnappen – mindestens ein Schritt in Wischrichtung
+        const proj = sheetY + v * 220; let best = 0, bd = Infinity;
+        SNAPS.forEach((n, i) => { const d = Math.abs(snapY(n) - proj); if(d < bd){ bd = d; best = i; } });
+        const cur = SNAPS.indexOf(snap), step = v > 0 ? -1 : 1;
+        idx = step > 0 ? Math.max(best, cur + 1) : Math.min(best, cur - 1);
+      }
       else {
         let best = 0, bd = Infinity;
         SNAPS.forEach((n, i) => { const d = Math.abs(snapY(n) - sheetY); if(d < bd){ bd = d; best = i; } });
@@ -2741,7 +2762,7 @@ function camPad(){
   panel.addEventListener('pointercancel', end);
   panel.addEventListener('click', e => { if(moved){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
 })();
-$('.grabwrap').addEventListener('click', () => setSnap(snap === 'mini' ? 'peek' : snap === 'peek' ? 'half' : 'peek'));
+$('.grabwrap').addEventListener('click', () => setSnap(snap === 'mini' ? 'peek' : snap === 'peek' ? 'half' : snap === 'half' ? 'full' : 'peek'));
 function setCollapsed(c){
   panelCollapsed = c;
   panel.classList.toggle('collapsed', c); document.body.classList.toggle('pcol', c);
@@ -2759,7 +2780,7 @@ function show(v, snapTo){
   // Liste merkt sich Höhe und Scrollposition, damit "Zurück" genau dorthin führt
   if(changed && view === 'list'){ const pb = $('#listView .pb'); listMem = {snap, sc:pb ? pb.scrollTop : 0, tab}; }
   if(changed && v === 'list' && listMem && listMem.tab === tab && (!snapTo || snapTo === 'half') && mobile()) snapTo = listMem.snap;
-  view = v;
+  view = v; document.body.classList.toggle('vlist', v === 'list');
   if(!mobile() && panelCollapsed && v !== 'list') setCollapsed(false);
   for(const id of ['listView','detailView','placeView','editView','modeView','trackView','trackSaveView','courseView','drawView','wsView','sunView']){
     const el = $('#' + id), on = id === v + 'View';
@@ -2776,10 +2797,14 @@ let listMem = null;
 function renderChips(){
   const counts = {};
   data.spots.forEach(s => counts[s.cat] = (counts[s.cat] || 0) + 1);
-  const all = `<button class="chip ${filter.size ? '' : 'on'}" data-f="">Alle <span class="n">${data.spots.length}</span></button>`;
+  if(!data.spots.length){ $('#chips').innerHTML = ''; return; }
+  const all = `<button class="chip ${filter.size ? '' : 'on'}" data-f="" aria-pressed="${!filter.size}">Alle <span class="n">${data.spots.length}</span></button>`;
+  requestAnimationFrame(() => { const on = $('#chips .chip.on'); if(on && on.dataset.f) on.scrollIntoView({inline:'nearest', block:'nearest'}); });
   $('#chips').innerHTML = all + data.cats.map(c =>
-    `<button class="chip ${filter.has(c.id) ? 'on' : ''}" data-f="${c.id}" style="--c:${c.color}"><span class="dot"></span>${esc(c.name)} <span class="n">${counts[c.id] || 0}</span></button>`).join('');
+    `<button class="chip ${filter.has(c.id) ? 'on' : ''}" data-f="${c.id}" aria-pressed="${filter.has(c.id)}" style="--c:${c.color}"><span class="dot"></span>${esc(c.name)} <span class="n">${counts[c.id] || 0}</span></button>`).join('');
 }
+// Mausrad auf Chip-Zeilen = seitlich scrollen (am PC sonst nicht erreichbar)
+document.addEventListener('wheel', e => { const c = e.target.closest && e.target.closest('.chips'); if(!c || Math.abs(e.deltaX) > Math.abs(e.deltaY) || c.scrollWidth <= c.clientWidth) return; c.scrollLeft += e.deltaY; e.preventDefault(); }, {passive:false});
 $('#chips').addEventListener('click', e => {
   const b = e.target.closest('[data-f]'); if(!b) return;
   const f = b.dataset.f;
@@ -2791,7 +2816,7 @@ function itemHTML(s){
   const cat = catById(s.cat);
   let sub = esc(cat.name);
   if(s.walk && s.parking) sub = `<span class="tag-p">P</span>${fmtDist(dist(s.parking, s))} zu Fuß · ` + sub;
-  else if(s.walk) sub = 'Parkplatz fehlt · ' + sub;
+  else if(s.walk) sub = 'Kein Parkplatz gesetzt · ' + sub;
   if(me) sub = `<span class="me-d">${fmtDist(dist(me, s))}</span> · ` + sub;
   return `<button class="item" data-id="${s.id}"><span class="ic" style="--c:${cat.color}">${ic(cat.icon, 16)}</span><span class="tx"><span class="t">${esc(s.name)}</span><span class="s">${sub}</span></span>${rwTagHTML(s)}</button>`;
 }
@@ -2811,12 +2836,14 @@ function renderList(){
   if(!q){
     const list = visibleSpots().slice().sort(me ? (a,b) => dist(me, a) - dist(me, b) : (a,b) => (b.created||0) - (a.created||0));
     if(!data.spots.length) body.innerHTML = `<div class="empty"><b>Noch keine Spots</b>Tippe auf <strong>+</strong> und dann auf die Karte, um deinen ersten Spot zu setzen.</div>`;
-    else if(!list.length) body.innerHTML = `<div class="empty">Keine Spots in dieser Kategorie.</div>`;
+    else if(!list.length) body.innerHTML = `<div class="empty">Keine Spots in ${filter.size > 1 ? 'diesen Kategorien' : 'dieser Kategorie'}.<button class="btn" data-clearfilter style="margin-top:10px">Filter zurücksetzen</button></div>`;
     else{ body.innerHTML = (filter.size ? '' : sunCardHTML()) + list.map(itemHTML).join(''); rwListLoad(list); }
     return;
   }
-  const own = data.spots.filter(s => (s.name + ' ' + (s.notes||'') + ' ' + catById(s.cat).name).toLowerCase().includes(q));
-  let html = own.length ? `<div class="sec">Deine Spots</div>` + own.slice(0, 5).map(itemHTML).join('') : '';
+  const own = data.spots.filter(s => (s.name + ' ' + (s.notes||'') + ' ' + catById(s.cat).name).toLowerCase().includes(q))
+    .sort((a, b) => (b.name.toLowerCase().startsWith(q) - a.name.toLowerCase().startsWith(q)) || (me ? dist(me, a) - dist(me, b) : a.name.localeCompare(b.name, 'de')));
+  const showN = searchAll ? own.length : 6;
+  let html = own.length ? `<div class="sec">Deine Spots</div>` + own.slice(0, showN).map(itemHTML).join('') + (own.length > showN ? `<button class="item more-it" data-searchall><span class="tx"><span class="t">${own.length - showN} weitere Spots anzeigen</span></span></button>` : '') : '';
   html += `<div class="sec">Orte${geoState === 'loading' ? '<i class="geo-spin"></i>' : ''}</div>`;
   const co = geoCoord($('#q').value);
   if(co) html += geoRowHTML(co, -1);
@@ -2836,6 +2863,7 @@ $('#q').addEventListener('input', () => {
   geoTimer = setTimeout(() => geoSuggest(v), 260);
 });
 $('#q').addEventListener('focus', () => setSnap('full'));
+let searchAll = false, searchBack = '';
 function openSearch(){
   if(view === 'place') closePlace(false);
   if(view !== 'list' && view !== 'edit') show('list');
@@ -2848,7 +2876,7 @@ function openSearch(){
 }
 function closeSearch(){
   if(!searching) return;
-  searching = false; $('#q').value = ''; $('#q').blur(); geoState = 'idle';
+  searching = false; searchAll = false; $('#q').value = ''; $('#q').blur(); geoState = 'idle';
   $('#headRow').hidden = false; $('#searchRow').hidden = true; syncSpotsHead();
   renderList();
   if(mobile()) setSnap('peek');
@@ -3000,7 +3028,9 @@ $('#placeView').addEventListener('click', e => {
 });
 $('#listBody').addEventListener('click', e => {
   const it = e.target.closest('button'); if(!it) return;
-  if(it.dataset.id){ if(searching) closeSearch(); return openDetail(it.dataset.id, true); }
+  if(it.hasAttribute('data-clearfilter')){ filter.clear(); renderChips(); renderList(); renderMarkers(); renderNearest(); return; }
+  if(it.hasAttribute('data-searchall')){ searchAll = true; return renderList(); }
+  if(it.dataset.id){ if(searching){ searchBack = $('#q').value; closeSearch(); } return openDetail(it.dataset.id, true); }
   if(it.dataset.geosearch) return geoSearch();
   if(it.hasAttribute('data-geoclear')){ prefs.recent = []; savePrefs(); renderList(); return; }
   if(it.dataset.geo != null){
@@ -3035,7 +3065,7 @@ function renderDetail(s){
     const d = dist(s.parking, s);
     park = `<div class="card">
       <div class="h"><span class="pmark">P</span>Parkplatz</div>
-      <div class="stats"><div><b>${fmtDist(d)}</b><span>Luftlinie</span></div><div><b>ca. ${fmtMin(walkMin(d))}</b><span>zu Fuß</span></div></div>
+      ${d < 15 ? `<div class="muted" style="font-size:13px">Parkplatz liegt direkt am Spot.</div>` : `<div class="stats"><div><b>${fmtDist(d)}</b><span>Luftlinie</span></div><div><b>ca. ${fmtMin(walkMin(d))}</b><span>zu Fuß</span></div></div>`}
       ${s.parking.note ? `<div>${esc(s.parking.note)}</div>` : ''}
       <div class="coords"><span>${fmtCoord(s.parking)}</span><button class="txtbtn" data-copy="${fmtCoord(s.parking)}">Kopieren</button></div>
       ${extLinks(s.parking)}
@@ -3044,9 +3074,9 @@ function renderDetail(s){
     park = `<div class="card"><div class="h"><span class="pmark">P</span>Kein Parkplatz gesetzt</div><div class="muted">Bearbeite den Spot, um einen Parkplatz auf der Karte zu markieren.</div></div>`;
   }
   $('#detailView').innerHTML = `
-    <div class="top"><button class="txtbtn" data-act="back">${svg(UI.back,14)} Spots</button><button class="icon-btn press" data-act="back" aria-label="Schließen">${svg(UI.close,14)}</button></div>
+    <div class="top"><button class="txtbtn" data-act="back">${svg(UI.back,14)} Spots</button><span class="row" style="gap:8px"><button class="icon-btn press" data-act="edit" aria-label="Bearbeiten">${svg(UI.pencil,15)}</button><button class="icon-btn press" data-act="back" aria-label="Schließen">${svg(UI.close,14)}</button></span></div>
     <div class="pad">
-      <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${cat.color}"><span class="ic">${ic(cat.icon,13)}</span>${esc(cat.name)}${me ? `<span class="muted" style="font-weight:500">· ${fmtDist(dist(me, s))} entfernt</span>` : ''}</span><h2>${esc(s.name)}</h2>${s.fromBy ? `<span class="muted">Aus dem Workshop von ${esc(s.fromBy)}</span>` : ''}</div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${cat.color}"><span class="ic">${ic(cat.icon,13)}</span><span class="bn">${esc(cat.name)}</span>${me ? `<span class="muted" style="font-weight:500;flex:none">· ${fmtDist(dist(me, s))}</span>` : ''}</span><h2>${esc(s.name)}</h2>${s.fromBy ? `<span class="muted">Aus dem Workshop von ${esc(s.fromBy)}</span>` : ''}</div>
       ${FB && grp() && (s.ws || s.from) ? (() => { const k = s.ws || s.from, w = WS.spots.find(x => x._id === k); return w || s.ws ? `<div class="rx-row">${rxHTML('sp:' + k, w ? w.dev : myId(), 'full')}</div>` : ''; })() : ''}
       ${(s.photos || []).length ? `<div class="ph-strip">${s.photos.map((id, i) => `<img data-ph="${id}" data-i="${i}" alt="Foto ${i + 1} von ${esc(s.name)}">`).join('')}</div>` : ''}
       <button class="btn primary wide" data-act="nav">${svg(UI.nav,16)} ${s.walk && s.parking ? 'Zum Parkplatz navigieren' : 'Navigation starten'}</button>
@@ -3058,7 +3088,7 @@ function renderDetail(s){
       <div id="seasonSpot"></div>
       ${park}
       <div class="card">
-        <div class="h">${s.walk ? 'Spot' : 'Mit dem Auto erreichbar'}</div>
+        <div class="h">Position</div>
         <div class="coords"><span>${fmtCoord(s)}</span><button class="txtbtn" data-copy="${fmtCoord(s)}">Kopieren</button></div>
         ${s.walk && s.parking ? '' : extLinks(s)}
       </div>
@@ -3067,7 +3097,10 @@ function renderDetail(s){
   loadWeather(s); rwSpotLoad(s); sunPlanLoad(s); seasonSpotLoad(s);
   fillPhotos($('#detailView'));
 }
-function closeDetail(){ selected = null; setSrc('sunray', FC([])); show('list', 'half'); renderMarkers(); }
+function closeDetail(){
+  selected = null; setSrc('sunray', FC([])); show('list', 'half'); renderMarkers();
+  if(searchBack){ const q = searchBack; searchBack = ''; openSearch(); $('#q').value = q; renderList(); setTimeout(() => $('#q').blur(), 60); }   // zurück zur Suche, aus der man kam
+}
 $('#detailView').addEventListener('click', e => {
   const im = e.target.closest('img[data-ph]');
   if(im){ const s = data.spots.find(x => x.id === selected); if(s) openLightbox(s.photos, +im.dataset.i); return; }
@@ -3091,7 +3124,7 @@ $('#detailView').addEventListener('click', e => {
       const s = data.spots.find(x => x.id === selected);
       (s.photos || []).forEach(id => PDB.del(id).catch(() => {}));
       data.spots = data.spots.filter(x => x.id !== selected); save();
-      selected = null; show('list', 'half'); refreshAll(); toast(`„${s.name}“ gelöscht`);
+      selected = null; setSrc('sunray', FC([])); show('list', 'half'); refreshAll(); toast(`„${s.name}“ gelöscht`);
     } else {
       delArmed = selected; b.classList.add('armed'); b.textContent = 'Wirklich löschen?';
       setTimeout(() => { if(b.isConnected){ delArmed = null; b.classList.remove('armed'); b.textContent = 'Löschen'; } }, 3500);
@@ -3374,11 +3407,12 @@ function enterMode(m){
   $('#modeView').innerHTML = `<div class="mode">
       <div class="big"><span class="pulse"></span>${txt}</div>
       <div class="muted">${tip}</div>
-      <div class="btns"><button class="btn" data-act="cancel">Abbrechen</button><button class="btn primary" data-act="center">Kartenmitte nehmen</button><button class="btn full" style="grid-column:1/-1" data-act="here">${svg(UI.locate,15)} Mein Standort nehmen</button></div>
+      <div class="btns"><button class="btn" data-act="cancel">Abbrechen</button><button class="btn primary" data-act="center">Fadenkreuz nehmen</button><button class="btn full" style="grid-column:1/-1" data-act="here">${svg(UI.locate,15)} Mein Standort nehmen</button></div>
     </div>`;
+  document.body.classList.add('placing');
   show('mode', 'peek');
 }
-function exitMode(){ mode = null; $('#map').classList.remove('placing'); }
+function exitMode(){ mode = null; $('#map').classList.remove('placing'); document.body.classList.remove('placing'); }
 $('#modeView').addEventListener('click', e => {
   const a = e.target.closest('button')?.dataset.act;
   if(a === 'cancel'){
@@ -3424,21 +3458,36 @@ function place(ll){
 function newDraft(){
   const c = filter.size === 1 ? [...filter][0] : data.cats[0]?.id;
   draft = {id:uid(), isNew:true, name:'', cat:c, notes:'', lat:null, lng:null, walk:false, parking:null, created:Date.now()};
-  selected = null; editError = '';
+  selected = null; editError = ''; setSrc('sunray', FC([]));
 }
 $('#addBtn').addEventListener('click', () => { newDraft(); renderMarkers(); enterMode('spot'); });
 function startEdit(id){
   const s = data.spots.find(x => x.id === id); if(!s) return;
-  draft = structuredClone(s); draft.isNew = false; editError = '';
+  draft = structuredClone(s); draft.isNew = false; editError = ''; setSrc('sunray', FC([]));
   renderMarkers(); showEdit();
 }
-function showEdit(){ renderEdit(); show('edit', 'full'); renderDraftMarkers(); renderMarkers(); }
+function showEdit(){
+  renderEdit(); const neu = draft && draft.isNew && !draft._shown;
+  show('edit', neu ? 'half' : 'full'); renderDraftMarkers(); renderMarkers();
+  if(neu){ draft._shown = true; if(draft.lat != null) map.easeTo({center:[draft.lng, draft.lat], padding:camPad(), duration:600}); setTimeout(() => { const n = $('#f-name'); if(n && !n.value) n.focus(); }, 350); }
+}
+// Hat sich im Formular etwas geändert? (dann beim Abbrechen nachfragen)
+function editDirty(){
+  if(!draft) return false;
+  if((draft._added || []).length) return true;
+  if(draft.isNew) return !!(String(draft.name || '').trim() || String(draft.notes || '').trim());
+  const o = data.spots.find(x => x.id === draft.id); if(!o) return false;
+  const k = x => JSON.stringify([x.name || '', x.notes || '', x.cat, x.lat, x.lng, !!x.walk, x.parking || null, x.photos || []]);
+  return k(o) !== k(draft);
+}
 function syncForm(){
   const n = $('#f-name'); if(!n) return;
   draft.name = n.value; draft.notes = $('#f-notes').value;
   const pn = $('#f-pnote'); if(pn && draft.parking) draft.parking.note = pn.value;
 }
 function afterEditRender(){ fillPhotos($('#editView')); }
+$('#editView').addEventListener('input', e => { if(e.target.id === 'f-name' && editError && e.target.value.trim()){ editError = ''; const er = e.target.parentElement.querySelector('.err'); if(er) er.remove(); } });
+$('#editView').addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.id === 'f-name'){ e.preventDefault(); saveDraft(); } });
 function refreshEditLive(){ const sc = $('#editView .pad')?.scrollTop || 0; syncForm(); renderEdit(); const p = $('#editView .pad'); if(p) p.scrollTop = sc; }
 function renderEdit(){
   const d = draft;
@@ -3448,7 +3497,7 @@ function renderEdit(){
       const m = dist(d.parking, d);
       park = `<div class="card">
         <div class="h"><span class="pmark">P</span>Parkplatz gesetzt</div>
-        <div class="stats"><div><b>${fmtDist(m)}</b><span>Luftlinie</span></div><div><b>ca. ${fmtMin(walkMin(m))}</b><span>zu Fuß</span></div></div>
+        ${m < 15 ? `<div class="muted" style="font-size:13px">Parkplatz liegt direkt am Spot.</div>` : `<div class="stats"><div><b>${fmtDist(m)}</b><span>Luftlinie</span></div><div><b>ca. ${fmtMin(walkMin(m))}</b><span>zu Fuß</span></div></div>`}
         <label class="f">Notiz zum Parkplatz<input class="inp" id="f-pnote" value="${esc(d.parking.note)}" placeholder="z. B. kostenlos, max. 2 h"></label>
         <div class="muted">Den P-Marker kannst du auf der Karte ziehen.</div>
         <div class="btns"><button class="btn" data-act="park">Neu setzen</button><button class="btn danger" data-act="unpark">Entfernen</button></div>
@@ -3477,7 +3526,10 @@ $('#editView').addEventListener('click', e => {
   const b = e.target.closest('button'); if(!b) return;
   if(b.dataset.cat){ syncForm(); draft.cat = b.dataset.cat; refreshEditLive(); renderDraftMarkers(); return; }
   const a = b.dataset.act;
-  if(a === 'cancel'){ (draft._added || []).forEach(id => PDB.del(id).catch(() => {})); const back = draft.isNew ? null : draft.id; draft = null; renderDraftMarkers(); if(back) openDetail(back); else { show('list', 'half'); renderMarkers(); } }
+  if(a === 'cancel'){
+    syncForm();
+    if(editDirty() && !b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = 'Verwerfen?'; setTimeout(() => { if(b.isConnected){ b.classList.remove('armed'); b.textContent = 'Abbrechen'; } }, 3500); return; }
+    (draft._added || []).forEach(id => PDB.del(id).catch(() => {})); const back = draft.isNew ? null : draft.id; draft = null; renderDraftMarkers(); if(back) openDetail(back); else { show('list', 'half'); renderMarkers(); } }
   if(a === 'save') saveDraft();
   if(a === 'move'){ syncForm(); enterMode('spot'); }
   if(a === 'park'){ syncForm(); enterMode('parking'); }
@@ -3493,6 +3545,7 @@ $('#photoFile').addEventListener('change', async e => {
   if(!files.length || !draft) return;
   photoBusy = true; refreshEditLive();
   let fails = 0;
+  if(files.length > 12) toast(`Nur 12 Fotos auf einmal – ${files.length - 12} wurden nicht übernommen.`);
   for(const f of files.slice(0, 12)){
     try{
       const blob = await shrinkImage(f);
@@ -3513,7 +3566,7 @@ function saveDraft(){
   syncForm();
   if(!draft.name.trim()){ editError = 'Gib dem Spot einen Namen.'; renderEdit(); $('#f-name').focus(); return; }
   (draft._removed || []).forEach(id => PDB.del(id).catch(() => {}));
-  const s = {...draft, name:draft.name.trim(), notes:draft.notes.trim()}; delete s.isNew; delete s._added; delete s._removed;
+  const s = {...draft, name:draft.name.trim(), notes:draft.notes.trim()}; delete s.isNew; delete s._added; delete s._removed; delete s._shown;
   if(!s.walk) s.parking = null;
   if(s.parking) s.parking.note = (s.parking.note || '').trim();
   const i = data.spots.findIndex(x => x.id === s.id);
@@ -3533,7 +3586,7 @@ function renderCats(){
       ${data.cats.map(c => `<div class="catblock" data-id="${c.id}" style="--c:${c.color}">
         <div class="catrow"><input type="color" value="${c.color}" data-k="color" aria-label="Farbe"><input class="inp" value="${esc(c.name)}" data-k="name" aria-label="Name" maxlength="30">
         <button class="icon-btn" data-act="delcat" title="${used[c.id] ? `Wird von ${used[c.id]} Spot(s) genutzt` : 'Löschen'}" ${used[c.id] ? 'disabled style="opacity:.35;cursor:default"' : ''} aria-label="Kategorie löschen">${svg(UI.close,13)}</button></div>
-        <div class="iconsel">${Object.keys(ICONS).map(k => `<button class="${k === c.icon ? 'on' : ''}" data-icon="${k}" aria-label="Symbol ${k}">${ic(k,15)}</button>`).join('')}</div>
+        <div class="iconsel">${Object.keys(ICONS).map(k => `<button class="${k === c.icon ? 'on' : ''}" data-icon="${k}" aria-label="Symbol ${ICON_DE[k] || k}" aria-pressed="${k === c.icon}">${ic(k,15)}</button>`).join('')}</div>
       </div>`).join('')}
       <button class="btn" style="margin-top:12px" data-act="addcat">${svg(UI.plus,14)} Kategorie hinzufügen</button>
       <div class="muted" style="margin-top:8px">Kategorien mit Spots lassen sich erst löschen, wenn keine Spots mehr darin sind.</div>
@@ -3547,6 +3600,7 @@ $('#modal').addEventListener('click', e => {
   if(b.dataset.icon && cat){ cat.icon = b.dataset.icon; save(); renderCats(); return; }
   const a = b.dataset.act;
   if(a === 'close') closeCats();
+  if(a === 'delcat' && cat && data.cats.length <= 1){ toast('Mindestens eine Kategorie muss bleiben.'); return; }
   if(a === 'delcat' && cat){ data.cats = data.cats.filter(c => c !== cat); filter.delete(cat.id); save(); renderCats(); }
   if(a === 'addcat'){
     const pal = ['#0ca678','#f59f00','#ae3ec9','#4263eb','#e03131','#5c940d'];
@@ -5114,7 +5168,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.06.14';
+const VERSION = '2026.10.06.15';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -10826,7 +10880,7 @@ try{
 
 /* ================= Start ================= */
 $('#addBtn').innerHTML = svg(UI.plus, 18, 2.4);
-$('#hereBtn').innerHTML = svg(UI.here, 19);
+$('#hereBtn').innerHTML = svg('<path d="M12 21s-6-5.8-6-10.4a6 6 0 0 1 12 0C18 15.2 12 21 12 21z"/><path d="M12 8v5M9.5 10.5h5"/>', 19);
 $('#searchBtn').innerHTML = svg(UI.search, 18);
 $('#collapseBtn').innerHTML = svg(UI.sidebar, 18);
 $('#panelOpen').innerHTML = svg(UI.list, 20);
