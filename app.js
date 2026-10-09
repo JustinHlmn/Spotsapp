@@ -282,6 +282,7 @@ function apply3D(animate = true){
   $('#b-3d').classList.toggle('on', !!prefs.terrain);
   if(!mapReady) return;
   if(prefs.terrain){
+    if(ckOn || rp) return;   // im Cockpit/Replay bleibt die Karte flach (siehe enterCockpit)
     map.setMaxPitch(80);
     try{ map.setTerrain({source:'dem', exaggeration:1.4}); }catch(e){}
     try{ map.setSky && map.setSky({'sky-color':'#7fb2e6', 'horizon-color':'#cfe3f5', 'sky-horizon-blend':.6, 'horizon-fog-blend':.6, 'fog-color':'#cfe3f5', 'fog-ground-blend':.3}); }catch(e){}
@@ -352,8 +353,19 @@ async function radLoadFrames(src){
   if(!past.length) throw 0;
   return {frames:past.map(f => ({t:f.time * 1000, url:`${j.host}${f.path}/512/{z}/{x}/{y}/2/1_1.png`})), now:past[past.length - 1].time * 1000};
 }
-const radSpec = url => rad.src === 'dwd' ? {type:'raster', tiles:[url], tileSize:512, maxzoom:10, bounds:[1.46, 45.68, 18.71, 56.21]} : {type:'raster', tiles:[url], tileSize:256, maxzoom:7};
-function radRemove(){ ['a', 'b'].forEach(k => { if(map.getLayer('radar-' + k)) map.removeLayer('radar-' + k); if(map.getSource('radar-' + k)) map.removeSource('radar-' + k); }); }
+// DWD rechnet jedes Bild auf dem Server: weniger Zoomstufen = viel weniger Anfragen (Radar hat ohnehin ~1 km Auflösung, darüber wird nur vergrößert)
+const RAD_MAXZ = 8;
+const radSpec = url => rad.src === 'dwd' ? {type:'raster', tiles:[url], tileSize:512, maxzoom:RAD_MAXZ, bounds:[1.46, 45.68, 18.71, 56.21]} : {type:'raster', tiles:[url], tileSize:256, maxzoom:7};
+// Nächsten Zeitpunkt unsichtbar mitladen (dritte Ebene mit Deckkraft 0): dieselben Adressen wie später → beim Weiterschalten aus dem Browser-Speicher
+function radPrefetch(i){
+  const f = rad.frames[(i + 1) % rad.frames.length]; if(!f || !mapReady) return;
+  if(!map.getSource('radar-p')){
+    const sym = map.getStyle().layers.find(l => l.type === 'symbol'), before = sym ? sym.id : undefined;
+    map.addSource('radar-p', radSpec(f.url));
+    map.addLayer({id:'radar-p', type:'raster', source:'radar-p', paint:{'raster-opacity':0, 'raster-fade-duration':0}}, before);
+  } else map.getSource('radar-p').setTiles([f.url]);
+}
+function radRemove(){ ['a', 'b', 'p'].forEach(k => { if(map.getLayer('radar-' + k)) map.removeLayer('radar-' + k); if(map.getSource('radar-' + k)) map.removeSource('radar-' + k); }); }
 async function radStart(){
   if(!mapReady || rad.busy) return;
   rad.busy = true; const src = radArea();
@@ -369,6 +381,7 @@ async function radStart(){
       map.addLayer({id:'radar-' + k, type:'raster', source:'radar-' + k, paint:{'raster-opacity':k === 'a' ? RAD_OP : 0, 'raster-opacity-transition':{duration:250, delay:0}, 'raster-fade-duration':0}}, before);
     });
     $('#radar').innerHTML = '';
+    setTimeout(() => { if(rad.on) radPrefetch(rad.idx); }, 1500);   // erst das aktuelle Bild, dann das nächste
   }catch(e){ if(rad.on) toast('Regenradar gerade nicht erreichbar.'); }
   finally{ rad.busy = false; }
   radUI(); setAttrib();
@@ -390,6 +403,7 @@ function radShow(i){
   const nxt = rad.cur === 'a' ? 'b' : 'a';
   rad.pend = {nxt, i};
   map.getSource('radar-' + nxt).setTiles([f.url]);
+  radPrefetch(i);
   clearTimeout(rad.swapT); rad.swapT = setTimeout(radSwap, 3000);   // spätestens dann umschalten
 }
 function radSwap(){
@@ -3309,7 +3323,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.09.01';
+const VERSION = '2026.10.09.02';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4347,7 +4361,7 @@ const KV = (() => {
   }); };
   return {get:k => run('readonly', st => st.get(k)), put:(k, v) => run('readwrite', st => st.put(v, k))};
 })();
-let tracksReady = false, tracksLS = false, tracksSaveT = null, tracksSaving = Promise.resolve();
+let tracksVer = 0, tracksReady = false, tracksLS = false, tracksSaveT = null, tracksSaving = Promise.resolve();
 try{ const raw = localStorage.getItem(TKEY); if(raw){ tracks = sjson(raw); tracksLS = true; } if(!Array.isArray(tracks)) tracks = []; }catch(e){ tracks = []; }
 (async () => {
   let stored = null;
@@ -4379,11 +4393,15 @@ let riskCache = new WeakMap(), riskSig = '';
 const tracksSig = () => tracks.length + ':' + (tracks[0] && tracks[0].id) + ':' + (tracks[tracks.length - 1] && tracks[tracks.length - 1].id);
 function saveTracks(){
   const sg = tracksSig(); if(sg !== riskSig){ riskSig = sg; riskCache = new WeakMap(); riskWarm(); }
-  bkDirty();
+  bkDirty(); tracksVer++;
   if(!tracksReady){ setTimeout(saveTracks, 300); return true; }
-  tracksSaving = tracksSaving.then(tracksWrite);
+  // kurz sammeln: mehrere Änderungen hintereinander = ein Schreibvorgang (jedes Schreiben kopiert alle Fahrten)
+  clearTimeout(tracksSaveT); tracksSaveT = setTimeout(tracksFlush, 700);
   return true;
 }
+function tracksFlush(){ if(!tracksSaveT) return; clearTimeout(tracksSaveT); tracksSaveT = null; tracksSaving = tracksSaving.then(tracksWrite); }
+addEventListener('pagehide', tracksFlush);
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') tracksFlush(); });
 function persistRec(force){
   if(!rec) { try{ localStorage.removeItem(RKEY); }catch(e){} return; }
   if(!force && Date.now() - lastPersist < 2000) return;
@@ -4397,9 +4415,11 @@ const fmtDur = ms => { const t = Math.floor(ms/1000), h = Math.floor(t/3600), m 
 const fmtDurU = ms => { const t = Math.round(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60; return h ? `${h}:${String(m).padStart(2, '0')} h` : `${m}:${String(sec).padStart(2, '0')} Min`; };
 const fmtDurLong = ms => { const m = Math.round(ms/60000); return m < 60 ? `${m} Min` : `${Math.floor(m/60)} h ${m%60} Min`; };
 const fmtSpd = v => `${(v*3.6).toFixed(1).replace('.', ',')} km/h`;
-const fmtDate = ts => { const d = new Date(ts); return d.toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'short', ...(d.getFullYear() !== new Date().getFullYear() ? {year:'numeric'} : {}), hour:'2-digit', minute:'2-digit'}); };
+const DTF = {y:new Intl.DateTimeFormat('de-DE', {weekday:'short', day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}), n:new Intl.DateTimeFormat('de-DE', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})};
+const fmtDate = ts => { const d = new Date(ts); return (d.getFullYear() !== new Date().getFullYear() ? DTF.y : DTF.n).format(d); };
 // Für die Übersicht aller Fahrten: Punkte unter ~15 m Abstand weglassen (bei hunderten Fahrten viel weniger Daten für die Karte)
 const lightCache = new WeakMap();
+let trackAllKey = null;
 function lightSegs(t){
   let c = lightCache.get(t); if(c) return c;
   c = (t.segs || []).map(sg => { const out = []; let l = null; sg.forEach((q, i) => { if(!l || i === sg.length - 1 || Math.abs(q[0] - l[0]) + Math.abs(q[1] - l[1]) > .00018){ out.push(q); l = q; } }); return out; });
@@ -4428,7 +4448,9 @@ function updateTrackLayers(){
   if(!mapReady) return;
   xplHeatApply();
   const showAll = tab === 'tracks' && sub === 'rec' && view === 'list';
-  setSrc('track-all', FC(showAll ? tracks.filter(t => t.id !== selTrack && (!prefs.trkFav || t.fav)).flatMap(t => segFeatures(lightSegs(t), {id:t.id, fav:!!t.fav})) : []));
+  // nur neu an die Karte geben, wenn sich etwas geändert hat (bei hunderten Fahrten sonst jedes Mal spürbar)
+  const key = showAll ? `${tracksVer}|${tracks.length}|${selTrack}|${prefs.trkFav ? 1 : 0}` : '';
+  if(key !== trackAllKey){ trackAllKey = key; setSrc('track-all', FC(showAll ? tracks.filter(t => t.id !== selTrack && (!prefs.trkFav || t.fav)).flatMap(t => segFeatures(lightSegs(t), {id:t.id, fav:!!t.fav})) : [])); }
   const t = view === 'track' && curTrack();
   if(t){
     const segs = t.segs.filter(sg => sg.length);
@@ -5864,7 +5886,7 @@ function offsetPt(p, brg, d){
 function terrainAlt(p){
   if(!prefs.terrain || !mapReady || !p) return 0;
   try{ const t = map.terrain; if(t && t.getElevationForLngLatZoom) return t.getElevationForLngLatZoom(maplibregl.LngLat.convert([p.lng, p.lat]), map.transform.tileZoom) || 0;
-    const r = map.queryTerrainElevation([p.lng, p.lat]); return r == null ? 0 : r + (map.transform.elevation || 0); }catch(e){ return 0; }
+    if(!t) return 0; const r = map.queryTerrainElevation([p.lng, p.lat]); return r == null ? 0 : r + (map.transform.elevation || 0); }catch(e){ return 0; }
 }
 function camStart(){
   if(cam.raf) return;
@@ -5920,7 +5942,8 @@ function enterCockpit(){
   ckFollow = true; ckUserZoom = null; ckFollowUI();
   $('#q').blur();
   map.setMaxPitch(70);
-  if(prefs.terrain && mapReady) try{ map.setTerrain({source:'dem', exaggeration:1}); }catch(e){}   // beim Fahren echte Höhen, sonst ragen Hügel ins Bild
+  // Beim Fahren flach: mit 3D-Gelände ruckelte die Kamera, Auto und Route lagen teils im Berg. Schattierung bleibt, beim Verlassen kommt 3D zurück.
+  if(prefs.terrain && mapReady) try{ map.setTerrain(null); }catch(e){}
   ckWatch = navigator.geolocation.watchPosition(onDrivePos, err => {
     if(err.code === 1){ toast('Standortzugriff verweigert. Das Cockpit braucht deinen Standort.'); exitCockpit(); }
   }, {enableHighAccuracy:true, maximumAge:0, timeout:30000});
@@ -6541,7 +6564,7 @@ async function fetchPlace(t){
   if(dist(b.s, b.e) > 1500){ await sleep(1100); e = await reverseName(b.e); }
   if(!a && !e) return false;
   t.place = {a, b:e};
-  if(tracksReady) tracksSaving = tracksSaving.then(tracksWrite);
+  if(tracksReady){ clearTimeout(tracksSaveT); tracksSaveT = setTimeout(tracksFlush, 700); }
   return true;
 }
 let dlBusy = false;
@@ -7700,7 +7723,8 @@ function navPick(mode, quiet){
 function navFit(){
   const c = [...nav.route.coords, ...((nav.opts.land && nav.opts.land.coords) || [])], b = c.reduce((bb, q) => bb.extend(q), new maplibregl.LngLatBounds(c[0], c[0]));
   const np = $('#navPrev'), h = np && navPrevOn ? np.offsetHeight + 30 : 0;
-  map.fitBounds(b, {padding:{top:80, bottom:Math.max(mobile() ? 200 : 120, Math.min(h || 420, innerHeight * .64)), left:50, right:mobile() ? 70 : 90}, maxZoom:16, duration:1200});
+  // Vorschau immer von oben: mit 3D-Gelände und Neigung lagen Teile der Route hinter Hügeln oder außerhalb des Bildes
+  map.fitBounds(b, {padding:{top:80, bottom:Math.max(mobile() ? 200 : 120, Math.min(h || 420, innerHeight * .64)), left:50, right:mobile() ? 70 : 90}, maxZoom:16, duration:1200, pitch:0, bearing:0});
 }
 let navStopMk = [];
 function navStopMarks(){
