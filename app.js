@@ -863,7 +863,7 @@ function camPad(){
   let start = null, dragging = false, moved = false, samples = [];
   panel.addEventListener('pointerdown', e => {
     if(!mobile() || e.button > 0) return;
-    if(e.target.closest('input,textarea,select,.chips,.no-drag')) return;
+    if(e.target.closest('input,textarea,select,.no-drag')) return;
     start = {x:e.clientX, y:e.clientY, sy:sheetY, id:e.pointerId, scroller:e.target.closest('.pb,.pad')};
     dragging = false; moved = false; samples = [{y:e.clientY, t:performance.now()}];
   });
@@ -871,6 +871,7 @@ function camPad(){
     if(!start || e.pointerId !== start.id) return;
     const dx = e.clientX - start.x, dy = e.clientY - start.y;
     if(!dragging){
+      if(Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)){ start = null; return; }   // seitlich (z. B. Kategorien wischen): kein Ziehen
       if(Math.abs(dy) < 7 || Math.abs(dy) < Math.abs(dx)) return;
       if(start.scroller && snap === 'full' && !(start.scroller.scrollTop <= 0 && dy > 0)){ start = null; return; }
       dragging = true; moved = true;
@@ -1168,7 +1169,8 @@ $('#placeView').addEventListener('click', e => {
   if(a === 'back' && r.back){ closePlace(false); show('list', 'half'); return; }
   if(a === 'back'){ openSearch();if(geoLastQ){ $('#q').value = geoLastQ; renderList(); } return; }
   if(a === 'copy') return copy(`${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}`);
-  if(a === 'route'){ closePlace(); planNav({lat:r.lat, lng:r.lng}, r.name, null); return; }
+  // Ortsansicht erst schließen, wenn die Route steht – sonst muss man nach einem Fehler neu suchen
+  if(a === 'route'){ b.disabled = true; planNav({lat:r.lat, lng:r.lng}, r.name, null).then(ok => { if(b.isConnected) b.disabled = false; if(ok && placeCur === r) closePlace(); }); return; }
   if(a === 'spot'){
     closePlace(false); newDraft(); draft.lat = r.lat; draft.lng = r.lng; draft.name = r.type === 'coord' ? '' : r.name;
     if(r.sub) draft.notes = r.sub;
@@ -2398,6 +2400,7 @@ function renderWorkshop(){
       ${wsHeadOpen ? `<div class="wh-acts"><button class="btn primary" data-wsa="invite">${svg(UI.share, 15)} Einladen</button><button class="btn" data-wsa="sync">Aktualisieren</button><button class="btn" data-wsa="avatar">Profilbild</button><button class="btn" data-wsa="code">Link einfügen</button></div>` : ''}
     </div>
     ${WS.err ? `<div class="ws-err">${esc(WS.err)}</div>` : ''}
+    ${prefs.bkTodo ? `<div class="bk-todo"><span>${svg('<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>', 18, 2)}</span><div><b>Backup ist an</b><small>Sicher dir jetzt deinen Wiederherstellungscode – damit holst du alles auf ein neues Handy.</small></div><button class="btn sm primary" data-bktodo>Code sichern</button></div>` : ''}
     ${WS.rulesOld ? `<div class="ws-err">Profilbilder und geteilte Fahrten gehen in dieser Crew gerade nicht.</div>` : ''}
     ${WS.nameClash ? `<button class="ws-err ws-clash" data-wsa="rename">Den Namen „${esc(WS.nameClash)}“ gibt es in der Crew schon. Die anderen sehen dich erst, wenn du ihn änderst – hier tippen.</button>` : ''}
     <div class="seg2 ws-seg"><button data-wss="feed" class="${wsSub === 'feed' ? 'on' : ''}">News${wsSub === 'feed' ? '' : nwBadge('dr') || nwBadge('lb') || nwBadge('sp')}</button><button data-wss="drives" class="${wsSub === 'drives' ? 'on' : ''}">Fahrten${nwBadge('dr')}</button><button data-wss="lb" class="${wsSub === 'lb' ? 'on' : ''}">Zeiten${nwBadge('lb')}</button><button data-wss="crew" class="${wsSub === 'crew' ? 'on' : ''}">Leute</button></div>`;
@@ -3323,7 +3326,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.09.02';
+const VERSION = '2026.10.09.03';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -3386,7 +3389,7 @@ function renderSettings(){
         <button class="set-row" data-st="gjoin"><span>Mit Link beitreten</span>${chev}</button>`}</div>` : ''}
       <div class="set-sec">Daten</div>
       <div class="set-card">
-        <button class="set-row" data-st="backup"><span>Automatisches Backup<small>${esc(bkStatusTxt())}</small></span>${chev}</button>
+        <button class="set-row" data-st="backup"><span>Automatisches Backup${prefs.bkTodo ? ' <i class="nwd"></i>' : ''}<small>${prefs.bkTodo ? 'Wiederherstellungscode noch nicht gesichert' : esc(bkStatusTxt())}</small></span>${chev}</button>
         <button class="set-row" data-st="export"><span>Backup-Datei speichern<small>Spots, Kategorien, Strecken und Zeiten (ohne Fotos)</small></span><span class="ri">${svg(UI.share, 16)}</span></button>
         <button class="set-row" data-st="import"><span>Backup-Datei laden</span>${chev}</button>
         <button class="set-row" data-st="offline"><span>Offline-Karten</span><span class="ri">${offAreas.length ? `${offAreas.length} ${offAreas.length > 1 ? 'Gebiete' : 'Gebiet'}` : ''}${svg('<path d="M15 5 8 12l7 7"/>', 14).replace('<svg', '<svg style="transform:scaleX(-1)"')}</span></button>
@@ -3483,13 +3486,19 @@ async function crewRenew(){
   admBusy = true; prog('Sammle alles ein …');
   try{
     const all = {}; let total = 0, done = 0;
-    for(const c of cols){ all[c] = (await fsRawList(old, c)).filter(d => !(c === 'members' && (d.id === CREW_DOC || crewBan()[d.id]))); total += all[c].length; }
+    // verschlüsselte Backups (bk_…) nicht über dieses Handy schleusen – jedes Mitglied lädt sein Backup beim nächsten Abgleich selbst neu hoch
+    let bkOld = [];
+    for(const c of cols){
+      all[c] = (await fsRawList(old, c)).filter(d => !(c === 'members' && (d.id === CREW_DOC || crewBan()[d.id])));
+      if(c === 'drives'){ bkOld = all[c].filter(d => d.id.startsWith('bk_')); all[c] = all[c].filter(d => !d.id.startsWith('bk_')); }
+      total += all[c].length;
+    }
     for(const c of cols) await pool(all[c], 6, async d => { await fsRawPut(neu, c, d.id, d.fields); done++; if(done % 5 === 0 || done === total) prog(`Ziehe um … ${done} von ${total}`); });
     // zweiter Durchgang: was andere während des Umzugs neu geschrieben oder geändert haben, auch mitnehmen
     prog('Prüfe auf Neues …');
     for(const c of cols){
       const seen = new Map(all[c].map(d => [d.id, JSON.stringify(d.fields)]));
-      const late = (await fsRawList(old, c)).filter(d => !(c === 'members' && (d.id === CREW_DOC || crewBan()[d.id])) && seen.get(d.id) !== JSON.stringify(d.fields));
+      const late = (await fsRawList(old, c)).filter(d => !(c === 'members' && (d.id === CREW_DOC || crewBan()[d.id])) && !d.id.startsWith('bk_') && seen.get(d.id) !== JSON.stringify(d.fields));
       await pool(late, 6, d => fsRawPut(neu, c, d.id, d.fields));
       late.forEach(d => { if(!seen.has(d.id)) all[c].push(d); });
     }
@@ -3502,6 +3511,8 @@ async function crewRenew(){
     const live = await fsRawList(old, 'live').catch(() => []);
     for(const c of cols) await pool(all[c], 6, d => fsRawDel(old, c, d.id).catch(() => {}));
     await pool(live, 6, d => fsRawDel(old, 'live', d.id).catch(() => {}));
+    await pool(bkOld, 6, d => fsRawDel(old, 'drives', d.id).catch(() => {}));
+    bk.sent = {}; bk.code = grp().code; bkSave(); setTimeout(() => { if(bkOn()) bkRun(); }, 1500);   // eigenes Backup gleich in die neue Ablage
     await fsRawPut(old, 'members', CREW_DOC, docFields({moved:true, by:myName(), at:Date.now()})).catch(() => {});
     admBusy = false; admArmed = null; WS.loaded = 0; wsSync(true);
     $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Neuer Link"><div class="pad" style="padding:20px 16px 16px;gap:12px">
@@ -3675,7 +3686,7 @@ function ckNightCheck(force){
 var bk = {sent:{}, at:0, n:null, busy:false, err:null, prog:''};
 try{ Object.assign(bk, JSON.parse(localStorage.getItem('meine-spots-bk') || '{}'), {busy:false, err:null, prog:''}); }catch(e){}
 const BK_COL = 'drives', BK_CHUNK = 700000, BK_PREFS = ['myName', 'avatar', 'carType', 'carColor', 'accent', 'theme', 'labels', 'base', 'terrain', 'wayPlaces', 'wayGeo', 'navMode', 'cam', 'car3d', 'gforce', 'recCockpit', 'shareStats', 'gShare'];
-function bkSave(){ try{ localStorage.setItem('meine-spots-bk', JSON.stringify({sent:bk.sent, at:bk.at, n:bk.n, dev:bk.dev})); }catch(e){} }
+function bkSave(){ try{ localStorage.setItem('meine-spots-bk', JSON.stringify({sent:bk.sent, at:bk.at, n:bk.n, dev:bk.dev, code:bk.code})); }catch(e){} }
 function bkDirty(){ try{ localStorage.setItem('meine-spots-bk-dirty', '1'); }catch(e){} clearTimeout(window.__bkT); window.__bkT = setTimeout(() => { try{ bkRun(); }catch(e){} }, 40000); }
 const bkOn = () => !!(FB && grp() && prefs.bk !== false && window.crypto && crypto.subtle);
 const u8b64 = u8 => { let s = ''; for(let i = 0; i < u8.length; i += 32768) s += String.fromCharCode.apply(null, u8.subarray(i, i + 32768)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
@@ -3733,6 +3744,7 @@ async function bkRun(force){
   if(!force && localStorage.getItem('meine-spots-bk-dirty') !== '1' && Date.now() - (bk.at || 0) < 20 * 3600e3) return;
   bk.busy = true; bk.err = null; bkUI();
   if(bk.dev !== myId()){ bk.sent = {}; bk.dev = myId(); }   // andere Person auf diesem Gerät: alles neu sichern
+  if(bk.code !== grp().code){ if(bk.code) bk.sent = {}; bk.code = grp().code; }   // neuer Einladungslink: Backup in die neue Crew-Ablage neu hochladen
   try{
     const id = bkId(), sent = bk.sent, own = myTracks().filter(t => !t._ws), parts = {t:{}, p:{}}, types = {};
     let i = 0;
@@ -3767,8 +3779,9 @@ async function bkRun(force){
     bkSave();
     if(prefs.bkCodeSeen && !prefs.bkCodeFor) prefs.bkCodeFor = prefs.bkCodeG || grp().code;
     if(!prefs.bkCodeSeen || prefs.bkCodeFor !== grp().code){   // erstes Backup oder neuer Einladungslink: der alte Code gilt nicht mehr → neu sichern
-      prefs.bkCodeSeen = 1; prefs.bkCodeFor = grp().code; delete prefs.bkCodeG; savePrefs();
-      setTimeout(() => { if($('#modal').hidden && $('#onb').hidden) openBackup('first'); }, 600);
+      // kein Popup mitten in der Bedienung: ruhige Karte in der Crew und ein Punkt in den Einstellungen, bis der Code gesichert ist
+      prefs.bkCodeSeen = 1; prefs.bkCodeFor = grp().code; prefs.bkTodo = 1; delete prefs.bkCodeG; savePrefs();
+      if(tab === 'crew' && view === 'list') renderList();
     }
   }catch(e){ bk.err = /403/.test(e.message || '') ? 'Die Crew-Datenbank hat das Backup abgelehnt.' : 'Backup gerade nicht möglich. Es wird später nochmal versucht.'; }
   bk.busy = false; bk.prog = ''; bkUI();
@@ -3789,6 +3802,7 @@ function bkParse(raw){
   try{ const o = u8dec(b64u8(m[1])); return o && o.g && o.g.length >= 20 && /^[A-Za-z0-9_-]{43}$/.test(o.k) && /^[a-z0-9]{8,64}$/i.test(o.d || '') ? o : null; }catch(e){ return null; }
 }
 let bkMode = 'main', bkCodeIn = '', bkErr = '', bkRes = null, bkOfferSrc = null;
+document.addEventListener('click', e => { if(e.target.closest('[data-bktodo]')) openBackup('first'); });
 function openBackup(mode = 'main', code = ''){
   bkMode = mode; bkErr = ''; if(code) bkCodeIn = code;
   $('#modal').hidden = false; renderBackup();
@@ -3900,7 +3914,7 @@ $('#modal').addEventListener('click', async e => {
   if(a === 'close') return bkClose();
   if(a === 'toggle'){ prefs.bk = prefs.bk === false; savePrefs(); renderBackup(); if(prefs.bk !== false) bkRun(true); return; }
   if(a === 'now') return bkRun(true);
-  if(a === 'copy' || a === 'share'){ prefs.bkCodeG = grp().code; savePrefs(); }
+  if(a === 'copy' || a === 'share'){ prefs.bkCodeG = grp().code; delete prefs.bkTodo; savePrefs(); if(tab === 'crew' && view === 'list') renderList(); }
   if(a === 'copy') return copyText(bkCode(), 'Code kopiert – leg ihn an einem sicheren Ort ab');
   if(a === 'share') return shareURL(`${appURL()}#restore=${bkCode().slice(6)}`, 'Spots-Wiederherstellungscode', `Mein Spots-Wiederherstellungscode (nicht weitergeben):\n${bkCode()}\n`);
   if(a === 'gcreate'){ $('#modal').hidden = true; openGroupDlg('create', {}); return; }
@@ -7665,22 +7679,23 @@ let planBusy = 0;
 async function planNav(target, name, walkTo, o = {}){
   if(planBusy && Date.now() - planBusy < 30000) return;   // Doppeltipp: nicht zweimal planen
   planBusy = Date.now();
-  try{ await planNavRun(target, name, walkTo, o); } finally { planBusy = 0; }
+  try{ return await planNavRun(target, name, walkTo, o); } finally { planBusy = 0; }
 }
 async function planNavRun(target, name, walkTo, o){
   if(ckOn) exitCockpit();
   if(nav) endNav();
-  const here = await getHere(); if(!here) return;
+  const here = await getHere(); if(!here) return false;
   navStatus('Route wird berechnet …');
   const stops = (o.stops || []).filter(x => dist(x, here) > 300).map(x => ({...x}));   // Zwischenstopp, an dem ich schon stehe, weglassen
   nav = {active:false, start:{lat:here.lat, lng:here.lng}, dest:{lat:target.lat, lng:target.lng}, name, walkTo, stops, mode:(o.mode || prefs.navMode) === 'land' ? 'land' : 'fast', opts:null, route:null, prog:0, off:0, lastReroute:0, arrived:false, pick:null};
   const n = nav;
   const ok = await navReplan(true);
-  if(nav !== n) return;
-  if(!ok){ nav = null; navStatus(''); toast('Route konnte nicht berechnet werden. Prüfe deine Internetverbindung.'); return; }
+  if(nav !== n) return false;
+  if(!ok){ nav = null; navStatus(''); toast('Route konnte nicht berechnet werden. Prüfe deine Internetverbindung.'); return false; }
   navStatus(''); hideToast();
   navPrevOn = true; document.body.classList.add('navprev');
   navFit(); navRefit(n);
+  return true;
 }
 // Wenn Hinweise nachgeladen sind, ist die Vorschau höher – einmal nachjustieren, solange niemand die Karte bewegt hat
 function navRefit(n){
