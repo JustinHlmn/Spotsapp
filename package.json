@@ -1,0 +1,12 @@
+{
+  "name": "spots",
+  "private": true,
+  "description": "Spots – Karte, Fahrten und Crew als Web-App",
+  "scripts": {
+    "test": "node tests/run.js",
+    "bump": "python3 tools/bump.py"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}
