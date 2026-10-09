@@ -3309,7 +3309,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.07.01';
+const VERSION = '2026.10.09.01';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -3365,7 +3365,7 @@ function renderSettings(){
         <button class="set-row${onOff('shareStats') ? ' on' : ''}" data-st="tg" data-k="shareStats" role="switch" aria-checked="${onOff('shareStats')}"><span>Wochenstatistik teilen<small>Kilometer, Anzahl Fahrten, Fahrzeit, Höchsttempo und Ø Risiko pro Woche – keine Strecken</small></span><i class="tg"></i></button>
         <button class="set-row" data-st="ginvite"><span>Freunde einladen</span><span class="ri">${svg(UI.share, 16)}</span></button>
         ${isAdmin() ? `<button class="set-row adm-row" data-st="admin"><span>Crew verwalten<small>Rauswerfen, sperren, neuer Einladungslink</small></span><span class="ri"><i class="adm-tag">Admin</i>${chev}</span></button>`
-          : `<button class="set-row" data-st="mkadmin"><span>Admin-Zugang<small>Mit Passwort Admin dieser Crew werden</small></span>${chev}</button>`}
+          : !(crewDoc().admin || []).length && WS.crew ? `<button class="set-row" data-st="mkadmin"><span>Admin werden<small>Diese Crew hat noch keinen Admin</small></span>${chev}</button>` : ''}
         <button class="set-row" data-st="link"><span>Auf weiterem Gerät nutzen<small>Z. B. am PC – dort bist du dann auch ${esc(myName() || 'du')}${isAdmin() ? ', mit Admin-Rechten' : ''}</small></span>${chev}</button>
         <button class="set-row" data-st="gleave"><span style="color:var(--danger)">Crew verlassen</span></button>` : `
         <button class="set-row" data-st="gcreate"><span>Crew erstellen</span>${chev}</button>
@@ -3406,7 +3406,7 @@ $('#modal').addEventListener('click', e => {
   if(a === 'gcreate') openGroupDlg('create', {});
   if(a === 'admin'){ openAdmin(); return; }
   if(a === 'link'){ openLinkDlg(); return; }
-  if(a === 'mkadmin'){ openAdminLogin(); return; }
+  if(a === 'mkadmin'){ claimAdmin(); return; }
   if(a === 'gjoin') openGroupDlg('code', {});
   if(a === 'gleave'){
     if(!b.classList.contains('armed')){ b.classList.add('armed'); b.querySelector('span').textContent = 'Wirklich verlassen? Nochmal tippen'; return; }
@@ -3429,7 +3429,7 @@ function openAdmin(){
   const row = m => {
     const me_ = m._id === myId(), adm = isAdmin(m._id), arm = k => admArmed === k + m._id;
     return `<div class="adm-m">${avHTML(m._id, m.name, 38)}<div class="adm-tx"><b>${esc(me_ ? myName() : m.name || '?')}${adm ? ' <i class="adm-tag sm">Admin</i>' : ''}${me_ ? ' <small>(du)</small>' : ''}</b><span>${ago(m.at)}</span></div>
-      ${me_ ? '' : adm ? `<div class="adm-acts"><button class="btn sm${arm('a') ? ' armed' : ''}" data-adm="unadmin" data-dev="${esc(m._id)}">${arm('a') ? 'Sicher?' : 'Admin entfernen'}</button></div>` : `<div class="adm-acts"><button class="btn sm${arm('k') ? ' armed' : ''}" data-adm="kick" data-dev="${esc(m._id)}">${arm('k') ? 'Sicher?' : 'Rauswerfen'}</button><button class="btn sm danger${arm('b') ? ' armed' : ''}" data-adm="ban" data-dev="${esc(m._id)}">${arm('b') ? 'Sicher?' : 'Sperren'}</button></div>`}</div>`;
+      ${me_ ? '' : adm ? `<div class="adm-acts"><button class="btn sm${arm('a') ? ' armed' : ''}" data-adm="unadmin" data-dev="${esc(m._id)}">${arm('a') ? 'Sicher?' : 'Admin entfernen'}</button></div>` : `<div class="adm-acts"><button class="btn sm${arm('m') ? ' armed' : ''}" data-adm="mkadm" data-dev="${esc(m._id)}">${arm('m') ? 'Sicher?' : 'Zum Admin'}</button><button class="btn sm${arm('k') ? ' armed' : ''}" data-adm="kick" data-dev="${esc(m._id)}">${arm('k') ? 'Sicher?' : 'Rauswerfen'}</button><button class="btn sm danger${arm('b') ? ' armed' : ''}" data-adm="ban" data-dev="${esc(m._id)}">${arm('b') ? 'Sicher?' : 'Sperren'}</button></div>`}</div>`;
   };
   const bans = Object.entries(ban).sort((a, b) => b[1].t - a[1].t);
   $('#modal').innerHTML = `<div class="dlg adm-dlg" role="dialog" aria-modal="true" aria-label="Crew verwalten">
@@ -3513,44 +3513,22 @@ $('#modal').addEventListener('click', e => {
     return;
   }
   if(a === 'kick' || a === 'ban'){ const k = (a === 'kick' ? 'k' : 'b') + dev; if(admArmed !== k){ admArmed = k; openAdmin(); return; } admKick(dev, a === 'ban'); return; }
+  if(a === 'mkadm'){ const k = 'm' + dev; if(admArmed !== k){ admArmed = k; openAdmin(); return; } admArmed = null; crewSave(c => ({admin:[...new Set([...(c.admin || []), dev])]})).then(() => { toast('Ist jetzt Admin'); openAdmin(); wsRefreshUI(); }).catch(() => toast('Ging gerade nicht. Prüfe dein Internet.')); return; }
   if(a === 'unadmin'){ const k = 'a' + dev; if(admArmed !== k){ admArmed = k; openAdmin(); return; } admArmed = null; crewSave(c => ({admin:(c.admin || []).filter(x => x !== dev)})).then(() => { toast('Admin-Rechte entfernt'); openAdmin(); wsRefreshUI(); }).catch(() => toast('Ging gerade nicht. Prüfe dein Internet.')); return; }
   if(a === 'unban'){ const n = (crewBan()[dev] || {}).n; crewSave(c => { const bn = {...(c.ban || {})}; delete bn[dev]; return {ban:bn}; }).then(() => { toast(`${n || 'Gerät'} ist entsperrt`); openAdmin(); }).catch(() => toast('Ging gerade nicht. Prüfe dein Internet.')); return; }
   if(a === 'renew' && !admBusy){ if(admArmed !== 'renew'){ admArmed = 'renew'; openAdmin(); return; } crewRenew(); }
 });
 
-/* Admin-Zugang: kleines Passwort (nur als Prüfsumme im Code, nicht im Klartext) */
-const ADMIN_PW_HASH = '1f9ba570e2e92ebdf49fce177d604b31185ab202d9d4eb42cc61e537099ae4b4';
-let admTries = 0, admLockUntil = 0;
-async function pwHash(pw){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('jamsis-spots:' + pw)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
-function openAdminLogin(err = ''){
-  $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Admin-Zugang"><div class="pad" style="padding:20px 16px 16px;gap:12px">
-    <div class="adm-head"><span class="adm-shield">${svg('<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>', 22, 2)}</span><div><b>Admin-Zugang</b><span>${esc((grp() || {}).name || '')}</span></div></div>
-    <label class="f">Passwort<input class="inp" id="adm-pw" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="40"></label>
-    <div class="err" id="adm-err">${esc(err)}</div>
-    <div class="btns"><button class="btn" data-al="back">Abbrechen</button><button class="btn primary" data-al="go">Freischalten</button></div></div></div>`;
-  $('#modal').hidden = false;
-  setTimeout(() => { const i = $('#adm-pw'); if(i) i.focus(); }, 60);
-}
-async function adminLogin(){
-  const i = $('#adm-pw'); if(!i) return;
-  if(Date.now() < admLockUntil) return openAdminLogin(`Zu viele Versuche – warte ${Math.ceil((admLockUntil - Date.now()) / 1000)} Sekunden.`);
-  const ok = (await pwHash(i.value.trim().toLowerCase())) === ADMIN_PW_HASH;
-  if(!ok){
-    admTries++; if(admTries >= 3){ admTries = 0; admLockUntil = Date.now() + 30000; }
-    return openAdminLogin('Falsches Passwort.');
-  }
-  admTries = 0;
+/* Admin: wer die Crew erstellt, ist Admin. Admins können andere zu Admins machen.
+   Hat eine (ältere) Crew gar keinen Admin, darf das erste Mitglied, das es möchte, Admin werden. */
+async function claimAdmin(){
   try{
-    await crewSave(c => ({admin:[...new Set([...(c.admin || []), myId()])], since:c.since || Date.now()}));
-    toast('Du bist jetzt Admin dieser Crew'); wsRefreshUI(); openAdmin();
-  }catch(e){ openAdminLogin('Ging gerade nicht. Prüfe dein Internet.'); }
+    let got = false;
+    await crewSave(c => { if((c.admin || []).length) return {}; got = true; return {admin:[myId()], since:c.since || Date.now()}; });
+    if(got){ toast('Du bist jetzt Admin dieser Crew'); wsRefreshUI(); openAdmin(); }
+    else { toast('Die Crew hat inzwischen einen Admin.'); renderSettings(); }
+  }catch(e){ toast('Ging gerade nicht. Prüfe dein Internet.'); }
 }
-$('#modal').addEventListener('click', e => {
-  const b = e.target.closest('[data-al]'); if(!b) return;
-  if(b.dataset.al === 'back') renderSettings();
-  if(b.dataset.al === 'go') adminLogin();
-});
-$('#modal').addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.id === 'adm-pw'){ e.preventDefault(); adminLogin(); } });
 
 /* Gerät verknüpfen: derselbe Mensch auf Handy und PC */
 const linkURL = () => `${appURL()}#link=${myId()}&n=${encodeURIComponent(myName())}${grp() ? `&join=${grp().code}&g=${encodeURIComponent(grp().name || 'Crew')}` : ''}${grp() && window.crypto?.subtle ? `&bk=${bkKeyRaw()}` : ''}`;

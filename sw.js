@@ -1,6 +1,6 @@
 /* Spots – Service Worker: App offline starten + Kartenkacheln zwischenspeichern */
-const V = 'v56';
-const AV = '2026.10.07.01';   // Version von app.js/app.css (tools/bump.py setzt sie zusammen mit index.html)
+const V = 'v57';
+const AV = '2026.10.09.01';   // Version von app.js/app.css (tools/bump.py setzt sie zusammen mit index.html)
 const APP = 'app-' + V, LIB = 'lib-1', RT = 'tiles-rt';
 // App-Dateien: bei jeder Version neu. Bibliotheken und Schriften: eigener Speicher, der Versionen überlebt (spart ~1 MB pro Update)
 const SHELL = ['./', './index.html', './app.css?v=' + AV, './app.js?v=' + AV, './manifest.webmanifest', './icon-192.png', './apple-touch-icon.png', './favicon.png'];
