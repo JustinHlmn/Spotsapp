@@ -2017,7 +2017,7 @@ async function fsList(col, meta){
 async function fsGet(col, id){
   const r = await fetch(`${fsURL(col, id)}?key=${FB.apiKey}`);
   if(!r.ok) throw new Error('Firestore ' + r.status);
-  const d = await r.json(), v = sjson(d.fields.d.stringValue); v._id = id; return v;
+  const d = await r.json(), v = sjson(d.fields.d.stringValue); v._id = id; v._t = +((d.fields.t && (d.fields.t.integerValue || d.fields.t.doubleValue)) || 0); return v;
 }
 async function fsPut(col, id, obj, meta){
   const fields = {d:{stringValue:JSON.stringify(obj)}, t:{integerValue:String(Date.now())}};
@@ -2335,12 +2335,34 @@ async function wsUploadSpot(s){
     while(JSON.stringify(obj).length > 900000 && obj.ph.length) obj.ph.pop();
     const docId = `${myId()}_${s.id}`, meta = {...obj, ph:undefined, nph:obj.ph.length};
     await fsPut('spots', docId, obj, meta);
-    s.ws = docId; save(); wsUpsert(WS.spots, {...meta, _id:docId}); wsFull.set(docId, {...obj, _id:docId}); wsCache();
+    const t = Date.now(); s.ws = docId; save(); wsUpsert(WS.spots, {...meta, _id:docId, _t:t}); wsFull.set(docId, {...obj, _id:docId, _t:t}); wsCache();
     toast(`„${s.name}“ ist jetzt in der Crew`);
     if(view === 'detail' && selected === s.id) renderDetail(s);
     wsRefreshUI();
   }catch(e){ toast('Hochladen hat nicht geklappt. Prüfe dein Internet.'); }
 }
+/* Fotos eines Crew-Spots direkt im Workshop ändern (wer ihn geteilt hat oder ein Admin) */
+const WS_PH_MAX = 6;
+let wsPhEdit = false, wsPhBusy = false;
+const wsCanEdit = w => !!w && (w.dev === myId() || isAdmin());
+async function wsSetPhotos(w, fn){
+  if(wsPhBusy) return; wsPhBusy = true; renderWsDetail();
+  try{
+    const f = w.nph ? await fsGet('spots', w._id) : {...w};
+    const {_id, _t, nph, ...obj} = f;
+    obj.ph = await fn((obj.ph || []).map(okImg).filter(Boolean));
+    while(JSON.stringify(obj).length > 900000 && obj.ph.length) obj.ph.pop();
+    const meta = {...obj, ph:undefined, nph:obj.ph.length}, t = Date.now();
+    await fsPut('spots', w._id, obj, meta);
+    wsUpsert(WS.spots, {...meta, _id:w._id, _t:t}); wsFull.set(w._id, {...obj, _id:w._id, _t:t}); wsCache();
+  }catch(e){ toast('Speichern hat nicht geklappt. Prüfe dein Internet.'); }
+  wsPhBusy = false; if(view === 'ws') renderWsDetail(); renderWsMarkers();
+}
+$('#wsPhFile').addEventListener('change', async e => {
+  const files = [...e.target.files]; e.target.value = ''; const w = WS.spots.find(x => x._id === wsSel);
+  if(!files.length || !wsCanEdit(w)) return;
+  wsSetPhotos(w, async ph => { for(const f of files){ if(ph.length >= WS_PH_MAX) break; try{ ph.push(await smallJPEG(f)); }catch(_){ toast('Ein Bild konnte nicht gelesen werden.'); } } return ph; });
+});
 async function wsRemoveSpot(docId){
   try{
     await fsDel('spots', docId);
@@ -2353,9 +2375,10 @@ async function wsRemoveSpot(docId){
   }catch(e){ toast('Löschen hat nicht geklappt. Prüfe dein Internet.'); }
 }
 const wsSavedAs = w => data.spots.find(s => s.from === w._id || s.ws === w._id);
+const wsFresh = w => { const f = wsFull.get(w._id); return f && (f._t || 0) >= (w._t || 0) ? f : null; };   // geänderte Fotos: alten Stand nicht weiter zeigen
 async function wsFullSpot(w){
   if(!w.nph) return w;
-  if(wsFull.has(w._id)) return wsFull.get(w._id);
+  if(wsFresh(w)) return wsFresh(w);
   try{ const f = await fsGet('spots', w._id); wsFull.set(w._id, f); return f; }catch(e){ return w; }
 }
 async function wsSaveSpot(w){
@@ -3166,7 +3189,7 @@ async function openWsDrive(id){
 /* Workshop-Spot ansehen */
 function openWsSpot(id){
   const w = WS.spots.find(x => x._id === id); if(!w) return;
-  wsSel = id; wsDelArmed = false; renderWsDetail(); show('ws', mobile() && snap === 'full' ? 'full' : 'half');
+  wsSel = id; wsDelArmed = false; wsPhEdit = false; renderWsDetail(); show('ws', mobile() && snap === 'full' ? 'full' : 'half');
   map.flyTo({center:[w.lng, w.lat], zoom:Math.max(map.getZoom(), 14), padding:camPad(), duration:900});
   renderWsMarkers();
 }
@@ -3180,10 +3203,12 @@ function renderWsDetail(){
       <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${esc(col)}"><span class="ic">${ic((w.cat && w.cat.icon) || 'pin', 13)}</span>${esc((w.cat && w.cat.name) || 'Spot')}</span><h2>${esc(w.name)}</h2>
         <span class="muted ws-by">${avHTML(w.dev, w.by, 20)}Geteilt ${mine ? 'von dir' : `von ${esc(w.by || '?')}`} · ${ago(w.at || 0)}${me ? ` · ${fmtDist(dist(me, w))} entfernt` : ''}</span></div>
       <div class="rx-row">${rxHTML('sp:' + w._id, w.dev, 'full')}</div>
-      ${(() => { const f = wsFull.get(w._id), ph = ((f || w).ph || []).map(okImg).filter(Boolean);
-        if(ph.length) return `<div class="ph-strip">${ph.map((u, i) => `<img src="${u}" data-wsph="${i}" alt="Foto ${i + 1}">`).join('')}</div>`;
+      ${(() => { const f = wsFresh(w), ph = w.nph ? ((f || {}).ph || []).map(okImg).filter(Boolean) : [], ed = wsCanEdit(w);
         if(w.nph && !f){ wsFullSpot(w).then(() => { if(view === 'ws' && wsSel === w._id) renderWsDetail(); }); return `<div class="muted">${w.nph} Foto${w.nph > 1 ? 's' : ''} wird geladen …</div>`; }
-        return ''; })()}
+        if(!ed) return ph.length ? `<div class="ph-strip">${ph.map((u, i) => `<img src="${u}" data-wsph="${i}" alt="Foto ${i + 1}">`).join('')}</div>` : '';
+        const on = wsPhEdit && ph.length, add = ph.length < WS_PH_MAX ? `<button class="ph-add" data-wsd="phadd"${wsPhBusy ? ' disabled' : ''}>${svg(UI.plus, 22, 2.2)}<span>${wsPhBusy ? 'Speichert …' : 'Foto'}</span></button>` : '';
+        return `<div class="ws-ph-h"><span>Fotos${ph.length ? ` · ${ph.length}` : ''}</span>${ph.length ? `<button class="txtbtn${on ? ' bold' : ''}" data-wsd="phedit">${on ? 'Fertig' : 'Bearbeiten'}</button>` : ''}</div>
+          <div class="ph-strip${on ? ' editing' : ''}">${ph.map((u, i) => `<span class="ph-it"><img src="${u}" data-wsph="${i}" alt="Foto ${i + 1}">${on ? `<button class="ph-del" data-wsd="phdel" data-i="${i}" aria-label="Foto ${i + 1} entfernen"${wsPhBusy ? ' disabled' : ''}>${svg(UI.close, 12, 2.6)}</button>` : ''}</span>`).join('')}${add}</div>`; })()}
       ${saved ? `<button class="btn wide" data-wsd="mine">${svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>', 16, 2.6)} ${mine ? 'Dein Spot – öffnen' : 'Gespeichert – öffnen'}</button>` : `<button class="btn primary wide" data-wsd="save">${svg(UI.plus, 16, 2.4)} Bei meinen Spots speichern</button>`}
       <div class="btns"><button class="btn" data-wsd="nav">${svg(UI.nav, 15)} Navigation</button><button class="btn" data-wsd="share">${svg(UI.share, 15)} Link teilen</button></div>
       ${w.notes ? `<p class="notes">${esc(w.notes)}</p>` : ''}
@@ -3194,13 +3219,16 @@ function renderWsDetail(){
 }
 $('#wsView').addEventListener('click', e => {
   const im = e.target.closest('img[data-wsph]');
-  if(im){ const w = wsFull.get(wsSel); if(w){ $('#lightbox').innerHTML = `<img src="${okImg(w.ph[+im.dataset.wsph])}" alt=""><button class="lb-x" aria-label="Schließen">${svg(UI.close, 18, 2.4)}</button>`; $('#lightbox').hidden = false; } return; }
+  if(im){ if(wsPhEdit) return; const w = wsFull.get(wsSel); if(w){ $('#lightbox').innerHTML = `<img src="${okImg(w.ph[+im.dataset.wsph])}" alt=""><button class="lb-x" aria-label="Schließen">${svg(UI.close, 18, 2.4)}</button>`; $('#lightbox').hidden = false; } return; }
   const b = e.target.closest('button'); if(!b) return;
   if(b.dataset.copy) return copy(b.dataset.copy);
   const a = b.dataset.wsd, w = WS.spots.find(x => x._id === wsSel);
   if(a === 'back'){ wsSel = null; show('list', 'half'); renderWsMarkers(); return; }
   if(!w) return;
   if(a === 'save') wsSaveSpot(w);
+  if(a === 'phedit'){ wsPhEdit = !wsPhEdit; renderWsDetail(); return; }
+  if(a === 'phadd'){ if(wsCanEdit(w) && !wsPhBusy) $('#wsPhFile').click(); return; }
+  if(a === 'phdel'){ const i = +b.dataset.i; if(wsCanEdit(w)) wsSetPhotos(w, ph => { ph.splice(i, 1); if(!ph.length) wsPhEdit = false; return ph; }); return; }
   if(a === 'mine'){ const s = wsSavedAs(w); if(s){ spotView = 'mine'; syncSpotsHead(); renderMarkers(); renderWsMarkers(); openDetail(s.id, true); } }
   if(a === 'nav'){ if(w.walk && w.parking) planNav(w.parking, w.name, {lat:w.lat, lng:w.lng}); else planNav({lat:w.lat, lng:w.lng}, w.name, null); }
   if(a === 'share'){ const tmp = {name:w.name, lat:w.lat, lng:w.lng, notes:w.notes, walk:w.walk, parking:w.parking, cat:null}; const c = catFor(w.cat && w.cat.name, w.cat && w.cat.color, w.cat && w.cat.icon); tmp.cat = c.id; shareURL(spotLink(tmp), w.name, `${w.name} – geteilt aus Spots`); }
@@ -3330,7 +3358,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.12.02';
+const VERSION = '2026.10.12.03';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
