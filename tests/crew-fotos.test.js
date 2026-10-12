@@ -64,10 +64,13 @@ const sync = async p => { await click(p, '[data-tab=crew]'); await wait(200); if
   console.log('after add:', spDoc().ph.length, spMeta().nph, spDoc().name); if(spDoc().ph.length !== 2 || spMeta().nph !== 2 || spDoc().name !== 'Spot A') throw new Error('Fotos nicht hinzugefügt');
   await wait(400); await shot(A, 'wsph-added');
   const ui2 = await ev(A, () => document.querySelectorAll('#wsView .ph-strip img').length); console.log('ui after add:', ui2); if(ui2 !== 2) throw new Error('neue Fotos nicht sichtbar');
-  // B (kein Admin) sieht die neuen Fotos, kann aber nichts ändern
+  // B (kein Admin) sieht die neuen Fotos und darf sie auch ändern
   const B = await device(b, 'B', {...base, myName:'Max'}); await B.goto(`${BASE}/index.html?noonb#join=${inv.code}&g=Test%20Crew`); await wait(1500); await click(B, '[data-gp=join]'); await wait(1500);
   await sync(B); await openSpot(B); await wait(600);
   const vb = await ev(B, () => [document.querySelectorAll('#wsView .ph-strip img').length, !!document.querySelector('.ws-ph-h'), !!document.querySelector('[data-wsd=phadd]')]);
-  console.log('B view:', vb); if(vb[0] !== 2 || vb[1] || vb[2]) throw new Error('B-Ansicht falsch');
+  console.log('B view:', vb); if(vb[0] !== 2 || !vb[1] || !vb[2]) throw new Error('B-Ansicht falsch');
+  await click(B, '[data-wsd=phedit]'); await wait(200); await click(B, '[data-wsd=phdel]');
+  for(let i = 0; i < 20 && spDoc().ph.length > 1; i++) await wait(150);
+  console.log('B deleted:', spDoc().ph.length, spDoc().by); if(spDoc().ph.length !== 1 || spDoc().by !== 'Alex') throw new Error('B konnte nicht löschen');
   console.log('errors', JSON.stringify(errs)); await b.close();
 })();

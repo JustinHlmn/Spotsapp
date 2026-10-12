@@ -2341,10 +2341,10 @@ async function wsUploadSpot(s){
     wsRefreshUI();
   }catch(e){ toast('Hochladen hat nicht geklappt. Prüfe dein Internet.'); }
 }
-/* Fotos eines Crew-Spots direkt im Workshop ändern (wer ihn geteilt hat oder ein Admin) */
+/* Fotos eines Crew-Spots direkt im Workshop ändern (alle in der Crew) */
 const WS_PH_MAX = 6;
 let wsPhEdit = false, wsPhBusy = false;
-const wsCanEdit = w => !!w && (w.dev === myId() || isAdmin());
+const wsCanEdit = w => !!w && !!grp();   // jeder in der Crew darf die Fotos ändern
 async function wsSetPhotos(w, fn){
   if(wsPhBusy) return; wsPhBusy = true; renderWsDetail();
   try{
@@ -3358,7 +3358,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.12.03';
+const VERSION = '2026.10.12.04';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
