@@ -2282,10 +2282,11 @@ async function pushMember(){
   WS.nameClash = null;
   let st = onOff('shareStats') ? memberStats() : null;
   if(st && !tracks.length && cur && cur.st) st = cur.st;   // zweites Gerät ohne Fahrten: Kilometer vom Handy behalten
-  const sig = myName() + '|' + (prefs.avatar || '').length + '|' + (prefs.avatar || '').slice(-24) + '|' + JSON.stringify(st) + '|' + carType() + carColor() + '|' + (gActive() && prefs.gShare !== false ? gModel(gActive()) + gActive().year : '');
+  const sig = myName() + '|' + (prefs.avatar || '').length + '|' + (prefs.avatar || '').slice(-24) + '|' + JSON.stringify(st) + '|' + carType() + carColor() + '|' + (gActive() && prefs.gShare !== false ? gModel(gActive()) + gActive().year + (gActive().nick || '') + (gActive().photo || '') : '');
   if(prefs.memberSig === sig && WS.members.some(m => m._id === myId())) return;
   if(!grp().since){ prefs.group.since = (cur && cur.since) || Date.now(); savePrefs(); }
-  const ga = gActive(), rc = ga && prefs.gShare !== false && gModel(ga) ? {n:gModel(ga).slice(0, 40), y:ga.year || null} : (cur && !garage.cars.length ? cur.rc || null : null);
+  const ga = gActive(), rc = ga && prefs.gShare !== false && (gModel(ga) || ga.photo) ? {n:(gModel(ga) || gTitle(ga)).slice(0, 40), y:ga.year || null} : (cur && !garage.cars.length ? cur.rc || null : null);
+  if(rc && ga && ga.photo){ try{ const b = await PDB.get(ga.photo); if(b) rc.ph = await smallJPEG(b, 560, .7); }catch(e){} }
   const obj = {name:myName(), av:okImg(prefs.avatar) || (cur && okImg(cur.av)) || '', st, car:{t:carType(), c:carColor()}, rc, since:grp().since, at:Date.now()};
   try{ await fsPut('members', myId(), obj); prefs.memberSig = sig; savePrefs(); wsUpsert(WS.members, {...obj, _id:myId()}); }
   catch(e){ if(/403/.test(e.message)) WS.rulesOld = true; }
@@ -2550,8 +2551,9 @@ function openCrew(dev){
     <div class="top" style="padding:12px 14px"><span></span><button class="txtbtn bold" data-crewx>Fertig</button></div>
     <div class="pad" style="padding-top:0;gap:14px">
       <div class="crew-hero"><button class="crew-big" data-crewav="${esc(dev)}" aria-label="Profilbild vergrößern">${avHTML(dev, m.name, 112)}</button><h2>${esc(crewName(dev, m.name))}${isAdmin(dev) ? ' <i class="adm-tag">Admin</i>' : ''}</h2>
-        ${(() => { const mc = dev === myId() ? {t:carType(), c:carColor()} : (WS.members.find(x => x._id === dev) || {}).car; const rc = dev === myId() ? (gActive() && prefs.gShare !== false && gModel(gActive()) ? {n:gModel(gActive()), y:gActive().year} : null) : (WS.members.find(x => x._id === dev) || {}).rc;
-          return (mc && CAR_TYPES[mc.t] && CAR_COLORS[mc.c] ? `<div class="crew-car">${carSideSVG(mc.t, mc.c)}<span>${esc(CAR_TYPES[mc.t].name)} · ${esc(CAR_COLORS[mc.c].name)}</span></div>` : '') + (rc && rc.n ? `<div class="crew-rc">${svg(UI.car, 14)} Fährt ${esc(String(rc.n).slice(0, 40))}${rc.y ? ` · ${esc(String(rc.y).slice(0, 4))}` : ''}</div>` : ''); })()}${dev === myId() ? '<button class="txtbtn" data-crewme>Profilbild ändern</button>' : ''}${liveOf(dev) ? `<button class="btn live" data-crewlive="${esc(dev)}"><span class="lv-dot"></span>Live${liveOf(dev).v >= 6 ? ` · ${Math.round(liveOf(dev).v)} km/h` : ''} · Live-Stats ansehen</button>` : ''}</div>
+        ${(() => { const mc = dev === myId() ? {t:carType(), c:carColor()} : (WS.members.find(x => x._id === dev) || {}).car; const ga = gActive(), rc = dev === myId() ? (ga && prefs.gShare !== false && (gModel(ga) || ga.photo) ? {n:gModel(ga) || gTitle(ga), y:ga.year} : null) : (WS.members.find(x => x._id === dev) || {}).rc;
+          const pic = dev === myId() ? (rc && ga.photo ? `<img data-ph="${esc(ga.photo)}" alt="">` : '') : (rc && okImg(rc.ph) ? `<img src="${okImg(rc.ph)}" alt="">` : '');
+          return (pic ? `<button class="crew-carpic" data-crewcar="${esc(dev)}" aria-label="Autofoto vergrößern">${pic}</button>` : mc && CAR_TYPES[mc.t] && CAR_COLORS[mc.c] ? `<div class="crew-car">${carSideSVG(mc.t, mc.c)}<span>${esc(CAR_TYPES[mc.t].name)} · ${esc(CAR_COLORS[mc.c].name)}</span></div>` : '') + (rc && rc.n ? `<div class="crew-rc">${svg(UI.car, 14)} Fährt ${esc(String(rc.n).slice(0, 40))}${rc.y ? ` · ${esc(String(rc.y).slice(0, 4))}` : ''}</div>` : ''); })()}${dev === myId() ? '<button class="txtbtn" data-crewme>Profilbild ändern</button>' : ''}${liveOf(dev) ? `<button class="btn live" data-crewlive="${esc(dev)}"><span class="lv-dot"></span>Live${liveOf(dev).v >= 6 ? ` · ${Math.round(liveOf(dev).v)} km/h` : ''} · Live-Stats ansehen</button>` : ''}</div>
       ${st ? `<div class="tstats">
         <div><b>${(weekKm(st, 0) || 0).toFixed(1).replace('.', ',')} km</b><span>Diese Woche</span></div>
         <div><b>${Math.round(st.km).toLocaleString('de-DE')} km</b><span>Gesamt</span></div>
@@ -2566,7 +2568,7 @@ function openCrew(dev){
       ${drives.length ? `<div class="st-h"><span>Geteilte Fahrten</span></div><div class="st-list">${drives.slice(0, 8).map(d => `<button class="st-row crew-link" data-crewdrv="${esc(d._id)}"><span class="k">${esc(d.name)}</span><span class="v">${fmtKmS(d.dist || 0)}<small>${new Date(d.created || d.at).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}</small></span></button>`).join('')}</div>` : ''}
       ${spots.length ? `<div class="st-h"><span>Geteilte Spots</span></div><div class="st-list">${spots.slice(0, 8).map(x => `<button class="st-row crew-link" data-crewspot="${esc(x._id)}"><span class="k">${esc(x.name)}</span><span class="v">${esc((x.cat && x.cat.name) || '')}</span></button>`).join('')}</div>` : ''}
     </div></div>`;
-  $('#modal').hidden = false;
+  $('#modal').hidden = false; fillPhotos($('#modal .crew-hero'));
   const ch = $('#crewChart');
   if(ch){
     const pick = k => { ch.querySelectorAll('.bar').forEach(b => b.classList.toggle('on', +b.dataset.cw === k)); const x = vals[k]; $('#crewCap').textContent = `${x.i === 0 ? 'Diese Woche' : 'Woche ab ' + new Date(weekStart(Date.now() - x.i * 7 * 864e5)).toLocaleDateString('de-DE', {day:'numeric', month:'short'})} ${x.v.toFixed(1).replace('.', ',')} km`; };
@@ -2579,6 +2581,7 @@ $('#modal').addEventListener('click', e => {
   if(!$('#modal .crew-dlg')){ crewOpen = null; return; }
   if(e.target.id === 'modal' || e.target.closest('[data-crewx]')){ crewOpen = null; $('#modal').hidden = true; return; }
   const av = e.target.closest('[data-crewav]'); if(av){ zoomAvatar(av.dataset.crewav); return; }
+  const cp = e.target.closest('[data-crewcar]'); if(cp){ const im = cp.querySelector('img'); if(im && im.src){ $('#lightbox').innerHTML = `<img src="${esc(im.src)}" alt=""><button class="lb-x" aria-label="Schließen">${svg(UI.close, 18, 2.4)}</button>`; $('#lightbox').hidden = false; } return; }
   if(e.target.closest('[data-crewme]')){ $('#avFile').click(); return; }
   const lv = e.target.closest('[data-crewlive]'); if(lv){ crewOpen = null; $('#modal').hidden = true; openLiveCard(lv.dataset.crewlive); return; }
   const dv = e.target.closest('[data-crewdrv]'); if(dv){ crewOpen = null; $('#modal').hidden = true; openWsDrive(dv.dataset.crewdrv); return; }
@@ -3327,7 +3330,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.12.01';
+const VERSION = '2026.10.12.02';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -3985,7 +3988,7 @@ function openGarage(){
           <span class="gkm">${fmtNum(gKm(c))} km${gTracks(c).length ? ` · ${gTracks(c).length} Fahrt${gTracks(c).length === 1 ? '' : 'en'} aufgezeichnet` : ''}</span><span class="gdues">${gDueHTML(c)}</span></span></button>`).join('')
       : `<div class="empty"><b>Noch kein Auto in der Garage</b>Leg dein Auto an – mit Kilometerstand, TÜV und Service-Erinnerung. Aufgezeichnete Fahrten zählen automatisch dazu.</div>`}
       <button class="btn primary" data-g="new">${svg(UI.plus, 15)} Auto hinzufügen</button>
-      ${garage.cars.length ? `<button class="set-row${prefs.gShare !== false ? ' on' : ''}" data-g="share" role="switch" aria-checked="${prefs.gShare !== false}" style="border-radius:14px;background:var(--solid);border:1px solid var(--line)"><span>Marke und Modell in der Crew zeigen<small>Vom aktiven Auto, z. B. im Profil</small></span><i class="tg"></i></button>` : ''}
+      ${garage.cars.length ? `<button class="set-row${prefs.gShare !== false ? ' on' : ''}" data-g="share" role="switch" aria-checked="${prefs.gShare !== false}" style="border-radius:14px;background:var(--solid);border:1px solid var(--line)"><span>Auto in der Crew zeigen<small>Foto, Marke und Modell vom aktiven Auto im Profil</small></span><i class="tg"></i></button>` : ''}
     </div></div>`;
   $('#modal').hidden = false; fillPhotos($('#modal'));
 }
