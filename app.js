@@ -229,8 +229,9 @@ function onMapStyle(){
   map.addLayer({id:'nav-alt-case', type:'line', source:'nav-alt', layout:rl, paint:{'line-color':'#0b2f57', 'line-width':9, 'line-opacity':.55}});
   map.addLayer({id:'nav-alt-line', type:'line', source:'nav-alt', layout:rl, paint:{'line-color':'#8fa3bf', 'line-width':5.5, 'line-opacity':.85}});
   map.addLayer({id:'nav-alt-hit', type:'line', source:'nav-alt', layout:rl, paint:{'line-color':'#000', 'line-width':24, 'line-opacity':0}});
-  map.addLayer({id:'nav-route-case', type:'line', source:'nav-route', layout:rl, paint:{'line-color':'#0b2f57', 'line-width':12, 'line-opacity':.9}});
-  map.addLayer({id:'nav-route-line', type:'line', source:'nav-route', layout:rl, paint:{'line-color':'#4da3ff', 'line-width':7.5}});
+  // eigene Farbe für die Route (kräftiges Blau mit weißem Rand) – nie dieselbe wie Straßen oder die Akzentfarbe
+  map.addLayer({id:'nav-route-case', type:'line', source:'nav-route', layout:rl, paint:{'line-color':'#ffffff', 'line-width':13, 'line-opacity':.95}});
+  map.addLayer({id:'nav-route-line', type:'line', source:'nav-route', layout:rl, paint:{'line-color':'#1a73ff', 'line-width':8.5}});
   map.addSource('nav-wx', {type:'geojson', data:FC([])});
   map.addLayer({id:'nav-wx-ice', type:'line', source:'nav-wx', layout:rl, filter:['in', ['get', 'k'], ['literal', ['ice', 'frost', 'snow']]], paint:{'line-color':['get', 'c'], 'line-width':7.5}});
   map.addLayer({id:'nav-wx-rain', type:'line', source:'nav-wx', layout:rl, filter:['in', ['get', 'k'], ['literal', ['rain', 'heavy']]], paint:{'line-color':'#ffffff', 'line-width':['case', ['==', ['get', 'k'], 'heavy'], 3.6, 3], 'line-dasharray':[.5, 1.7], 'line-opacity':.95}});
@@ -3326,7 +3327,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.09.03';
+const VERSION = '2026.10.12.01';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -3340,7 +3341,7 @@ function applyTheme(){
   root.style.setProperty('--accent-soft', `color-mix(in srgb, ${col} 16%, transparent)`);
   root.style.setProperty('--accent-fg', th === 'dark' && ['vanille','teal','green','orange'].includes(ACCENTS[prefs.accent] ? prefs.accent : 'vanille') ? '#0b2540' : '#ffffff');
   const m = document.querySelector('meta[name="theme-color"]'); if(m) m.content = th === 'light' ? '#efece3' : '#06111d';
-  if(mapReady){ try{ map.setPaintProperty('acc-fill', 'fill-color', col); map.setPaintProperty('acc-line', 'line-color', col); map.setPaintProperty('nav-route-line', 'line-color', col); }catch(e){} }
+  if(mapReady){ try{ map.setPaintProperty('acc-fill', 'fill-color', col); map.setPaintProperty('acc-line', 'line-color', col); }catch(e){} }
 }
 if(darkMQ.addEventListener) darkMQ.addEventListener('change', () => { if(prefs.theme === 'auto') applyTheme(); });
 function openSettings(){
@@ -3363,6 +3364,7 @@ function renderSettings(){
       <div class="set-sec">Fahren</div>
       <div class="set-card">
         ${tg('recCockpit', 'Aufzeichnen öffnet Cockpit', 'Ein Tipp, direkt losfahren')}
+        ${tg('navRec', 'Navi zeichnet auf', 'Fahrten mit Navigation automatisch als Fahrt speichern')}
         <div class="set-row"><span>Nachtmodus<small>Cockpit dunkel ab Sonnenuntergang</small></span><div class="set-seg">${[['auto','Auto'],['on','An'],['off','Aus']].map(([k, n]) => `<button data-st="cknight" data-v="${k}" class="${(prefs.ckNight || 'auto') === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
         <div class="set-row"><span>Kamera<small>im Cockpit</small></span><div class="set-seg">${[['near','Nah'],['normal','Normal'],['far','Weit']].map(([k, n]) => `<button data-st="cam" data-v="${k}" class="${cam === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
         <button class="set-row" data-st="garage"><span>Garage${garage.cars.some(c => gDue(c).some(d => d.lvl >= 1)) ? '<i class="gdot"></i>' : ''}<small>${gActive() ? `${esc(gTitle(gActive()))} · ${fmtNum(gKm(gActive()))} km` : 'Deine echten Autos, TÜV und Service'}</small></span>${chev}</button>
@@ -3685,7 +3687,7 @@ function ckNightCheck(force){
    Jedes Gerät sichert für sich; beim Wiederherstellen werden alle Backups der Person zusammengeführt. */
 var bk = {sent:{}, at:0, n:null, busy:false, err:null, prog:''};
 try{ Object.assign(bk, JSON.parse(localStorage.getItem('meine-spots-bk') || '{}'), {busy:false, err:null, prog:''}); }catch(e){}
-const BK_COL = 'drives', BK_CHUNK = 700000, BK_PREFS = ['myName', 'avatar', 'carType', 'carColor', 'accent', 'theme', 'labels', 'base', 'terrain', 'wayPlaces', 'wayGeo', 'navMode', 'cam', 'car3d', 'gforce', 'recCockpit', 'shareStats', 'gShare'];
+const BK_COL = 'drives', BK_CHUNK = 700000, BK_PREFS = ['myName', 'avatar', 'carType', 'carColor', 'accent', 'theme', 'labels', 'base', 'terrain', 'wayPlaces', 'wayGeo', 'navMode', 'cam', 'car3d', 'gforce', 'recCockpit', 'navRec', 'shareStats', 'gShare'];
 function bkSave(){ try{ localStorage.setItem('meine-spots-bk', JSON.stringify({sent:bk.sent, at:bk.at, n:bk.n, dev:bk.dev, code:bk.code})); }catch(e){} }
 function bkDirty(){ try{ localStorage.setItem('meine-spots-bk-dirty', '1'); }catch(e){} clearTimeout(window.__bkT); window.__bkT = setTimeout(() => { try{ bkRun(); }catch(e){} }, 40000); }
 const bkOn = () => !!(FB && grp() && prefs.bk !== false && window.crypto && crypto.subtle);
@@ -4569,6 +4571,7 @@ map.on('dragstart', () => { followMe = false; });
 map.on('zoomstart', e => { if(e.originalEvent) followMe = false; });
 
 function updateRecUI(){
+  if(document.getElementById('navRec')) navRecUI();
   const bar = $('#recbar'), active = rec && !rec.stopped;
   bar.hidden = !active;
   if(!active) return;
@@ -8311,11 +8314,21 @@ function startNav(){
   nav.active = true; document.body.classList.add('nav');
   enterCockpit();
   if(!ckOn){ endNav(); return; }
-  renderNav();
+  if(onOff('navRec') && !rec){ startRec(); if(rec){ nav.autoRec = true; toast('Fahrt wird aufgezeichnet – gute Fahrt'); } }
+  renderNav(); navRecUI();
+}
+// Aufnahme-Knopf im Navi (oben in der Leiste ist im Navi kein Platz)
+function navRecUI(){
+  let b = $('#navRec');
+  if(!b){ b = document.createElement('button'); b.id = 'navRec'; b.className = 'glass'; b.addEventListener('click', () => { if(rec && !rec.stopped){ if(nav) nav.autoRec = false; stopRec(); } else startRec(); setTimeout(navRecUI, 50); }); document.body.appendChild(b); }
+  const on = !!(rec && !rec.stopped);
+  b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', on ? 'Aufnahme beenden' : 'Fahrt aufnehmen');
+  b.innerHTML = `<span class="rdot"></span><b>${on ? 'Aufnahme' : 'Aufnehmen'}</b>`;
 }
 function endNav(fromExit, keepCk){
   if(!nav) return;
-  const wasActive = nav.active;
+  const wasActive = nav.active, autoRec = nav.autoRec;
+  if(autoRec && rec && !rec.stopped) setTimeout(() => { if(rec && !rec.stopped) stopRec(); }, 0);   // automatisch gestartete Aufnahme endet mit der Navi → Speichern anbieten
   nav = null; navPrevOn = false; navStopMarks(); navSightMk.forEach(m => m.remove()); navSightMk = [];
   document.body.classList.remove('nav', 'navprev');
   setSrc('nav-route', FC([])); setSrc('nav-wx', FC([])); setSrc('nav-wild', FC([])); setSrc('nav-block', FC([])); setSrc('nav-alt', FC([]));
