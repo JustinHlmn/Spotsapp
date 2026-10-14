@@ -2261,7 +2261,7 @@ async function wsSync(force){
       if(meDoc.car && !prefs.carType && CAR_TYPES[meDoc.car.t]){ prefs.carType = meDoc.car.t; prefs.carColor = meDoc.car.c; }
       delete prefs.linkAdopt; savePrefs();
     }
-    await pushBests(); await pushMember();
+    await pushBests(); await pushMember(); await wsFixDriveTops().catch(() => {});
     wsCache(); feedNotify(); evLiveCheck();
   }catch(e){ WS.err = 'Crew gerade nicht erreichbar. Prüfe dein Internet.'; }
   WS.busy = false; wsRefreshUI();
@@ -3152,6 +3152,14 @@ async function wsUploadDrive(t){
     if(view === 'track') renderTrackView();
   }catch(e){ toast(/403/.test(e.message) ? 'Teilen geht in dieser Crew gerade nicht.' : 'Teilen hat nicht geklappt. Prüfe dein Internet.'); }
 }
+async function wsFixDriveTops(){   // korrigierter Top-Speed (z. B. Tunnel-Ausreißer) auch in schon geteilten Fahrten
+  for(const d of WS.drives.filter(x => x.dev === myId())){
+    const t = tracks.find(x => x.ws === d._id); if(!t || Math.abs((d.maxSpd || 0) - (t.maxSpd || 0)) < .5) continue;
+    const f = await fsGet('drives', d._id), {_id, _t, ...obj} = f;
+    obj.maxSpd = t.maxSpd; const meta = {...d, maxSpd:t.maxSpd}; delete meta._id; delete meta._t;
+    await fsPut('drives', d._id, obj, meta); wsUpsert(WS.drives, {...meta, _id:d._id}); wsTrackObjs.delete(d._id);
+  }
+}
 async function wsRemoveDrive(t){
   try{
     await fsDel('drives', t.ws);
@@ -3358,7 +3366,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.12.04';
+const VERSION = '2026.10.14.01';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4422,6 +4430,7 @@ try{ const raw = localStorage.getItem(TKEY); if(raw){ tracks = sjson(raw); track
   tracksReady = true;
   if(tracksLS || !Array.isArray(stored)) await tracksWrite();
   if(tracksLS){ try{ if(Array.isArray(await KV.get('tracks'))) localStorage.removeItem(TKEY); }catch(e){} }
+  if(fixTopSpeeds()) await tracksWrite();
   riskCache = new WeakMap(); riskSig = tracksSig(); riskWarm();
   try{ if(stored && stored.length){ renderList(); if(tab === 'tracks') renderTracksHead(); updateTrackLayers(); } }catch(e){}
 })();
@@ -4431,6 +4440,52 @@ async function tracksWrite(){
     try{ localStorage.setItem(TKEY, JSON.stringify(tracks)); tracksLS = true; return true; }
     catch(_){ toast('Fahrten konnten nicht gespeichert werden – Speicher voll. Exportiere deine Daten.'); return false; }
   }
+}
+/* Tempo-Plausibilität: GPS-Ausreißer (Tunnel, Häuserschluchten) erzeugen weder Tempo noch Top-Speed.
+   Geglaubt wird nur, was genau genug ist, zur Bewegung passt und nicht schneller zunimmt, als ein Auto beschleunigen kann.
+   Für den Top-Speed muss ein Tempo zwei Messungen hintereinander gehalten werden. */
+const SPD_CAP = 92, SPD_ACC = 9;   // m/s (≈ 330 km/h) und m/s² (≈ 0,9 g)
+function spdGuard(){
+  let ok = null, lastPt = null;
+  return (c, ts) => {
+    const pt = {lat:c.latitude, lng:c.longitude}, good = c.accuracy != null && c.accuracy <= 25;
+    let pos = null;
+    if(lastPt && good){ const dt = (ts - lastPt.ts) / 1000; if(dt >= .8 && dt <= 10) pos = dist(lastPt, pt) / dt; }
+    if(good) lastPt = {...pt, ts};
+    const v = c.speed != null && !isNaN(c.speed) && c.speed >= 0 ? c.speed : pos;
+    if(v == null || !good || v > SPD_CAP || (pos != null && v > pos * 1.5 + 6)) return {v:null, top:0};
+    const fresh = ok && ts - ok.ts <= 4000;
+    if(fresh && (v - ok.v) / Math.max(1, (ts - ok.ts) / 1000) > SPD_ACC) return {v:null, top:0};
+    const top = fresh ? Math.min(v, ok.v) : 0;
+    const shown = fresh || v < 25 ? v : null;   // erste Messung nach einer Lücke (z. B. Tunnel) erst mal nur merken
+    ok = {v, ts};
+    return {v:shown, top};
+  };
+}
+/* Top-Speed aus den Punkten einer Fahrt: höchstes Tempo, das rund 10 s gehalten wurde */
+function trackTopSpd(t){
+  let top = 0;
+  for(const sg of t.segs || []){
+    if(!sg || sg.length < 3) continue;
+    const cd = [0]; for(let i = 1; i < sg.length; i++) cd.push(cd[i - 1] + dist({lng:sg[i - 1][0], lat:sg[i - 1][1]}, {lng:sg[i][0], lat:sg[i][1]}));
+    const win = i => { let j = i + 1; while(j < sg.length && sg[j][2] - sg[i][2] < 5) j++; if(j >= sg.length) return null; const dt = sg[j][2] - sg[i][2]; return dt <= 12 ? {v:(cd[j] - cd[i]) / dt, j} : null; };
+    for(let i = 0; i < sg.length; i++){
+      const a = win(i); if(!a) continue; const b = win(a.j); if(!b) continue;
+      const v = Math.min(a.v, b.v); if(v <= SPD_CAP && v > top) top = v;
+    }
+  }
+  return top;
+}
+function fixTopSpeeds(){   // alte Fahrten mit Tunnel-Ausreißern einmalig korrigieren
+  let n = 0;
+  for(const t of tracks){
+    if(t.spdChk || !t.segs) continue;
+    t.spdChk = 1; n++;
+    const top = trackTopSpd(t);
+    if(top > 3 && (t.maxSpd || 0) > top * 1.25 + 5) t.maxSpd = +top.toFixed(2);
+    else if((t.maxSpd || 0) > SPD_CAP) t.maxSpd = top > 3 ? +top.toFixed(2) : 0;
+  }
+  return n;
 }
 let rec = null, recWatch = null, recTick = null, wake = null, followMe = true, lastPersist = 0;
 let tab = 'spots', selTrack = null, trackRenaming = false, trackDelArmed = false, discardArmed = false;
@@ -4578,8 +4633,9 @@ function stopRec(){
 function onRecPos(p){
   feedLive(p);
   if(!rec || !rec.runFrom) return;
-  const c = p.coords, ts = p.timestamp || Date.now();
-  if(!ckOn) gGpsFix(c.speed != null && c.speed >= 0 ? c.speed : 0, c.heading != null && !isNaN(c.heading) ? c.heading : null, ts);
+  const c = p.coords, ts = p.timestamp || Date.now(), sv = (rec.sg || (rec.sg = spdGuard()))(c, ts);
+  if(sv.top > rec.maxSpd) rec.maxSpd = sv.top;
+  if(!ckOn && sv.v != null) gGpsFix(sv.v, c.heading != null && !isNaN(c.heading) ? c.heading : null, ts);
   if(c.accuracy > 35){ if(!rec.weak){ rec.weak = true; updateRecUI(); } return; }
   if(rec.weak){ rec.weak = false; updateRecUI(); }
   const pt = {lat:c.latitude, lng:c.longitude};
@@ -4588,8 +4644,6 @@ function onRecPos(p){
     if(d < Math.max(5, c.accuracy * .4)) return;
     if(dt > 0 && d / dt > 70) return; // GPS-Sprung
     rec.dist += d;
-    const spd = (c.speed != null && c.speed >= 0) ? c.speed : (dt >= 2 ? d / dt : 0);
-    if(spd > rec.maxSpd && c.accuracy <= 20) rec.maxSpd = spd;
   }
   const q = [+pt.lng.toFixed(6), +pt.lat.toFixed(6), Math.round((ts - rec.start) / 100) / 10], gp = gTake();
   if(gp) q.push(+gp[0].toFixed(2), +gp[1].toFixed(2));
@@ -4680,7 +4734,7 @@ function openTrackSave(){
 $('#trackSaveView').addEventListener('click', e => {
   const b = e.target.closest('[data-ts]'); if(!b || !rec) return;
   if(b.dataset.ts === 'save'){
-    const t = {id:rec.id, name:($('#t-name').value.trim() || $('#t-name').defaultValue || 'Fahrt'), created:rec.start, dist:Math.round(rec.dist), dur:rec.active, maxSpd:rec.maxSpd,
+    const t = {spdChk:1, id:rec.id, name:($('#t-name').value.trim() || $('#t-name').defaultValue || 'Fahrt'), created:rec.start, dist:Math.round(rec.dist), dur:rec.active, maxSpd:rec.maxSpd,
                segs:rec.segs.filter(sg => sg.length)};
     if(rec.g && (rec.g.lat || rec.g.brake || rec.g.acc)) t.g = rec.g;
     if(garage.cars.length && gCar(tsCar || garage.active)) t.car = tsCar || garage.active;
@@ -6045,17 +6099,16 @@ function exitCockpit(){
 function onDrivePos(p){
   if(!ckOn) return;
   const c = p.coords, ts = p.timestamp || Date.now(), pt = {lat:c.latitude, lng:c.longitude};
-  let v = (c.speed != null && !isNaN(c.speed) && c.speed >= 0) ? c.speed : null;
+  const sv = (ck.sg || (ck.sg = spdGuard()))(c, ts), v = sv.v;
   let d = 0, dt = 0;
   if(ck.last){ d = dist(ck.last, pt); dt = (ts - ck.last.ts) / 1000; }
-  if(v == null && ck.last && dt >= .8) v = d / dt;
   if(v != null) ck.v = ck.v == null ? v : ck.v * .35 + v * .65;
   let h = (c.heading != null && !isNaN(c.heading) && (ck.v || 0) > 1.4) ? c.heading : null;
   if(h == null && ck.last && d > 4 && (ck.v || 0) > 1.4) h = bearing(ck.last, pt);
   if(h != null) ck.h = h;
   gGpsFix(ck.v || 0, (ck.v || 0) > 1.4 ? ck.h : null, ts);
   if(ck.last && c.accuracy <= 35 && d >= 3 && (dt <= 0 || d / dt < 70)) ck.dist += d;
-  if(ck.v != null && c.accuracy <= 25 && ck.v > ck.max && ck.v < 70) ck.max = ck.v;
+  if(sv.top > ck.max) ck.max = sv.top;
   if(!ck.last || d >= 3 || dt > 5) ck.last = {...pt, ts};
   ck.ts = Date.now();
   onPos(p);
