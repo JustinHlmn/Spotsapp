@@ -160,7 +160,7 @@ Spots ist eine deutsche Web-App (PWA) für Autofahrer und ihre Crew: Spots auf d
   - **Aufnahme startet automatisch** (Einstellung `navRec`), Knopf `#navRec`. Beim Ende wird Speichern angeboten.
   - X fragt „Beenden?“ und beendet nur die Navi, das Cockpit bleibt.
 - Cockpit:
-  - Tempo, Tempolimit (OSM), Straßenwetter- und Wildwechsel-Chip, Nachtmodus nach Dämmerung, 3D-Auto (three.js).
+  - Tempo, Tempolimit (OSM, vorausschauend geladen, mehrere Abschnitte im Speicher, versteht `DE:urban` usw.), Straßenwetter- und Wildwechsel-Chip, Nachtmodus nach Dämmerung, 3D-Auto (three.js).
   - 3D-Gelände ist im Cockpit und in der Navi aus (flach), danach wieder an.
 - Kurvige Rundtour: Dauer 30 Min bis 2 h, Richtung, kurvige Straßen aus OSM.
 

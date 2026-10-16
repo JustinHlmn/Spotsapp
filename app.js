@@ -3366,7 +3366,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.14.01';
+const VERSION = '2026.10.16.01';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -7202,67 +7202,114 @@ function updateGhost(){
   ghostM.setLngLat(LL(pos)); ghostM.setRotation(brg);
 }
 
-/* ================= Tempolimit (OpenStreetMap) ================= */
-let limitCache = null, limitBusy = false, limitLastQ = 0, limitNow = null, limitWay = null;
+/* ================= Tempolimit (OpenStreetMap) =================
+   Straßen werden vorausschauend in Fahrtrichtung geladen (Kreis 900 m, Mitte 350 m voraus); die letzten Abschnitte bleiben im Speicher,
+   damit beim Nachladen keine Lücke entsteht. Kurze Aussetzer (Kreuzung, GPS-Wackler, Server langsam) lassen das letzte Schild kurz stehen. */
+let limitCaches = [], limitBusy = false, limitLastQ = 0, limitWait = 8000, limitSrv = 0, limitNow = null, limitWay = null, limitSeen = null;
 const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
-async function limitFetch(pt){
-  if(limitBusy || Date.now() - limitLastQ < 10000) return;
+const LIM_R = 900, LIM_AHEAD = 350;
+function limitAhead(pt){
+  const h = (ck.v || 0) > 2 ? ck.h : null; if(h == null) return pt;
+  const r = h * Math.PI / 180;
+  return {lat:pt.lat + Math.cos(r) * LIM_AHEAD / 110540, lng:pt.lng + Math.sin(r) * LIM_AHEAD / (111320 * Math.cos(pt.lat * Math.PI / 180))};
+}
+const limitHas = (pt, margin) => limitCaches.some(L => dist(L.c, pt) < LIM_R - margin);
+async function limitFetch(at){
+  if(limitBusy || Date.now() - limitLastQ < limitWait) return;
   limitBusy = true; limitLastQ = Date.now();
-  const q = `[out:json][timeout:12];way(around:500,${pt.lat.toFixed(5)},${pt.lng.toFixed(5)})[highway~"^(motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link|unclassified|residential|living_street|road)$"];out tags geom;`;
-  for(const base of OVERPASS){
+  const q = `[out:json][timeout:15];way(around:${LIM_R},${at.lat.toFixed(5)},${at.lng.toFixed(5)})[highway~"^(motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link|unclassified|residential|living_street|road)$"];out tags geom;`;
+  let ok = false;
+  for(let k = 0; k < OVERPASS.length && !ok; k++){
+    const i = (limitSrv + k) % OVERPASS.length;
     try{
-      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 14000);
-      const r = await fetch(`${base}?data=${encodeURIComponent(q)}`, {signal:ctl.signal});
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 17000);
+      const r = await fetch(`${OVERPASS[i]}?data=${encodeURIComponent(q)}`, {signal:ctl.signal});
       clearTimeout(to);
       if(!r.ok) continue;
       const j = await r.json();
-      const kx = Math.cos(pt.lat * Math.PI / 180) * 111320, ky = 110540;
-      limitCache = {c:{...pt}, kx, ky, ways:(j.elements || []).filter(w => w.geometry && w.geometry.length > 1).map(w => ({id:w.id, tags:w.tags || {}, xy:w.geometry.map(g => [(g.lon - pt.lng) * kx, (g.lat - pt.lat) * ky])}))};
-      break;
+      if(j.remark && /error|timed out|timeout|out of memory|too many/i.test(j.remark)) continue;   // Überlastung kommt als 200 mit leerer Liste
+      const kx = Math.cos(at.lat * Math.PI / 180) * 111320, ky = 110540;
+      const ways = (j.elements || []).filter(w => w.geometry && w.geometry.length > 1).map(w => ({id:w.id, tags:w.tags || {}, xy:w.geometry.map(g => [(g.lon - at.lng) * kx, (g.lat - at.lat) * ky])}));
+      limitCaches = [{c:{lat:at.lat, lng:at.lng}, kx, ky, ways}, ...limitCaches].slice(0, 4);
+      limitSrv = i; ok = true;
     }catch(e){}
   }
+  limitWait = ok ? 8000 : Math.min(60000, Math.round(limitWait * 1.6));   // bei Störung seltener fragen
   limitBusy = false;
+}
+/* Länder-Kürzel wie „DE:urban“ (OSM). Nur Werte, die ohne Schild eindeutig gelten. */
+const LIM_ZONE = {
+  DE:{urban:50, rural:100, motorway:'none', living_street:'walk', bicycle_road:30},
+  AT:{urban:50, rural:100, motorway:130, living_street:'walk'},
+  CH:{urban:50, rural:80, motorway:120, living_street:20},
+  IT:{urban:50, rural:90, motorway:130},
+  FR:{urban:50, rural:80, motorway:130},
+  NL:{urban:50, rural:80, motorway:100},
+  CZ:{urban:50, rural:90, motorway:130},
+  PL:{urban:50, rural:90, motorway:140}
+};
+function zoneLimit(z){
+  if(!z) return null;
+  z = String(z).split(';')[0].trim(); let m;
+  if((m = z.match(/^[A-Z]{2}:zone:?(\d{1,3})$/i)) || (m = z.match(/^[A-Z]{2}:(\d{1,3})$/i))) return m[1];
+  if((m = z.match(/^([A-Z]{2}):([a-z_]+)$/i))){ const t = LIM_ZONE[m[1].toUpperCase()], v = t && t[m[2].toLowerCase()]; return v == null ? null : String(v); }
+  return null;
 }
 function parseLimit(tags, forward){
   let v = tags['maxspeed:' + (forward ? 'forward' : 'backward')] || tags.maxspeed;
+  if(v){ v = String(v).split(';')[0].trim(); if(!/^(\d|none$|walk$)/.test(v)) v = zoneLimit(v); }
   if(!v){
     const z = tags['zone:maxspeed'] || tags['source:maxspeed'] || tags['maxspeed:type'] || '';
-    if(/urban/i.test(z)) v = '50'; else if(/rural/i.test(z)) v = '100'; else if(/motorway/i.test(z)) v = 'none';
-    else { const m = z.match(/(\d{2,3})/); if(m) v = m[1]; }
+    v = zoneLimit(z);
+    if(!v){
+      if(/urban/i.test(z)) v = '50'; else if(/rural/i.test(z)) v = '100'; else if(/motorway/i.test(z)) v = 'none';
+      else { const m = z.match(/(\d{2,3})/); if(m) v = m[1]; }
+    }
   }
   if(!v && tags.highway === 'motorway') v = 'none';
   if(!v && tags.highway === 'living_street') v = 'walk';
   if(!v) return null;
-  v = String(v).split(';')[0].trim();
+  v = String(v).trim();
   if(v === 'none') return {none:true};
   if(v === 'walk') return {v:7};
-  const m = v.match(/^(\d+)\s*(mph)?/); if(!m) return null;
+  const m = v.match(/^(\d+)\s*(mph)?/); if(!m || +m[1] < 5) return null;
   return {v:m[2] ? Math.round(+m[1] * 1.609) : +m[1]};
 }
 function limitFix(pt){
   if(!ckOn) return;
-  if(!limitCache || dist(limitCache.c, pt) > 350) limitFetch(pt);
-  if(!limitCache){ showLimit(null); return; }
-  const L = limitCache, p = [(pt.lng - L.c.lng) * L.kx, (pt.lat - L.c.lat) * L.ky], h = (ck.v || 0) > 2 ? ck.h : null;
+  const ah = limitAhead(pt);
+  if(!limitHas(pt, 150) || !limitHas(ah, 250)) limitFetch(ah);
+  const h = (ck.v || 0) > 2 ? ck.h : null;
   let best = null;
-  for(const w of L.ways){
-    const ow = w.tags.oneway === 'yes' || /^motorway/.test(w.tags.highway) || w.tags.junction === 'roundabout';
-    for(let i = 1; i < w.xy.length; i++){
-      const a = w.xy[i-1], b = w.xy[i], dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx*dx + dy*dy; if(!l2) continue;
-      const f = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2));
-      const d = Math.hypot(a[0] + f * dx - p[0], a[1] + f * dy - p[1]); if(d > 30) continue;
-      const sb = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;
-      let diff = h == null ? 0 : Math.abs(((h - sb + 540) % 360) - 180);
-      const forward = diff <= 90;
-      let pen = 0;
-      if(h != null){ const dd = ow ? diff : Math.min(diff, 180 - diff); if(dd > 40) pen = ow && diff > 120 ? 60 : 25; }
-      const score = d + pen - (limitWay === w.id ? 6 : 0);
-      if(!best || score < best.score) best = {score, w, forward};
+  for(const L of limitCaches){
+    if(dist(L.c, pt) > LIM_R + 400) continue;
+    const p = [(pt.lng - L.c.lng) * L.kx, (pt.lat - L.c.lat) * L.ky];
+    for(const w of L.ways){
+      const ow = w.tags.oneway === 'yes' || /^motorway/.test(w.tags.highway) || w.tags.junction === 'roundabout';
+      for(let i = 1; i < w.xy.length; i++){
+        const a = w.xy[i-1], b = w.xy[i], dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx*dx + dy*dy; if(!l2) continue;
+        const f = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2));
+        const d = Math.hypot(a[0] + f * dx - p[0], a[1] + f * dy - p[1]); if(d > 30) continue;
+        const sb = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;
+        const diff = h == null ? 0 : Math.abs(((h - sb + 540) % 360) - 180);
+        const forward = diff <= 90;
+        let pen = 0;
+        if(h != null){ const dd = ow ? diff : Math.min(diff, 180 - diff); if(dd > 40) pen = ow && diff > 120 ? 60 : 25; }
+        const score = d + pen - (limitWay === w.id ? 6 : 0);
+        if(!best || score < best.score) best = {score, w, forward};
+      }
     }
   }
-  if(!best || best.score > 35){ showLimit(null); return; }
-  limitWay = best.w.id;
-  showLimit(parseLimit(best.w.tags, best.forward));
+  const now = Date.now();
+  if(best && best.score <= 35){
+    limitWay = best.w.id;
+    const l = parseLimit(best.w.tags, best.forward);
+    limitSeen = l ? {t:now, pt:{lat:pt.lat, lng:pt.lng}} : null;
+    showLimit(l); return;
+  }
+  // keine Straße erkannt: kurz das letzte Schild halten (länger, solange die Daten noch geladen werden)
+  const have = limitHas(pt, 0);
+  if(!(limitSeen && now - limitSeen.t < (have ? 6000 : 20000) && dist(limitSeen.pt, pt) < (have ? 150 : 500))) showLimit(null);
 }
 function showLimit(l){
   limitNow = l;
