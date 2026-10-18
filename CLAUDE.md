@@ -130,6 +130,10 @@ Spots ist eine deutsche Web-App (PWA) für Autofahrer und ihre Crew: Spots auf d
   - Wird alle 2 s, beim Verbergen und bei `pagehide` gesichert und nach einem Absturz wiederhergestellt.
   - Im Hintergrund pausiert das GPS: das iPhone erlaubt Web-Apps kein Tracking im Hintergrund.
 - „Meine“: Liste mit Lieblingen (Stern, Filter, auf der Karte gold) und einer Death List mit Rangliste.
+- Death List und Risk-Score (`analyzeTrack`, `trackRisk`):
+  - `cleanSeg()` wirft GPS-Ausreißer raus (Tempo ±18 m/s², quer 20 m/s² zwischen zwei Schritten, über Lücken > 5 s kein Urteil).
+  - Querkraft aus GPS über ≥ 20 m und ≥ 2 Punkte je Seite, G aus GPS höchstens 1,1. Spitzen und harte Manöver zählen nur, wenn sie über zwei Punkte anliegen.
+  - Death List erst ab 2 km (`DL_MIN`). Top-Speed überall = `maxSpd`; Punkt-Tempo wird daran gedeckelt.
 - Fahrt-Detail:
   - Distanz, Dauer, Ø, Max, Fahrbedingungen (Nacht, Regen, Glätte über Open-Meteo-Archiv), Risk-Karte, Wege, Neuland.
   - Vergleich mit gleichen Fahrten, Tempo-Verlauf und Sektoren, Replay.

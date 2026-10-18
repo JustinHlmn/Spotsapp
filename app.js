@@ -3366,7 +3366,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.16.01';
+const VERSION = '2026.10.18.01';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -5640,21 +5640,54 @@ const TRAMP = ['#22c55e', '#a3e635', '#facc15', '#f97316', '#ef4444'];   // Lini
 const rampExpr = () => ['interpolate', ['linear'], ['coalesce', ['get', 'k'], .5], 0, TRAMP[0], .25, TRAMP[1], .5, TRAMP[2], .75, TRAMP[3], 1, TRAMP[4]];
 const tCol = k => { const i = Math.max(0, Math.min(.9999, k)) * (TRAMP.length - 1), a = Math.floor(i), f = i - a, h = x => [1, 3, 5].map(j => parseInt(x.slice(j, j + 2), 16)); const p = h(TRAMP[a]), q = h(TRAMP[a + 1]); return '#' + p.map((v, j) => Math.round(v + (q[j] - v) * f).toString(16).padStart(2, '0')).join(''); };
 const anCache = new WeakMap();
+/* GPS-Ausreißer entfernen (Tunnel, Häuserschluchten): behalten wird die längste Punktfolge, in der sich Tempo und Richtung
+   so ändern, wie ein Auto es kann (Tempo höchstens ±18 m/s² zwischen zwei Schritten, quer höchstens 20 m/s², beides mit
+   Reserve für normales GPS-Rauschen). Über GPS-Lücken (> 5 s) wird nicht geurteilt. Gleich viele Punkte: die ruhigere Folge gewinnt. */
+function cleanSeg(sg){
+  const n = sg.length; if(n < 5) return sg;
+  const W = 5, NEG = -Infinity, ll = q => ({lat:q[1], lng:q[0]}), S = new Map();
+  const st = (i, j) => { const k = i * W + (j - i - 1); let v = S.get(k); if(!v){ const dt = sg[j][2] - sg[i][2], d = dist(ll(sg[i]), ll(sg[j])); v = {dt, d, s:dt > 0 ? d / dt : Infinity, h:bearing(ll(sg[i]), ll(sg[j]))}; S.set(k, v); } return v; };
+  const cost = (h, i, j) => {   // 0 … 2 = plausibel, Infinity = unmöglich
+    const a = st(h, i), b = st(i, j); if(a.dt > 5 || b.dt > 5) return 0;
+    const dtm = (a.dt + b.dt) / 2, lon = Math.abs(b.s - a.s) / dtm; if(lon > 18) return Infinity;
+    let lat = 0;
+    if(a.d >= 15 && b.d >= 15){ lat = (a.s + b.s) / 2 * Math.abs(((b.h - a.h + 540) % 360) - 180) * Math.PI / 180 / dtm; if(lat > 20) return Infinity; }
+    return lon / 18 + lat / 20;
+  };
+  const val = new Float64Array(n * W).fill(NEG), prv = new Int32Array(n * W).fill(-1), at = (i, j) => j * W + (j - i - 1);
+  let best = NEG, bi = -1, bj = -1;
+  for(let j = 1; j < n; j++) for(let i = Math.max(0, j - W); i < j; i++){
+    const a = st(i, j); if(!(a.dt > 0) || a.s > SPD_CAP) continue;
+    let v = 2e6, bp = -1;
+    for(let h = Math.max(0, i - W); h < i; h++){
+      const pv = val[at(h, i)]; if(pv === NEG) continue;
+      const c = cost(h, i, j); if(c === Infinity) continue;
+      if(pv + 1e6 - c > v){ v = pv + 1e6 - c; bp = h; }
+    }
+    val[at(i, j)] = v; prv[at(i, j)] = bp;
+    if(v > best){ best = v; bi = i; bj = j; }
+  }
+  if(bj < 0) return sg;
+  const keep = [bj]; let i = bi, j = bj;
+  while(i >= 0){ keep.push(i); const h = prv[at(i, j)]; j = i; i = h; }
+  return keep.length >= n * .5 ? keep.reverse().map(k => sg[k]) : sg;   // nie mehr als die Hälfte verwerfen
+}
 let tvSel = -1, tvDown = false;
 function analyzeTrack(t){
   if(anCache.has(t)) return anCache.get(t);
   const P = []; let D = 0, TA = 0;
-  t.segs.forEach((sg, si) => sg.forEach((q, i) => {
+  t.segs.map(cleanSeg).forEach((sg, si) => sg.forEach((q, i) => {
     if(i){ const p = sg[i - 1]; D += dist({lat:p[1], lng:p[0]}, {lat:q[1], lng:q[0]}); TA += Math.max(0, q[2] - p[2]); }
     P.push({lng:q[0], lat:q[1], d:D, ta:TA, si, sl:q.length > 4 ? q[3] : null, sn:q.length > 4 ? q[4] : null});
   }));
   if(P.length < 3 || D < 30){ anCache.set(t, null); return null; }
-  // Tempo je Punkt, über ±2 Nachbarpunkte geglättet (km/h)
+  // Tempo je Punkt, über ±2 Nachbarpunkte geglättet (km/h); nie über dem gemessenen Top-Speed der Fahrt
+  const vCap = t.maxSpd > 0 ? t.maxSpd * 3.6 : SPD_CAP * 3.6;
   P.forEach((p, k) => {
     let j0 = k, j1 = k;
     for(let n = 0; n < 2; n++){ if(j0 > 0 && P[j0 - 1].si === p.si) j0--; if(j1 < P.length - 1 && P[j1 + 1].si === p.si) j1++; }
     const dt = P[j1].ta - P[j0].ta;
-    p.v = dt > .4 ? Math.min(400, (P[j1].d - P[j0].d) / dt * 3.6) : null;
+    p.v = dt > .4 ? Math.min(vCap, (P[j1].d - P[j0].d) / dt * 3.6) : null;
   });
   for(let k = 1; k < P.length; k++) if(P[k].v == null) P[k].v = P[k - 1].v;
   for(let k = P.length - 2; k >= 0; k--) if(P[k].v == null) P[k].v = P[k + 1].v;
@@ -5665,18 +5698,26 @@ function analyzeTrack(t){
     for(let n = 0; n < 2; n++){ if(j0 > 0 && P[j0 - 1].si === p.si) j0--; if(j1 < P.length - 1 && P[j1 + 1].si === p.si) j1++; }
     const A = P[j0], B = P[j1], dt = B.ta - A.ta, vm = p.v / 3.6;
     let lon = dt > .5 ? (B.v - A.v) / 3.6 / dt / 9.81 : 0, lat = 0;
-    if(j0 < k && j1 > k && vm > 3){
-      const ds = (B.d - A.d) / 2;
-      if(ds > 6){ const dh = ((bearing(p, B) - bearing(A, p) + 540) % 360) - 180; lat = vm * vm * (dh * Math.PI / 180) / ds / 9.81; }
+    // Kurve über mindestens 20 m und zwei Punkte vor und nach dem Punkt messen (zusammen ≥ 40 m), sonst macht GPS-Rauschen Querkraft
+    let a = k, b = k;
+    while(a > 0 && P[a - 1].si === p.si && (p.d - P[a].d < 20 || k - a < 2) && p.ta - P[a - 1].ta <= 10) a--;
+    while(b < P.length - 1 && P[b + 1].si === p.si && (P[b].d - p.d < 20 || b - k < 2) && P[b + 1].ta - p.ta <= 10) b++;
+    if(vm > 3 && p.d - P[a].d >= 20 && P[b].d - p.d >= 20 && k - a >= 2 && b - k >= 2){
+      const ds = (P[b].d - P[a].d) / 2, dh = ((bearing(p, P[b]) - bearing(P[a], p) + 540) % 360) - 180;
+      lat = vm * vm * (dh * Math.PI / 180) / ds / 9.81;
     }
-    p.glat = p.sl != null ? p.sl : Math.max(-1.5, Math.min(1.5, lat));
-    p.glon = p.sn != null ? p.sn : Math.max(-1.5, Math.min(1.5, lon));
+    p.glat = p.sl != null ? p.sl : Math.max(-1.1, Math.min(1.1, lat));
+    p.glon = p.sn != null ? p.sn : Math.max(-1.1, Math.min(1.1, lon));
   });
   const gSrc = P.some(p => p.sl != null) ? 'sensor' : 'gps';
+  // Spitzenwerte zählen nur, wenn sie über zwei Punkte hintereinander anliegen (ein einzelner Ausreißer reicht nicht)
+  P.forEach((p, k) => { const q = P[k + 1], ok = q && q.si === p.si;
+    p.hlat = ok && Math.sign(q.glat) === Math.sign(p.glat) ? Math.sign(p.glat) * Math.min(Math.abs(p.glat), Math.abs(q.glat)) : 0;
+    p.hlon = ok && Math.sign(q.glon) === Math.sign(p.glon) ? Math.sign(p.glon) * Math.min(Math.abs(p.glon), Math.abs(q.glon)) : 0; });
   let iLat = 0, iBr = 0, iAc = 0;
-  P.forEach((p, k) => { if(Math.abs(p.glat) > Math.abs(P[iLat].glat)) iLat = k; if(p.glon < P[iBr].glon) iBr = k; if(p.glon > P[iAc].glon) iAc = k; });
+  P.forEach((p, k) => { if(Math.abs(p.hlat) > Math.abs(P[iLat].hlat)) iLat = k; if(p.hlon < P[iBr].hlon) iBr = k; if(p.hlon > P[iAc].hlon) iAc = k; });
   const at = k => [P[k].lng, P[k].lat];
-  const gx = {src:gSrc, lat:{v:P[iLat].glat, at:at(iLat), kmh:P[iLat].v}, brake:{v:Math.max(0, -P[iBr].glon), at:at(iBr), kmh:P[iBr].v}, acc:{v:Math.max(0, P[iAc].glon), at:at(iAc), kmh:P[iAc].v}};
+  const gx = {src:gSrc, lat:{v:P[iLat].hlat, at:at(iLat), kmh:P[iLat].v}, brake:{v:Math.max(0, -P[iBr].hlon), at:at(iBr), kmh:P[iBr].v}, acc:{v:Math.max(0, P[iAc].hlon), at:at(iAc), kmh:P[iAc].v}};
   if(t.g){   // Spitzenwerte vom Sensor während der Fahrt (genauer)
     gx.src = 'sensor';
     const vNear = ll => { if(!ll) return null; let b = null, bd = Infinity; for(const p of P){ const dd = Math.abs(p.lat - ll[1]) + Math.abs(p.lng - ll[0]); if(dd < bd){ bd = dd; b = p; } } return b ? b.v : null; };
@@ -6520,6 +6561,7 @@ window.addEventListener('pagehide', () => {   // App wird geschlossen: Position 
 });
 
 /* ================= Risk-Indikator ================= */
+const DL_MIN = 2000;   // kürzere Fahrten kommen nicht auf die Death List
 const RISK_LV = [[85, 'Kritisch', '#ff2d55'], [70, 'Gefährlich', '#ff3b30'], [50, 'Riskant', '#ff9f0a'], [30, 'Sportlich', '#ffd60a'], [0, 'Entspannt', '#30d158']];
 const riskLevel = s => { const l = RISK_LV.find(x => s >= x[0]); return {name:l[1], col:l[2]}; };
 const clamp01 = x => Math.max(0, Math.min(1, x));
@@ -6549,8 +6591,9 @@ function trackRisk(t){
   for(let k = 1; k < P.length; k++){
     const p = P[k], q = P[k - 1];
     if(p.si === q.si && (p.v + q.v) / 2 > 130) tHigh += p.ta - q.ta;
-    if((Math.abs(p.glon) > .35 || Math.abs(p.glat) > .4) && p.ta - lastEv > 5){ ev++; lastEv = p.ta; }
+    if((Math.abs(p.hlon) > .35 || Math.abs(p.hlat) > .4) && p.ta - lastEv > 5){ ev++; lastEv = p.ta; }   // über zwei Punkte gehalten
   }
+  const topKmh = t.maxSpd > 0 ? t.maxSpd * 3.6 : b.p95;   // derselbe Top-Speed wie überall sonst
   const fHigh = tHigh / b.dur, evPer10 = ev / Math.max(1, an.D / 10000);
   const brake = an.g.brake.v, acc = an.g.acc.v, lat = Math.abs(an.g.lat.v);
   // Vergleich mit früheren Fahrten: gleiche Strecke (Start + Ziel), sonst deine üblichen Fahrten
@@ -6562,7 +6605,7 @@ function trackRisk(t){
   if(same.length){ ratio = b.avg / (same.reduce((a, x) => a + x.avg, 0) / same.length); cmpTxt = `${pct(ratio)} als sonst auf dieser Strecke`; }
   else if(prev.length >= 2){ const ps = prev.map(x => x.p95).sort((x, y) => x - y); ratio = b.p95 / ps[Math.floor(ps.length / 2)]; cmpTxt = `${pct(ratio)} als deine üblichen Fahrten`; }
   const F = [
-    {w:.18, c:clamp01((b.p95 - 80) / 120), t:`Top-Tempo ${Math.round(b.p95)} km/h`},
+    {w:.18, c:clamp01((b.p95 - 80) / 120), t:`Top-Tempo ${Math.round(topKmh)} km/h`},
     {w:.10, c:clamp01((b.avg - 50) / 90), t:`Ø ${Math.round(b.avg)} km/h in Fahrt`},
     {w:.12, c:clamp01(fHigh / .4), t:`${Math.round(fHigh * 100)} % der Zeit über 130`},
     {w:.15, c:clamp01((brake - .3) / .6), t:`Bremsung ${fmtG(brake)}`},
@@ -6574,7 +6617,7 @@ function trackRisk(t){
   let score = Math.round(100 * F.reduce((a, x) => a + x.w * x.c, 0));
   const shared = t._ws && t._ws.risk;   // geteilte Fahrt: Wert so, wie ihn der Fahrer selbst hat
   if(shared) score = Math.max(0, Math.min(100, Math.round(shared.score)));
-  const r = {score, lv:riskLevel(score), F, cmpTxt, ratio, top:Math.max((t.maxSpd || 0) * 3.6, b.p95), avg:b.avg, brake, lat, acc, ev, an,
+  const r = {score, lv:riskLevel(score), F, cmpTxt, ratio, top:topKmh, avg:b.avg, brake, lat, acc, ev, an,
              why:shared && shared.why && shared.why.length ? shared.why.slice(0, 4).map(x => ({t:String(x)})) : F.filter(x => x.c > .05).sort((x, y) => y.w * y.c - x.w * x.c)};
   riskCache.set(t, r); return r;
 }
@@ -6600,7 +6643,7 @@ function riskCardHTML(t){
   const rank = t._ws ? 0 : riskRank(t);
   return `<div class="rk" style="--lv:${r.lv.col}">
     <div class="rk-top"><div class="rk-s"><b>${r.score}</b><span>Risk</span></div>
-      <div class="rk-t"><b>${r.lv.name}</b><span>${t._ws ? `Fahrt von ${t._ws.dev === myId() ? 'dir' : esc(t._ws.by)}` : rank ? `Platz ${rank} auf der Death List` : 'Nicht in den Top 10'}</span></div>
+      <div class="rk-t"><b>${r.lv.name}</b><span>${t._ws ? `Fahrt von ${t._ws.dev === myId() ? 'dir' : esc(t._ws.by)}` : rank ? `Platz ${rank} auf der Death List` : r.an.D < DL_MIN ? 'Zu kurz für die Death List' : 'Nicht in den Top 10'}</span></div>
       ${t._ws ? '' : '<button class="rk-go" data-dl-open-list>Death List</button>'}</div>
     <div class="rk-bar"><i style="width:${Math.max(3, r.score)}%;background-size:${(10000 / Math.max(3, r.score)).toFixed(1)}% 100%"></i></div>
     ${r.why.length ? `<div class="rk-why">${r.why.slice(0, 4).map(x => `<span>${esc(x.t)}</span>`).join('')}</div>` : ''}
@@ -6609,7 +6652,7 @@ function riskCardHTML(t){
 
 /* ================= Death List ================= */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-function deathTop(){ return tracks.map(t => ({t, r:trackRisk(t)})).filter(x => x.r).sort((a, b) => b.r.score - a.r.score).slice(0, 10); }
+function deathTop(){ return tracks.map(t => ({t, r:trackRisk(t)})).filter(x => x.r && x.r.an.D >= DL_MIN).sort((a, b) => b.r.score - a.r.score).slice(0, 10); }
 function placeTxt(t){ const p = t.place; if(!p) return null; return p.a && p.b && p.a !== p.b ? `${p.a} → ${p.b}` : (p.a || p.b || null); }
 const DL_PULSE = '<path d="M0 22H40l5-3 4 3h14l5-17 6 28 6-22 4 11H120"/>';
 function dlEntryHTML(){
@@ -6631,7 +6674,7 @@ function openDeath(){
 function closeDeath(){ $('#death').hidden = true; }
 function renderDeath(){
   const top = deathTop(), list = $('#dlList');
-  if(!top.length){ list.innerHTML = `<div class="dl-empty"><b>Noch leer</b>Zeichne Fahrten auf. Ab 500 m bekommt jede Fahrt einen Risk-Score, die zehn höchsten landen hier.</div>`; return; }
+  if(!top.length){ list.innerHTML = `<div class="dl-empty"><b>Noch leer</b>Zeichne Fahrten auf. Fahrten ab 2 km kommen in die Wertung, die zehn riskantesten landen hier.</div>`; return; }
   const vmax = Math.max(100, ...top.map(x => x.r.top));
   list.innerHTML = top.map((x, i) => {
     const t = x.t, r = x.r, d = new Date(t.created), hero = i === 0, h = hero ? 46 : 26;
