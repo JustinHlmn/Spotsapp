@@ -3398,7 +3398,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.20.01';
+const VERSION = '2026.10.20.02';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4099,11 +4099,11 @@ $('#modal').addEventListener('click', async e => {
   if(!gEdit) return;
   gSync();
   if(a === 'tires' || a === 'type' || a === 'color'){ gEdit[a] = b.dataset.v; openGarageCar(gEdit.isNew ? null : gEdit.id); return; }
-  if(a === 'photo'){ $('#gFile').click(); return; }
+  if(a === 'photo'){ if(gEdit.photo) cropFromCar(); else $('#gFile').click(); return; }
   if(a === 'use'){ gUse(gEdit.id); toast(`${gTitle(gEdit)} ist jetzt dein aktives Auto`); openGarage(); return; }
   if(a === 'del'){
     if(!gDelArmed){ gDelArmed = true; openGarageCar(gEdit.id); return; }
-    const c = gCar(gEdit.id); if(c && c.photo) PDB.del(c.photo).catch(() => {});
+    const c = gCar(gEdit.id); if(c) [c.photo, c.photoSrc].forEach(id => id && PDB.del(id).catch(() => {}));
     garage.cars = garage.cars.filter(x => x.id !== gEdit.id); if(garage.active === gEdit.id) garage.active = garage.cars[0] ? garage.cars[0].id : null;
     saveGarage(); gDelArmed = false; gEdit = null; toast('Auto gelöscht'); openGarage(); return;
   }
@@ -4125,9 +4125,110 @@ $('#modal').addEventListener('click', async e => {
 });
 $('#gFile').addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = ''; if(!f || !gEdit) return;
-  try{ const bl = await shrinkImage(f, 1200, .82), id = 'g_' + gEdit.id + '_' + uid(); await PDB.put(id, bl); if(gEdit.photo && gEdit.photo !== (gCar(gEdit.id) || {}).photo) PDB.del(gEdit.photo).catch(() => {}); gEdit.photo = id; openGarageCar(gEdit.isNew ? null : gEdit.id); }
-  catch(_){ toast('Das Bild konnte nicht gelesen werden.'); }
+  let bl = null; try{ bl = await shrinkImage(f, 2400, .9); }catch(_){}
+  if(!bl){ toast('Das Bild konnte nicht gelesen werden.'); return; }
+  cropClose(); cropOpen(bl, null, null);
 });
+/* Zuschnitt fürs Autofoto: vor dem Übernehmen verschieben und zoomen (ziehen, zwei Finger, Regler, Mausrad).
+   Ergebnis ist immer 16:10 und sieht damit in Garage, Profil und Crew gleich aus. Das Original bleibt gespeichert,
+   damit man den Ausschnitt später noch ändern kann (Foto antippen). */
+const CROP_AR = 16 / 10, CROP_OUT = [1280, 800];
+let crop = null;
+async function cropFromCar(){
+  if(!gEdit || !gEdit.photo) return;
+  let src = null, srcId = null;
+  if(gEdit.photoSrc){ src = await PDB.get(gEdit.photoSrc).catch(() => null); if(src) srcId = gEdit.photoSrc; }
+  if(!src){ src = await PDB.get(gEdit.photo).catch(() => null); if(src) srcId = gEdit.photo; }
+  if(!src){ $('#gFile').click(); return; }
+  cropOpen(src, srcId, srcId === gEdit.photoSrc ? gEdit.crop : null);
+}
+async function cropOpen(blob, srcId, prev){
+  const url = URL.createObjectURL(blob);
+  const img = await new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = url; });
+  if(!img || !img.naturalWidth){ URL.revokeObjectURL(url); toast('Das Bild konnte nicht gelesen werden.'); return; }
+  img.alt = ''; img.draggable = false;
+  const el = document.createElement('div'); el.id = 'cropper';
+  el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Ausschnitt wählen');
+  el.innerHTML = `<div class="cr-top"><button class="txtbtn" data-cr="cancel">Abbrechen</button><strong>Ausschnitt</strong><button class="txtbtn bold" data-cr="ok">Fertig</button></div>
+    <div class="cr-stage"><div class="cr-frame"></div></div>
+    <div class="cr-bar">${svg('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4M8 11h6"/>', 18, 2)}<input type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom">${svg('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4M8 11h6M11 8v6"/>', 18, 2)}</div>
+    <div class="cr-acts"><button class="btn" data-cr="pick">Anderes Foto</button><button class="btn" data-cr="reset">Zurücksetzen</button></div>`;
+  el.querySelector('.cr-stage').prepend(img);
+  document.body.appendChild(el);
+  const C = crop = {el, img, url, blob, srcId, w:img.naturalWidth, h:img.naturalHeight, z:1, ix:img.naturalWidth / 2, iy:img.naturalHeight / 2, W:0, H:0, fx:0, fy:0, s0:1, ptr:new Map()};
+  cropMeasure();
+  if(prev && prev.z >= 1){ C.z = Math.min(4, prev.z); C.ix = prev.u * C.w; C.iy = prev.v * C.h; }
+  cropRender();
+  const stage = el.querySelector('.cr-stage'), range = el.querySelector('input');
+  stage.addEventListener('pointerdown', e => { try{ stage.setPointerCapture(e.pointerId); }catch(_){} C.ptr.set(e.pointerId, [e.clientX, e.clientY]); el.classList.add('moving'); });
+  stage.addEventListener('pointermove', e => {
+    if(!C.ptr.has(e.pointerId)) return;
+    const old = [...C.ptr.values()]; C.ptr.set(e.pointerId, [e.clientX, e.clientY]); const cur = [...C.ptr.values()];
+    if(cur.length === 1){ cropPan(cur[0][0] - old[0][0], cur[0][1] - old[0][1]); return; }
+    const mid = q => [(q[0][0] + q[1][0]) / 2, (q[0][1] + q[1][1]) / 2], len = q => Math.hypot(q[0][0] - q[1][0], q[0][1] - q[1][1]) || 1;
+    const m0 = mid(old), m1 = mid(cur);
+    cropZoomAt(C.z * len(cur) / len(old), m1[0], m1[1]); cropPan(m1[0] - m0[0], m1[1] - m0[1]);
+  });
+  const up = e => { C.ptr.delete(e.pointerId); if(!C.ptr.size) el.classList.remove('moving'); };
+  stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
+  stage.addEventListener('wheel', e => { e.preventDefault(); cropZoomAt(C.z * Math.exp(-e.deltaY * .0015), e.clientX, e.clientY); }, {passive:false});
+  range.addEventListener('input', () => { const r = stage.getBoundingClientRect(); cropZoomAt(+range.value, r.left + C.fx + C.W / 2, r.top + C.fy + C.H / 2); });
+  el.addEventListener('click', e => {
+    const b = e.target.closest('[data-cr]'); if(!b) return;
+    const a = b.dataset.cr;
+    if(a === 'cancel') cropClose();
+    if(a === 'reset'){ C.z = 1; C.ix = C.w / 2; C.iy = C.h / 2; cropRender(); }
+    if(a === 'pick') $('#gFile').click();
+    if(a === 'ok') cropSave();
+  });
+  addEventListener('resize', cropOnResize);
+}
+function cropOnResize(){ if(crop){ cropMeasure(); cropRender(); } }
+function cropMeasure(){
+  const C = crop, st = C.el.querySelector('.cr-stage'), SW = st.clientWidth, SH = st.clientHeight;
+  C.W = Math.min(SW - 32, 560); C.H = C.W / CROP_AR;
+  if(C.H > SH - 32){ C.H = Math.max(80, SH - 32); C.W = C.H * CROP_AR; }
+  C.fx = (SW - C.W) / 2; C.fy = (SH - C.H) / 2; C.s0 = Math.max(C.W / C.w, C.H / C.h);
+  const f = C.el.querySelector('.cr-frame'); Object.assign(f.style, {left:C.fx + 'px', top:C.fy + 'px', width:C.W + 'px', height:C.H + 'px'});
+}
+function cropRender(){
+  const C = crop; C.z = Math.max(1, Math.min(4, C.z));
+  const s = C.s0 * C.z, hw = C.W / 2 / s, hh = C.H / 2 / s;
+  C.ix = Math.max(hw, Math.min(C.w - hw, C.ix)); C.iy = Math.max(hh, Math.min(C.h - hh, C.iy));   // Bild deckt den Rahmen immer ganz ab
+  C.img.style.width = C.w + 'px'; C.img.style.height = C.h + 'px';
+  C.img.style.transform = `translate3d(${(C.fx + C.W / 2 - C.ix * s).toFixed(2)}px,${(C.fy + C.H / 2 - C.iy * s).toFixed(2)}px,0) scale(${s.toFixed(5)})`;
+  const r = C.el.querySelector('input'); if(r && Math.abs(+r.value - C.z) > .005) r.value = C.z.toFixed(2);
+}
+function cropPan(dx, dy){ const s = crop.s0 * crop.z; crop.ix -= dx / s; crop.iy -= dy / s; cropRender(); }
+function cropZoomAt(z, px, py){   // Punkt unter dem Finger bleibt stehen
+  const C = crop, r = C.el.querySelector('.cr-stage').getBoundingClientRect();
+  const ox = px - r.left - (C.fx + C.W / 2), oy = py - r.top - (C.fy + C.H / 2), s = C.s0 * C.z;
+  const qx = C.ix + ox / s, qy = C.iy + oy / s;
+  C.z = Math.max(1, Math.min(4, z)); const s2 = C.s0 * C.z;
+  C.ix = qx - ox / s2; C.iy = qy - oy / s2; cropRender();
+}
+function cropClose(){
+  if(!crop) return;
+  removeEventListener('resize', cropOnResize);
+  URL.revokeObjectURL(crop.url); crop.el.remove(); crop = null;
+}
+async function cropSave(){
+  const C = crop; if(!C || C.busy || !gEdit) return; C.busy = true;
+  const s = C.s0 * C.z, sw = C.W / s, sh = C.H / s, sx = C.ix - sw / 2, sy = C.iy - sh / 2;
+  try{
+    const cv = document.createElement('canvas'); cv.width = CROP_OUT[0]; cv.height = CROP_OUT[1];
+    const g = cv.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(C.img, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+    const out = await new Promise(res => cv.toBlob(res, 'image/jpeg', .86)); if(!out) throw new Error('encode');
+    const srcId = C.srcId || 'gs_' + gEdit.id + '_' + uid(), id = 'g_' + gEdit.id + '_' + uid();
+    if(!C.srcId) await PDB.put(srcId, C.blob);
+    await PDB.put(id, out);
+    const saved = gCar(gEdit.id) || {}, keep = new Set([saved.photo, saved.photoSrc, srcId, id]);
+    [gEdit.photo, gEdit.photoSrc].forEach(x => { if(x && !keep.has(x)) PDB.del(x).catch(() => {}); });   // nicht gespeicherte Zwischenstände aufräumen
+    gEdit.photo = id; gEdit.photoSrc = srcId; gEdit.crop = {u:+(C.ix / C.w).toFixed(4), v:+(C.iy / C.h).toFixed(4), z:+C.z.toFixed(3)};
+    cropClose(); openGarageCar(gEdit.isNew ? null : gEdit.id);
+  }catch(_){ C.busy = false; toast('Das Bild konnte nicht gespeichert werden.'); }
+}
+addEventListener('keydown', e => { if(crop && e.key === 'Escape'){ e.preventDefault(); e.stopImmediatePropagation(); cropClose(); } }, true);
 // Beim Speichern einer Fahrt: mit welchem Auto?
 let tsCar = null;
 function tsCarHTML(){
@@ -4228,7 +4329,7 @@ $('#modal').addEventListener('click', async e => {
 
 /* ================= Export / Import ================= */
 $('#exportBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify({app:'meine-spots', version:1, exported:new Date().toISOString(), ...data, tracks, runs, courses, efforts, garage:{cars:garage.cars.map(c => ({...c, photo:undefined})), active:garage.active}}, null, 2)], {type:'application/json'});
+  const blob = new Blob([JSON.stringify({app:'meine-spots', version:1, exported:new Date().toISOString(), ...data, tracks, runs, courses, efforts, garage:{cars:garage.cars.map(c => ({...c, photo:undefined, photoSrc:undefined})), active:garage.active}}, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = `spots-backup-${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -4252,7 +4353,7 @@ $('#importFile').addEventListener('change', async e => {
       });
     }
     if(j.garage && Array.isArray(j.garage.cars)){
-      j.garage.cars.forEach(c => { if(!c || !c.id) return; const i = garage.cars.findIndex(x => x.id === c.id); if(i >= 0) garage.cars[i] = {...garage.cars[i], ...c, photo:garage.cars[i].photo}; else garage.cars.push(c); });
+      j.garage.cars.forEach(c => { if(!c || !c.id) return; const i = garage.cars.findIndex(x => x.id === c.id); if(i >= 0) garage.cars[i] = {...garage.cars[i], ...c, photo:garage.cars[i].photo, photoSrc:garage.cars[i].photoSrc}; else garage.cars.push(c); });
       if(!garage.active && j.garage.active) garage.active = j.garage.active; saveGarage();
     }
     if(Array.isArray(j.tracks)){
