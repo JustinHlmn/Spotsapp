@@ -135,6 +135,8 @@ Spots ist eine deutsche Web-App (PWA) für Autofahrer und ihre Crew: Spots auf d
   - Querkraft aus GPS über ≥ 20 m und ≥ 2 Punkte je Seite, G aus GPS höchstens 1,1. Spitzen und harte Manöver zählen nur, wenn sie über zwei Punkte anliegen.
   - Death List erst ab 2 km (`DL_MIN`). Top-Speed überall = `maxSpd`; Punkt-Tempo wird daran gedeckelt.
 - Fahrt-Detail:
+  - Beim Öffnen (`tvIntroKey`): Linie zeichnet sich auf der Karte (`tvDraw`, Filter auf Feature-Anteil `f`), Zahlen zählen hoch (`countUp`), Risk-Balken füllt sich, Tempo-Verlauf zeichnet sich (`introAnim`). Nur beim Öffnen, nicht beim Neuzeichnen; bei „Bewegung reduzieren“ aus. Statistik-Kacheln zählen auch hoch.
+  - G-Schilder auf der Karte: Punkt + Schild, `gLayout()` sucht eine freie Seite (8 Positionen), meidet Kartenknöpfe, Hinweiskarte und Sheet.
   - Distanz, Dauer, Ø, Max, Fahrbedingungen (Nacht, Regen, Glätte über Open-Meteo-Archiv), Risk-Karte, Wege, Neuland.
   - Vergleich mit gleichen Fahrten, Tempo-Verlauf und Sektoren, Replay.
   - „Nochmal fahren“: Navi folgt der Fahrt über Valhalla-`through`-Punkte (`favGo`).

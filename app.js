@@ -120,6 +120,38 @@ function circlePoly(c, r, n = 48){
 }
 const FC = f => ({type:'FeatureCollection', features:f});
 
+/* ================= Intro-Animationen: Zahlen zählen hoch, Linien zeichnen sich =================
+   Nur beim Öffnen (neuer Schlüssel), nicht bei jedem Neuzeichnen. Bei „Bewegung reduzieren“ aus. */
+const RM = matchMedia('(prefers-reduced-motion: reduce)');
+const easeOut = x => 1 - Math.pow(1 - x, 3);
+function countUp(el, dur = 800){
+  const txt = el.textContent; if(/:/.test(txt)) return;   // Zeiten (5:14) bleiben stehen
+  const m = txt.match(/\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:,\d+)?/); if(!m) return;
+  const raw = m[0], grouped = raw.includes('.'), dec = (raw.split(',')[1] || '').length, to = +raw.replace(/\./g, '').replace(',', '.');
+  if(!(to > 0)) return;
+  const pre = txt.slice(0, m.index), post = txt.slice(m.index + raw.length);
+  const fmt = v => grouped ? v.toLocaleString('de-DE', {minimumFractionDigits:dec, maximumFractionDigits:dec}) : v.toFixed(dec).replace('.', ',');
+  const t0 = performance.now();
+  const step = now => { if(!el.isConnected) return; const x = Math.max(0, Math.min(1, (now - t0) / dur)); el.textContent = pre + fmt(to * easeOut(x)) + post; if(x < 1) requestAnimationFrame(step); else el.textContent = txt; };
+  el.textContent = pre + fmt(0) + post; requestAnimationFrame(step);
+}
+function introAnim(root, key, nums){
+  if(!root) return;
+  const fresh = root.dataset.intro !== key; root.dataset.intro = key;
+  clearTimeout(root._introT);
+  if(!fresh || RM.matches){ root.classList.remove('intro'); return; }
+  root.classList.add('intro'); root._introT = setTimeout(() => root.classList.remove('intro'), 1800);
+  if(nums) root.querySelectorAll(nums).forEach(el => countUp(el));
+  root.querySelectorAll('.tv-chart .ln').forEach(ln => {   // Tempo-Verlauf zeichnet sich von links nach rechts
+    let L = 0; try{ L = ln.getTotalLength(); }catch(e){} if(!(L > 0)) return;
+    ln.style.transition = 'none'; ln.style.strokeDasharray = L; ln.style.strokeDashoffset = L;
+    ln.getBoundingClientRect();
+    requestAnimationFrame(() => { ln.style.transition = 'stroke-dashoffset 1.1s cubic-bezier(.3,.6,.2,1) .1s'; ln.style.strokeDashoffset = 0; });
+    setTimeout(() => { ln.style.transition = ln.style.strokeDasharray = ln.style.strokeDashoffset = ''; }, 1400);
+  });
+}
+let tvIntroKey = '', tvIntroN = 0, statsIntroN = 0;
+
 /* ================= Karte (MapLibre) ================= */
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
 const BASES = {
@@ -1228,11 +1260,11 @@ function renderDetail(s){
   $('#detailView').innerHTML = `
     <div class="top"><button class="txtbtn" data-act="back">${svg(UI.back,14)} Spots</button><span class="row" style="gap:8px"><button class="icon-btn press" data-act="edit" aria-label="Bearbeiten">${svg(UI.pencil,15)}</button><button class="icon-btn press" data-act="back" aria-label="Schließen">${svg(UI.close,14)}</button></span></div>
     <div class="pad">
-      <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${cat.color}"><span class="ic">${ic(cat.icon,13)}</span><span class="bn">${esc(cat.name)}</span>${me ? `<span class="muted" style="font-weight:500;flex:none">· ${fmtDist(dist(me, s))}</span>` : ''}</span><h2>${esc(s.name)}</h2>${s.fromBy ? `<span class="muted">Aus dem Workshop von ${esc(s.fromBy)}</span>` : ''}</div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span class="badge" style="--c:${cat.color}"><span class="ic">${ic(cat.icon,13)}</span><span class="bn">${esc(cat.name)}</span>${me ? `<span class="muted" style="font-weight:500;flex:none">· ${fmtDist(dist(me, s))}</span>` : ''}</span><h2>${esc(s.name)}</h2>${s.fromBy ? `<span class="muted">Aus der Crew von ${esc(s.fromBy)}</span>` : ''}</div>
       ${FB && grp() && (s.ws || s.from) ? (() => { const k = s.ws || s.from, w = WS.spots.find(x => x._id === k); return w || s.ws ? `<div class="rx-row">${rxHTML('sp:' + k, w ? w.dev : myId(), 'full')}</div>` : ''; })() : ''}
       ${(s.photos || []).length ? `<div class="ph-strip">${s.photos.map((id, i) => `<img data-ph="${id}" data-i="${i}" alt="Foto ${i + 1} von ${esc(s.name)}">`).join('')}</div>` : ''}
       <button class="btn primary wide" data-act="nav">${svg(UI.nav,16)} ${s.walk && s.parking ? 'Zum Parkplatz navigieren' : 'Navigation starten'}</button>
-      <div class="btns"><button class="btn" data-act="share">${svg(UI.share, 15)} Link teilen</button><button class="btn${s.ws ? ' on-ws' : ''}" data-act="ws">${svg(s.ws ? '<path d="m5 12.5 4.5 4.5L19 7.5"/>' : '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 6M17.5 14.2A5.5 5.5 0 0 1 20.5 19"/>', 15, 2.2)} ${s.ws ? 'Im Workshop' : 'In den Workshop'}</button></div>
+      <div class="btns"><button class="btn" data-act="share">${svg(UI.share, 15)} Link teilen</button><button class="btn${s.ws ? ' on-ws' : ''}" data-act="ws">${svg(s.ws ? '<path d="m5 12.5 4.5 4.5L19 7.5"/>' : '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 6M17.5 14.2A5.5 5.5 0 0 1 20.5 19"/>', 15, 2.2)} ${s.ws ? 'In der Crew' : 'In die Crew'}</button></div>
       ${s.notes ? `<p class="notes">${esc(s.notes)}</p>` : ''}
       <div id="rwSpot">${rwSpotHTML(s)}</div>
       <div class="card wx" id="wxCard">${wxHTML(s)}</div>
@@ -3189,7 +3221,7 @@ async function openWsDrive(id){
     hideToast();
   }
   const t = wsTrackObjs.get(id);
-  selTrack = t.id; trackRenaming = false; trackDelArmed = false; tvSel = -1; tvCmp = null;
+  selTrack = t.id; trackRenaming = false; trackDelArmed = false; tvSel = -1; tvCmp = null; tvIntroKey = t.id + ':' + (++tvIntroN);
   renderTrackView(); show('track', mobile() && snap === 'full' ? 'full' : 'half');
   fitTrack(t.segs);
 }
@@ -3203,7 +3235,7 @@ function openWsSpot(id){
 }
 function renderWsDetail(){
   const w = WS.spots.find(x => x._id === wsSel), el = $('#wsView');
-  if(!w){ el.innerHTML = `<div class="top"><button class="txtbtn" data-wsd="back">${svg(UI.back, 14)} Crew</button></div><div class="pad"><div class="muted">Dieser Spot ist nicht mehr im Workshop.</div></div>`; return; }
+  if(!w){ el.innerHTML = `<div class="top"><button class="txtbtn" data-wsd="back">${svg(UI.back, 14)} Crew</button></div><div class="pad"><div class="muted">Dieser Spot ist nicht mehr in der Crew.</div></div>`; return; }
   const saved = wsSavedAs(w), mine = w.dev === myId(), col = (w.cat && w.cat.color) || '#868e96';
   const park = w.walk && w.parking ? `<div class="card"><div class="h"><span class="pmark">P</span>Parkplatz</div><div class="stats"><div><b>${fmtDist(dist(w.parking, w))}</b><span>Luftlinie</span></div><div><b>ca. ${fmtMin(walkMin(dist(w.parking, w)))}</b><span>zu Fuß</span></div></div>${w.parking.note ? `<div>${esc(w.parking.note)}</div>` : ''}</div>` : '';
   el.innerHTML = `<div class="top"><button class="txtbtn" data-wsd="back">${svg(UI.back, 14)} ${tab === 'crew' ? 'Crew' : 'Crew'}</button><button class="icon-btn press" data-wsd="back" aria-label="Schließen">${svg(UI.close, 14)}</button></div>
@@ -3241,7 +3273,7 @@ $('#wsView').addEventListener('click', e => {
   if(a === 'nav'){ if(w.walk && w.parking) planNav(w.parking, w.name, {lat:w.lat, lng:w.lng}); else planNav({lat:w.lat, lng:w.lng}, w.name, null); }
   if(a === 'share'){ const tmp = {name:w.name, lat:w.lat, lng:w.lng, notes:w.notes, walk:w.walk, parking:w.parking, cat:null}; const c = catFor(w.cat && w.cat.name, w.cat && w.cat.color, w.cat && w.cat.icon); tmp.cat = c.id; shareURL(spotLink(tmp), w.name, `${w.name} – geteilt aus Spots`); }
   if(a === 'del'){
-    if(!wsDelArmed){ wsDelArmed = true; b.classList.add('armed'); b.textContent = 'Wirklich entfernen?'; setTimeout(() => { if(b.isConnected){ wsDelArmed = false; b.classList.remove('armed'); b.textContent = 'Aus dem Workshop entfernen'; } }, 3500); return; }
+    if(!wsDelArmed){ wsDelArmed = true; b.classList.add('armed'); b.textContent = 'Wirklich entfernen?'; setTimeout(() => { if(b.isConnected){ wsDelArmed = false; b.classList.remove('armed'); b.textContent = 'Aus der Crew entfernen'; } }, 3500); return; }
     wsRemoveSpot(w._id);
   }
 });
@@ -3366,7 +3398,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.18.01';
+const VERSION = '2026.10.20.01';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4539,7 +4571,7 @@ function setTab(t){
   $('#spotActions').hidden = t !== 'spots';
   $('#searchBtn').hidden = t === 'crew';
   if(t === 'crew') wsSync(false);
-  if(t === 'tracks') renderTracksHead();
+  if(t === 'tracks'){ statsIntroN++; renderTracksHead(); }
   renderList(); updateTrackLayers(); renderMarkers(); renderWsMarkers();
   if(mobile()) setSnap(snap);
 }
@@ -4565,8 +4597,39 @@ function updateTrackLayers(){
     setSrc('track-ends', FC([{type:'Feature', properties:{k:'start'}, geometry:{type:'Point', coordinates:[first[0], first[1]]}},
                              {type:'Feature', properties:{k:'end'}, geometry:{type:'Point', coordinates:[last[0], last[1]]}}]));
   } else { setSrc('track-cmp', FC([])); setSrc('track-view', FC([])); setSrc('track-case', FC([])); setSrc('track-ends', FC([])); setSrc('track-secs', FC([])); setSrc('track-cur', FC([])); }
-  tvPaint(); tvGMarkers(t || null);
+  tvPaint();
+  if(t) tvDraw(tvIntroKey, t); else tvDrawStop();
+  tvGMarkers(t || null);
   updateCourseLayers();
+}
+/* Beim Öffnen läuft die Linie vom Start zum Ziel, ein leuchtender Punkt zieht sie, die Kamera gleitet dabei auf die ganze Fahrt */
+let tvDrawKey = '', tvDrawRaf = 0, tvHead = null;
+function tvDrawStop(){
+  cancelAnimationFrame(tvDrawRaf); tvDrawKey = '';
+  if(tvHead){ tvHead.remove(); tvHead = null; }
+  document.body.classList.remove('tvdrawing');
+  try{ map.setFilter('track-view-line', null); }catch(e){}
+}
+function tvDraw(key, t){
+  if(key === tvDrawKey) return;
+  tvDrawStop(); tvDrawKey = key;
+  const an = analyzeTrack(t);
+  if(RM.matches || !an || !an.feats.length) return;
+  const D = Math.min(2200, 1000 + an.feats.length * .6), t0 = performance.now(), fs = an.feats;
+  const el = document.createElement('div'); el.className = 'tvhead';
+  tvHead = new maplibregl.Marker({element:el, anchor:'center'}).setLngLat(fs[0].geometry.coordinates[0]).addTo(map);
+  document.body.classList.add('tvdrawing');
+  let i = 0;
+  const step = now => {
+    if(tvDrawKey !== key) return;
+    const x = Math.max(0, Math.min(1, (now - t0) / D)), e = x * x * (3 - 2 * x);   // weich anfahren und auslaufen
+    try{ map.setFilter('track-view-line', x >= 1 ? null : ['<=', ['coalesce', ['get', 'f'], 0], e]); }catch(_){}
+    while(i < fs.length - 1 && fs[i].properties.f < e) i++;
+    tvHead.setLngLat(fs[i].geometry.coordinates[1]);
+    if(x < 1){ tvDrawRaf = requestAnimationFrame(step); return; }
+    tvHead.remove(); tvHead = null; document.body.classList.remove('tvdrawing');
+  };
+  tvDrawRaf = requestAnimationFrame(step);
 }
 function drawLive(){ setSrc('track-live', FC(rec ? segFeatures(rec.segs) : [])); }
 
@@ -4826,6 +4889,7 @@ function renderStats(){
   chartEl.addEventListener('pointerover', e => { const t = e.target.closest('[data-i]'); if(t) pick(+t.dataset.i); });
   chartEl.addEventListener('click', e => { const t = e.target.closest('[data-i]'); if(t) pick(+t.dataset.i); });
   chartEl.addEventListener('pointerleave', () => pick(7));
+  introAnim(body, 'stats:' + statsIntroN, '.st-tile b');
   setTimeout(xrRun, 400);
   setTimeout(() => { if(tab === 'tracks' && sub === 'stats'){ wayGeoFetch(); cxRun(); gemAuto(); } }, 700);
 }
@@ -5555,7 +5619,7 @@ function fitTrack(segs){
 }
 function openTrack(id, fly = true){
   const t = tracks.find(x => x.id === id); if(!t) return;
-  selTrack = id; trackRenaming = false; trackDelArmed = false; tvSel = -1; tvCmp = null;
+  selTrack = id; trackRenaming = false; trackDelArmed = false; tvSel = -1; tvCmp = null; tvIntroKey = id + ':' + (++tvIntroN);
   if(tab !== 'tracks') setTab('tracks');
   if(sub !== 'rec'){ sub = 'rec'; renderTracksHead(); renderList(); }
   renderTrackView(); show('track', mobile() && snap === 'full' ? 'full' : 'half');
@@ -5595,6 +5659,7 @@ function renderTrackView(){
       ${t._ws ? '' : `<div class="btns"><button class="btn" data-tv="rename">Umbenennen</button><button class="btn danger" data-tv="del">Löschen</button></div>`}
     </div>`;
   if(trackRenaming) setTimeout(() => { const i = $('#tv-name'); if(i){ i.focus(); i.select(); } }, 50);
+  introAnim($('#trackView'), tvIntroKey, '.tstats b, .rk-s b');
   if(tvSel >= 0) tvApplySel(false);
   if(!t._ws && (!t.cx || cxNeedsWx(t))) setTimeout(() => cxRun([t]), 300);
   if(waysCalc().byTrack[t.id]) setTimeout(wayGeoFetch, 400);
@@ -5743,7 +5808,7 @@ function analyzeTrack(t){
   for(let k = 1; k < P.length; k++){
     const a = P[k - 1], b = P[k]; if(a.si !== b.si) continue;
     const v = (a.v + b.v) / 2;
-    feats.push({type:'Feature', properties:{k:+Math.max(0, Math.min(1, (v - lo) / (hi - lo))).toFixed(3), s:secOf((a.d + b.d) / 2)}, geometry:{type:'LineString', coordinates:[[a.lng, a.lat], [b.lng, b.lat]]}});
+    feats.push({type:'Feature', properties:{k:+Math.max(0, Math.min(1, (v - lo) / (hi - lo))).toFixed(3), s:secOf((a.d + b.d) / 2), f:+(b.d / D).toFixed(4)}, geometry:{type:'LineString', coordinates:[[a.lng, a.lat], [b.lng, b.lat]]}});
   }
   const bounds = secs.slice(1).map(s => ({type:'Feature', properties:{}, geometry:{type:'Point', coordinates:[lerp(s.a, 'lng'), lerp(s.a, 'lat')]}}));
   const prof = Array.from({length:240}, (_, i) => { const d = D * i / 239; return [d, lerp(d, 'v')]; });
@@ -5799,17 +5864,40 @@ function tvDetailsHTML(t){
     <div class="tv-tab"><div class="tv-head"><span>#</span><span>Ø Tempo</span><span>Zeit</span><span>Max</span></div>${rows}</div>`;
 }
 let gMks = [];
+/* G-Schilder: Punkt genau an der Stelle, Schild daneben. Die Schilder suchen sich eine freie Seite (oben, unten, schräg, rechts, links),
+   damit sie sich nie gegenseitig oder die Punkte verdecken – auch beim Zoomen. */
 function tvGMarkers(t){
-  gMks.forEach(m => m.remove()); gMks = [];
+  gMks.forEach(m => m.mk.remove()); gMks = [];
   const an = t && analyzeTrack(t); if(!an) return;
   [['lat', 'Q', '#bf5af2', 'quer'], ['brake', 'B', '#ff453a', 'Bremsen'], ['acc', 'A', '#0a84ff', 'Beschl.']].forEach(([k, l, c, txt]) => {
     const v = Math.abs(an.g[k].v); if(v < .05) return;
     const e = document.createElement('div'); e.className = 'gmk'; e.style.setProperty('--c', c);
-    e.innerHTML = `<i>${l}</i>${fmtG(v)} ${txt}`;
+    e.innerHTML = `<span class="gd"></span><button class="gl" aria-label="${esc(fmtG(v) + ' ' + txt)} – auf der Karte zeigen"><i>${l}</i><b>${fmtGn(v)}</b><small>G ${txt}</small></button>`;
     e.addEventListener('click', ev => { ev.stopPropagation(); map.flyTo({center:an.g[k].at, zoom:Math.max(map.getZoom(), 16.5), padding:camPad(), duration:800}); });
-    gMks.push(new maplibregl.Marker({element:e, anchor:'bottom', offset:[0, -8]}).setLngLat(an.g[k].at).addTo(map));
+    gMks.push({el:e, at:an.g[k].at, mk:new maplibregl.Marker({element:e, anchor:'center'}).setLngLat(an.g[k].at).addTo(map)});
+  });
+  gLayout();
+}
+function gLayout(){
+  if(!gMks.length) return;
+  const pts = gMks.map(m => map.project(m.at)), placed = pts.map(p => [p.x - 9, p.y - 9, 18, 18]);   // Punkte freihalten
+  const hit = (a, b) => a[0] < b[0] + b[2] + 4 && b[0] < a[0] + a[2] + 4 && a[1] < b[1] + b[3] + 4 && b[1] < a[1] + a[3] + 4;
+  // Kartenknöpfe, Hinweiskarte oben und das Sheet zählen auch als belegt; außerhalb des Bildschirms ebenso
+  const mr = map.getContainer().getBoundingClientRect(), rel = r => [r.left - mr.left, r.top - mr.top, r.width, r.height];
+  const ui = ['#ctrl .stack', '#near:not([hidden])', '#panel'].map(q => document.querySelector(q)).filter(e => e && e.getClientRects().length).map(e => rel(e.getBoundingClientRect()));
+  const off = r => r[0] < 6 || r[1] < 6 || r[0] + r[2] > mr.width - 6 || r[1] + r[3] > mr.height - 6;
+  gMks.forEach((m, i) => {
+    const gl = m.el.querySelector('.gl'), w = gl.offsetWidth, h = gl.offsetHeight, p = pts[i], G = 13;
+    const opt = {t:[p.x - w / 2, p.y - G - h, w, h], b:[p.x - w / 2, p.y + G, w, h],
+                 tl:[p.x + 12 - w, p.y - G - h, w, h], tr:[p.x - 12, p.y - G - h, w, h], bl:[p.x + 12 - w, p.y + G, w, h], br:[p.x - 12, p.y + G, w, h],
+                 r:[p.x + G, p.y - h / 2, w, h], l:[p.x - G - w, p.y - h / 2, w, h]};
+    let best = 't', bestN = Infinity;
+    for(const k of ['t', 'b', 'tl', 'tr', 'bl', 'br', 'r', 'l']){ const n = placed.filter(r => hit(opt[k], r)).length * 2 + ui.filter(r => hit(opt[k], r)).length + (off(opt[k]) ? 1 : 0); if(n < bestN){ best = k; bestN = n; } if(!n) break; }
+    m.el.dataset.p = best; placed.push(opt[best]);
   });
 }
+let gLayoutQ = 0;
+map.on('move', () => { if(gMks.length && !gLayoutQ) gLayoutQ = requestAnimationFrame(() => { gLayoutQ = 0; gLayout(); }); });
 function tvPaint(){
   if(!mapReady) return;
   const on = view === 'track' && tvSel >= 0, m = ['==', ['get', 's'], tvSel];
@@ -6645,7 +6733,7 @@ function riskCardHTML(t){
     <div class="rk-top"><div class="rk-s"><b>${r.score}</b><span>Risk</span></div>
       <div class="rk-t"><b>${r.lv.name}</b><span>${t._ws ? `Fahrt von ${t._ws.dev === myId() ? 'dir' : esc(t._ws.by)}` : rank ? `Platz ${rank} auf der Death List` : r.an.D < DL_MIN ? 'Zu kurz für die Death List' : 'Nicht in den Top 10'}</span></div>
       ${t._ws ? '' : '<button class="rk-go" data-dl-open-list>Death List</button>'}</div>
-    <div class="rk-bar"><i style="width:${Math.max(3, r.score)}%;background-size:${(10000 / Math.max(3, r.score)).toFixed(1)}% 100%"></i></div>
+    <div class="rk-bar"><i style="clip-path:inset(0 ${100 - Math.max(3, r.score)}% 0 0 round 4px)"></i></div>
     ${r.why.length ? `<div class="rk-why">${r.why.slice(0, 4).map(x => `<span>${esc(x.t)}</span>`).join('')}</div>` : ''}
   </div>`;
 }
@@ -8814,7 +8902,7 @@ const courseEfforts = id => efforts.filter(f => f.course === id).sort((a, b) => 
 
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-sub]'); if(!b || b.dataset.sub === sub) return;
-  sub = b.dataset.sub; renderTracksHead(); renderList(); updateTrackLayers(); if(mobile()) setSnap(sub !== 'rec' && (snap === 'peek' || snap === 'mini') ? 'half' : snap);
+  sub = b.dataset.sub; if(sub === 'stats') statsIntroN++; renderTracksHead(); renderList(); updateTrackLayers(); if(mobile()) setSnap(sub !== 'rec' && (snap === 'peek' || snap === 'mini') ? 'half' : snap);
 });
 
 /* Geometrie (lokales Meter-System) */
