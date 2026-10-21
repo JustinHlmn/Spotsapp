@@ -147,7 +147,9 @@ Spots ist eine deutsche Web-App (PWA) für Autofahrer und ihre Crew: Spots auf d
   - Straßen-Sammler mit Heatmap, Gemeinden sammeln (Overpass-Grenzen), Wochen-Diagramm.
   - Jahresrückblick als Story-Bilder. Fahrten unter 100 m werden ignoriert.
 - Garage mit eigenen Autos. 0–100-Messung. G-Kräfte (Sensor nur im Cockpit oder bei Aufnahme).
-  - Autofoto: erst Zuschnitt-Editor (`cropOpen`, ziehen, zwei Finger, Regler, Mausrad), Ergebnis immer 16:10 (1280×800) in `photo`. Original in `photoSrc`, Ausschnitt in `crop {u,v,z}`; Foto antippen öffnet den Zuschnitt erneut. Original geht nicht ins Backup/Export.
+  - Autofotos: bis zu 8 je Auto in `photos:[{id, src, crop}]`, das erste ist das Titelbild (`gPhotos()`, `gCoverSync()` spiegelt es in `photo`/`photoSrc`/`crop` für Liste, Profil, Crew). Alte Autos mit nur `photo` werden automatisch übernommen.
+  - Jedes Foto geht erst durch den Zuschnitt (`cropOpen`, ziehen, zwei Finger, Regler, Mausrad), Ergebnis immer 16:10 (1280×800); Original in `src`. Im Zuschnitt eines vorhandenen Fotos: „Als Titelbild“, „Foto löschen“ (zweimal tippen).
+  - Gelöschte Fotos werden beim Speichern entfernt, neue ohne Speichern beim Zurück verworfen. Backup enthält alle Fotos ohne Originale, Export keine. Crew sieht nur das Titelbild.
 
 **Navi und Cockpit**
 - Ziel aus Suche, Spot, Ausfahrt oder Fahrt.
