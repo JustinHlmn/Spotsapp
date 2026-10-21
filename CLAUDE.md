@@ -189,6 +189,15 @@ Spots ist eine deutsche Web-App (PWA) für Autofahrer und ihre Crew: Spots auf d
 - Dialoge: Fokus wird gesetzt, Tab bleibt im Dialog, Escape schließt.
 - Kamera springt sofort bei „Bewegung reduzieren“.
 - Begriffe einheitlich: „Crew“ (nicht Gruppe/Workshop), „Fahrt“ (nicht Strecke), „Rennstrecke“.
+- Animationen (alle aus bei „Bewegung reduzieren“, `RM`):
+  - Start: Startbildschirm zieht sich wie eine Blende auf das Logo zusammen, Sheet und Knöpfe gleiten herein (`body.boot`).
+  - Ansichten federn (`viewpush`/`viewpop`), Tabs und Unter-Tabs mit gleitender Markierung (`segPill`), Liste blendet beim Tab-Wechsel (`tabFade`).
+  - Death List baut sich von Platz 10 nach Platz 1 auf, Platz 1 mit Herzschlag (`dlIntroRun`, nur beim Öffnen).
+  - Neue Bestzeit (0–100, Rennstrecke): Glanz (`bestFx`) + `hapticWin()`. Speichern (Spot, Fahrt, Auto, Rennstrecke) gibt `hapticWin()`.
+  - Cockpit: Tacho federt (`ckGaugeTo`, auch im Replay), neues Tempolimit-Schild ploppt (`lpop`, nie `pop`).
+  - Schimmernde Platzhalter `.sk` beim Laden (Wetter, Straßenwetter, Crew-Fotos, Sonnenuntergang); Bilder ohne `src` schimmern auch.
+- Fahrtenliste mit Vorschaubild der Strecke (`trackThumb`). Fahrt-Detail zeigt das gefahrene Auto (`.tv-car`, tippen öffnet es).
+- Replay: Einflug hinter das Auto, gefahrener Teil leuchtet (Filter auf `f`), Zeitleiste mit Tempo-Profil (`rpTimeline`), am Ende fährt die Kamera hoch (`rpOutro`).
 
 ## Externe Dienste (alle ohne Key)
 - Kacheln:

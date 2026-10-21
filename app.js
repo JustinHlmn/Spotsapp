@@ -333,7 +333,12 @@ let splashGone = false;
 function hideSplash(){
   if(splashGone) return; splashGone = true;
   const el = $('#splash'); if(!el) return;
-  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 700); }, Math.max(0, 900 - (performance.now() - splashStart)));
+  setTimeout(() => {
+    const lg = el.querySelector('.logo'), r = lg && lg.getBoundingClientRect();
+    if(r){ el.style.setProperty('--cx', (r.left + r.width / 2) + 'px'); el.style.setProperty('--cy', (r.top + r.height / 2) + 'px'); }
+    if(!RM.matches){ document.body.classList.add('boot'); setTimeout(() => document.body.classList.remove('boot'), 1500); }
+    el.classList.add('out'); setTimeout(() => el.remove(), 900);
+  }, Math.max(0, 900 - (performance.now() - splashStart)));
 }
 setTimeout(hideSplash, 3500);
 function applyLabels(){
@@ -1379,7 +1384,7 @@ function wxHTML(s){
   const nextI = evts.findIndex(x => x[1] && x[1] > now);
   const sunHTML = `<div class="wx-sun">${evts.map((x, i) => `<div class="${i === nextI ? 'next' : ''}"><span>${x[0]}</span><b>${hhmm(x[1])}</b></div>`).join('')}</div>`;
   const c = wxCache[wxKey(s)], w = c && c.data;
-  if(!w) return `<div class="h">${off ? 'Morgen am Spot' : 'Heute am Spot'}</div>${sunHTML}<div class="muted">${c && c.err ? 'Wetter gerade nicht verfügbar.' : 'Wetter wird geladen …'}</div>`;
+  if(!w) return `<div class="h">${off ? 'Morgen am Spot' : 'Heute am Spot'}</div>${sunHTML}${c && c.err ? '<div class="muted">Wetter gerade nicht verfügbar.</div>' : `<div class="sk-wx" aria-label="Wetter wird geladen"><i class="sk" style="width:44px;height:44px;border-radius:14px"></i><span><i class="sk" style="width:64px;height:22px"></i><i class="sk" style="width:78%;height:12px"></i></span></div>${[0, 1, 2].map(() => '<i class="sk sk-line"></i>').join('')}`}`;
   const cur = w.current || {}, info = wxInfo(cur.weather_code, cur.is_day);
   const hi = hourIdx(w, sun.sunset), cc = hi >= 0 ? w.hourly.cloud_cover[hi] : null;
   const chance = cc == null ? '' : cc < 35 ? '<b class="good">gute Sicht</b>' : cc < 70 ? '<b class="mid">teils bewölkt</b>' : '<b class="bad">eher bewölkt</b>';
@@ -1483,7 +1488,7 @@ function rwRowHTML(at, title){
   const r = at(Date.now()); if(!r) return '';
   return `<div class="rw-row rwk-${r.k}"><span class="rw-i">${svg(RWI[r.k], 17, 2)}</span><div class="rw-tx"><b>${title}: ${esc(r.t)}</b><span>${esc([r.d, rwNextTxt(at)].filter(Boolean).join(' · '))}</span></div></div>`;
 }
-const rwLoadHTML = title => `<div class="rw-row rwk-load"><span class="rw-i">${svg(RWI.load, 17, 2)}</span><div class="rw-tx"><b>${title}</b><span>Straßenwetter wird geladen …</span></div></div>`;
+const rwLoadHTML = title => `<div class="rw-row rwk-load" aria-label="Straßenwetter wird geladen"><span class="rw-i">${svg(RWI.load, 17, 2)}</span><div class="rw-tx"><b>${title}</b><i class="sk" style="display:block;width:70%;height:11px;margin-top:5px"></i></div></div>`;
 // Spot
 function rwSpotHTML(s){ const h = rwPeek(s); return h === undefined ? rwLoadHTML('Straße') : h ? rwRowHTML(t => rwAt(h, t), 'Straße') : ''; }
 function rwSpotLoad(s){
@@ -1757,7 +1762,7 @@ function saveDraft(){
   if(i >= 0) data.spots[i] = s; else data.spots.push(s);
   if(filter.size && !filter.has(s.cat)) filter.add(s.cat);
   save(); draft = null; renderDraftMarkers(); refreshAll(); openDetail(s.id);
-  toast(i >= 0 ? 'Gespeichert' : `„${s.name}“ hinzugefügt`);
+  toast(i >= 0 ? 'Gespeichert' : `„${s.name}“ hinzugefügt`); hapticWin();
 }
 
 /* ================= Kategorien ================= */
@@ -3244,7 +3249,7 @@ function renderWsDetail(){
         <span class="muted ws-by">${avHTML(w.dev, w.by, 20)}Geteilt ${mine ? 'von dir' : `von ${esc(w.by || '?')}`} · ${ago(w.at || 0)}${me ? ` · ${fmtDist(dist(me, w))} entfernt` : ''}</span></div>
       <div class="rx-row">${rxHTML('sp:' + w._id, w.dev, 'full')}</div>
       ${(() => { const f = wsFresh(w), ph = w.nph ? ((f || {}).ph || []).map(okImg).filter(Boolean) : [], ed = wsCanEdit(w);
-        if(w.nph && !f){ wsFullSpot(w).then(() => { if(view === 'ws' && wsSel === w._id) renderWsDetail(); }); return `<div class="muted">${w.nph} Foto${w.nph > 1 ? 's' : ''} wird geladen …</div>`; }
+        if(w.nph && !f){ wsFullSpot(w).then(() => { if(view === 'ws' && wsSel === w._id) renderWsDetail(); }); return `<div class="ph-strip" aria-label="Fotos werden geladen">${Array.from({length:Math.min(w.nph, 4)}, () => '<i class="sk sk-ph"></i>').join('')}</div>`; }
         if(!ed) return ph.length ? `<div class="ph-strip">${ph.map((u, i) => `<img src="${u}" data-wsph="${i}" alt="Foto ${i + 1}">`).join('')}</div>` : '';
         const on = wsPhEdit && ph.length, add = ph.length < WS_PH_MAX ? `<button class="ph-add" data-wsd="phadd"${wsPhBusy ? ' disabled' : ''}>${svg(UI.plus, 22, 2.2)}<span>${wsPhBusy ? 'Speichert …' : 'Foto'}</span></button>` : '';
         return `<div class="ws-ph-h"><span>Fotos${ph.length ? ` · ${ph.length}` : ''}</span>${ph.length ? `<button class="txtbtn${on ? ' bold' : ''}" data-wsd="phedit">${on ? 'Fertig' : 'Bearbeiten'}</button>` : ''}</div>
@@ -3370,7 +3375,7 @@ function sunCardHTML(){
 function renderSunView(){
   const rk = sunRanking(), el = $('#sunView');
   const top = `<div class="top"><button class="txtbtn" data-sunv="back">${svg(UI.back, 14)} Spots</button><button class="icon-btn press" data-sunv="back" aria-label="Schließen">${svg(UI.close, 14)}</button></div>`;
-  if(!rk){ el.innerHTML = `${top}<div class="pad"><h2>Bester Sonnenuntergang</h2><div class="muted">${sunWx.err ? 'Wetter gerade nicht erreichbar. Prüfe dein Internet.' : 'Wetter wird geladen …'}</div></div>`; return; }
+  if(!rk){ el.innerHTML = `${top}<div class="pad"><h2>Bester Sonnenuntergang</h2>${sunWx.err ? '<div class="muted">Wetter gerade nicht erreichbar. Prüfe dein Internet.</div>' : `<div aria-label="Wetter wird geladen" style="display:flex;flex-direction:column;gap:10px">${[0, 1, 2, 3].map(() => '<i class="sk" style="display:block;height:58px;border-radius:16px"></i>').join('')}</div>`}</div>`; return; }
   const day = rk[0] && rk[0].off ? 'morgen' : 'heute';
   el.innerHTML = `${top}<div class="pad">
     <div style="display:flex;flex-direction:column;gap:4px"><h2>Bester Sonnenuntergang ${day}</h2><span class="muted">Bewertet nach tiefen Wolken (blockieren die Sonne), Schleierwolken weiter oben (machen die Farben), Sichtweite und Regenrisiko zur Untergangszeit.</span></div>
@@ -3398,7 +3403,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.21.01';
+const VERSION = '2026.10.21.02';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -3696,6 +3701,18 @@ function haptic(strong){
     }
     hapticLbl.click();
   }catch(e){}
+}
+// Erfolg (neue Bestzeit, Platz 1): doppeltes Antippen. Android vibriert im Muster, iPhone klickt zweimal (nur wenn der Browser es zulässt).
+function hapticWin(){
+  if(!onOff('haptic')) return;
+  try{ if(!hapticIOS && navigator.vibrate){ navigator.vibrate([18, 70, 30]); return; } }catch(e){}
+  haptic(true); setTimeout(() => haptic(true), 110);
+}
+// Glanz über einer Zahl: kurz aufploppen, ein Lichtstreif läuft darüber
+function bestFx(el){
+  if(!el || RM.matches) return;
+  el.classList.remove('bestfx'); void el.offsetWidth; el.classList.add('bestfx');
+  clearTimeout(el._bfx); el._bfx = setTimeout(() => el.classList.remove('bestfx'), 1800);
 }
 document.addEventListener('click', e => {
   if(!e.isTrusted) return;
@@ -4133,7 +4150,7 @@ $('#modal').addEventListener('click', async e => {
     if(isNew && !garage.active) garage.active = x.id;
     saveGarage();
     if(garage.active === x.id) gUse(x.id);
-    toast(isNew ? `${gTitle(x)} steht in der Garage` : 'Gespeichert');
+    toast(isNew ? `${gTitle(x)} steht in der Garage` : 'Gespeichert'); hapticWin();
     gEdit = null; openGarage();
   }
 });
@@ -4200,7 +4217,7 @@ async function cropOpen(blob, srcId, prev, slot = -1){
     if(a === 'reset'){ C.z = 1; C.ix = C.w / 2; C.iy = C.h / 2; cropRender(); }
     if(a === 'pick'){ gPickSlot = C.slot; $('#gFile').click(); }
     if(a === 'ok') cropSave(false);
-    if(a === 'cover') cropSave(true);
+    if(a === 'cover'){ hapticWin(); cropSave(true); }
     if(a === 'del'){
       if(!C.delArmed){ C.delArmed = true; b.classList.add('armed'); b.textContent = 'Wirklich löschen?'; setTimeout(() => { if(b.isConnected){ C.delArmed = false; b.classList.remove('armed'); b.textContent = 'Foto löschen'; } }, 3500); return; }
       cropDelete();
@@ -4696,8 +4713,45 @@ function lightSegs(t){
   c = (t.segs || []).map(sg => { const out = []; let l = null; sg.forEach((q, i) => { if(!l || i === sg.length - 1 || Math.abs(q[0] - l[0]) + Math.abs(q[1] - l[1]) > .00018){ out.push(q); l = q; } }); return out; });
   lightCache.set(t, c); return c;
 }
+/* Vorschaubild einer Fahrt für die Liste: die Strecke als Linie, eingepasst und gecacht */
+const thumbCache = new WeakMap();
+function trackThumb(t){
+  let c = thumbCache.get(t); if(c) return c;
+  const W = 60, H = 42, P = 6, segs = lightSegs(t).filter(sg => sg.length > 1), all = segs.flat();
+  if(all.length < 2){ c = `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true"></svg>`; thumbCache.set(t, c); return c; }
+  const k = Math.cos(all[0][1] * Math.PI / 180);
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  all.forEach(q => { const x = q[0] * k, y = -q[1]; if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y; });
+  const sc = Math.min((W - 2 * P) / Math.max(1e-9, x1 - x0), (H - 2 * P) / Math.max(1e-9, y1 - y0)), ox = (W - (x1 - x0) * sc) / 2, oy = (H - (y1 - y0) * sc) / 2;
+  const X = q => (ox + (q[0] * k - x0) * sc).toFixed(1), Y = q => (oy + (-q[1] - y0) * sc).toFixed(1);
+  const step = Math.max(1, Math.ceil(all.length / 90));
+  const d = segs.map(sg => sg.filter((q, i) => i % step === 0 || i === sg.length - 1).map((q, i) => `${i ? 'L' : 'M'}${X(q)} ${Y(q)}`).join('')).join('');
+  const a = all[0], b = all[all.length - 1];
+  c = `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><path class="tl" d="${d}"/><circle class="ts" cx="${X(a)}" cy="${Y(a)}" r="2.6"/><circle class="te" cx="${X(b)}" cy="${Y(b)}" r="2.6"/></svg>`;
+  thumbCache.set(t, c); return c;
+}
 const segFeatures = (segs, props = {}) => segs.filter(sg => sg.length > 1).map(sg => ({type:'Feature', properties:props, geometry:{type:'LineString', coordinates:sg.map(q => [q[0], q[1]])}}));
 
+/* Gleitende Markierung unter dem aktiven Tab: springt nicht, sondern gleitet mit kurzem Federn zum neuen Tab */
+const pillPos = {};
+function segPill(box, key){
+  if(!box) return;
+  const on = box.querySelector(':scope > button.on');
+  let p = box.querySelector(':scope > .seg-pill');
+  if(!on){ if(p) p.style.opacity = '0'; return; }
+  if(!p){ p = document.createElement('span'); p.className = 'seg-pill'; p.setAttribute('aria-hidden', 'true'); box.prepend(p); }
+  box.classList.add('has-pill'); p.style.opacity = '';
+  const x = on.offsetLeft, w = on.offsetWidth; if(!w) return;
+  p.style.top = on.offsetTop + 'px'; p.style.height = on.offsetHeight + 'px';
+  const prev = pillPos[key], set = (x, w) => { p.style.transform = `translateX(${x}px)`; p.style.width = w + 'px'; };
+  if(prev && !RM.matches && (prev.x !== x || prev.w !== w)){ p.style.transition = 'none'; set(prev.x, prev.w); p.getBoundingClientRect(); p.style.transition = ''; }
+  else if(!prev){ p.style.transition = 'none'; set(x, w); p.getBoundingClientRect(); p.style.transition = ''; }
+  set(x, w); pillPos[key] = {x, w};
+}
+function tabFade(){ const b = $('#listBody'); if(!b || RM.matches) return; b.classList.remove('tabin'); void b.offsetWidth; b.classList.add('tabin'); }
+addEventListener('resize', () => { for(const k in pillPos) delete pillPos[k]; segPill($('.tabs'), 'tab'); segPill($('#tracksHead .seg2'), 'sub'); });
+setTimeout(() => segPill($('.tabs'), 'tab'), 0);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { delete pillPos.tab; delete pillPos.sub; segPill($('.tabs'), 'tab'); segPill($('#tracksHead .seg2'), 'sub'); });
 /* Tabs */
 function setTab(t){
   tab = t;
@@ -4711,6 +4765,7 @@ function setTab(t){
   if(t === 'tracks'){ statsIntroN++; renderTracksHead(); }
   renderList(); updateTrackLayers(); renderMarkers(); renderWsMarkers();
   if(mobile()) setSnap(snap);
+  segPill($('.tabs'), 'tab'); tabFade();
 }
 document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if(b && b.dataset.tab !== tab) setTab(b.dataset.tab); });
 
@@ -4869,7 +4924,8 @@ function updateRecUI(){
     if(b.dataset.st !== st){ b.dataset.st = st; b.innerHTML = svg(st === 'run' ? UI.pause : UI.play, 18, 2.6); b.setAttribute('aria-label', st === 'run' ? 'Pause' : 'Fortsetzen'); }
   });
 }
-function renderTracksHead(){
+function renderTracksHead(){ renderTracksHeadInner(); segPill($('#tracksHead .seg2'), 'sub'); }
+function renderTracksHeadInner(){
   const h = $('#tracksHead');
   const segHTML = `<div class="seg2" role="tablist"><button data-sub="rec" role="tab" aria-selected="${sub === 'rec'}" class="${sub === 'rec' ? 'on' : ''}">Meine</button><button data-sub="race" class="${sub === 'race' ? 'on' : ''}">Rennstrecken</button><button data-sub="stats" class="${sub === 'stats' ? 'on' : ''}">Statistik</button></div>`;
   if(sub === 'stats' && !(rec && !rec.stopped)){ h.innerHTML = segHTML; renderCkTop(); updateRecUI(); return; }
@@ -4945,7 +5001,7 @@ $('#trackSaveView').addEventListener('click', e => {
     renderList(); openTrack(t.id, false);
     fetchPlace(t); if(grp()) setTimeout(() => pushMember().then(wsCache).catch(() => {}), 1500);
     const found = scanTrack(t);
-    toast(found.length ? `Fahrt gespeichert · ${found.length} neue Zeit${found.length > 1 ? 'en' : ''} auf Rennstrecken` : 'Fahrt gespeichert');
+    toast(found.length ? `Fahrt gespeichert · ${found.length} neue Zeit${found.length > 1 ? 'en' : ''} auf Rennstrecken` : 'Fahrt gespeichert'); hapticWin();
   } else {
     if(!discardArmed){ discardArmed = true; b.textContent = 'Wirklich verwerfen?'; b.style.color = 'var(--danger)'; setTimeout(() => { if(b.isConnected){ discardArmed = false; b.textContent = 'Verwerfen'; b.style.color = ''; } }, 3500); return; }
     rec = null; persistRec(true); drawLive(); renderTracksHead(); renderNearest();
@@ -5743,7 +5799,7 @@ function renderTrackList(){
   const nFav = tracks.filter(t => t.fav).length; if(!nFav && prefs.trkFav){ prefs.trkFav = false; savePrefs(); }
   const list = prefs.trkFav ? tracks.filter(t => t.fav) : tracks;
   const chips = nFav ? `<div class="chips fav-chips"><button class="chip ${prefs.trkFav ? '' : 'on'}" data-trkfav="0">Alle <span class="n">${tracks.length}</span></button><button class="chip ${prefs.trkFav ? 'on' : ''}" data-trkfav="1" style="--c:#ffd60a">${svg(ICONS.star, 13, 2.2)} Lieblinge <span class="n">${nFav}</span></button></div>` : '';
-  body.innerHTML = chips + (prefs.trkFav ? "" : dlEntryHTML()) + list.map(t => { const r = trackRisk(t); return `<button class="item" data-track="${t.id}"><span class="ic${t.fav ? ' fav' : ''}" style="--c:${t.fav ? '#ffd60a' : '#ff9f0a'}">${svg(t.fav ? ICONS.star : UI.route, 16)}</span><span class="tx"><span class="t">${esc(t.name)}</span><span class="s">${fmtKm(t.dist)} · ${fmtDurLong(t.dur)} · ${fmtDate(t.created)}</span></span>${r ? `<span class="rk-pill" style="--lv:${r.lv.col}">${r.score}</span>` : ''}</button>`; }).join('');
+  body.innerHTML = chips + (prefs.trkFav ? "" : dlEntryHTML()) + list.map(t => { const r = trackRisk(t); return `<button class="item" data-track="${t.id}"><span class="trk-th${t.fav ? ' fav' : ''}">${trackThumb(t)}${t.fav ? `<i>${svg(ICONS.star, 10)}</i>` : ''}</span><span class="tx"><span class="t">${esc(t.name)}</span><span class="s">${fmtKm(t.dist)} · ${fmtDurLong(t.dur)} · ${fmtDate(t.created)}</span></span>${r ? `<span class="rk-pill" style="--lv:${r.lv.col}">${r.score}</span>` : ''}</button>`; }).join('');
 }
 $('#listBody').addEventListener('click', e => {
   const f = e.target.closest('[data-trkfav]'); if(f){ prefs.trkFav = f.dataset.trkfav === '1'; savePrefs(); renderList(); updateTrackLayers(); return; }
@@ -5762,6 +5818,7 @@ function openTrack(id, fly = true){
   renderTrackView(); show('track', mobile() && snap === 'full' ? 'full' : 'half');
   fitTrack(t.segs);
 }
+document.addEventListener('click', e => { const b = e.target.closest('[data-tvcar]'); if(!b || !gCar(b.dataset.tvcar)) return; gEdit = null; gDelArmed = false; openGarageCar(b.dataset.tvcar); });
 function curTrack(){ return selTrack && String(selTrack).startsWith('ws:') ? (wsTrackObjs.get(selTrack.slice(3)) || null) : tracks.find(x => x.id === selTrack); }
 function closeTrack(){ const foreign = selTrack && String(selTrack).startsWith('ws:'); selTrack = null; tvSel = -1; tvCmp = null; renderList(); show('list', 'half'); if(foreign) renderWsMarkers(); }
 function renderTrackView(){
@@ -5774,6 +5831,8 @@ function renderTrackView(){
         ? `<div class="row"><input class="inp" id="tv-name" value="${esc(t.name)}" maxlength="80"><button class="txtbtn bold" data-tv="renamesave">Fertig</button></div>`
         : `<div style="display:flex;flex-direction:column;gap:4px"><span class="badge" style="--c:#ff9f0a"><span class="ic">${svg(UI.route,13)}</span>Fahrt</span><h2>${esc(t.name)}</h2><span class="muted">${fmtDate(t.created)}</span></div>`}
       ${t._ws ? `<div class="rx-row">${rxHTML('dr:' + t._ws.docId, t._ws.dev, 'full')}</div>` : t.ws && FB && grp() ? `<div class="rx-row">${rxHTML('dr:' + t.ws, myId(), 'full')}</div>` : ''}
+      ${(() => { const c = !t._ws && t.car && gCar(t.car); if(!c) return '';
+        return `<button class="tv-car" data-tvcar="${esc(c.id)}"><span class="tv-carpic">${c.photo ? `<img data-ph="${esc(c.photo)}" alt="">` : carSideSVG(CAR_TYPES[c.type] ? c.type : 'limo', CAR_COLORS[c.color] ? c.color : 'carbon')}</span><span class="tv-cartx"><small>Gefahren mit</small><b>${esc(gTitle(c))}</b></span>${svg('<path d="m9 6 6 6-6 6"/>', 16, 2.2)}</button>`; })()}
       <div class="tstats">
         <div><b>${fmtKm(t.dist)}</b><span>Distanz</span></div>
         <div><b>${fmtDurU(t.dur)}</b><span>Dauer</span></div>
@@ -5796,6 +5855,7 @@ function renderTrackView(){
       ${t._ws ? '' : `<div class="btns"><button class="btn" data-tv="rename">Umbenennen</button><button class="btn danger" data-tv="del">Löschen</button></div>`}
     </div>`;
   if(trackRenaming) setTimeout(() => { const i = $('#tv-name'); if(i){ i.focus(); i.select(); } }, 50);
+  fillPhotos($('#trackView .tv-car'));
   introAnim($('#trackView'), tvIntroKey, '.tstats b, .rk-s b');
   if(tvSel >= 0) tvApplySel(false);
   if(!t._ws && (!t.cx || cxNeedsWx(t))) setTimeout(() => cxRun([t]), 300);
@@ -6415,10 +6475,8 @@ function updateCockpitUI(){
   renderRaceCard(); rwCkCheck(); rwCkRender();
   const stale = !ck.ts || Date.now() - ck.ts > 6000;
   const kmh = ck.v == null ? null : ck.v * 3.6;
-  const vtxt = stale || kmh == null ? '–' : String(kmh < 1 ? 0 : Math.round(kmh));
-  $('[data-ck="v"]').textContent = vtxt; $('#ckSpeed').classList.toggle('w3', vtxt.length >= 3);
   const recOn = !!(rec && !rec.stopped);
-  $('#ckSpeed').style.setProperty('--p', stale || kmh == null ? 0 : Math.min(1, kmh / (recOn ? 260 : 200)).toFixed(3));
+  ckGaugeTo(stale || kmh == null ? null : (kmh < 1 ? 0 : kmh), recOn ? 260 : 200);
   $('#ckSpeed').classList.toggle('over', !stale && kmh != null && limitNow && limitNow.v != null && kmh > limitNow.v + 3);
   document.body.classList.toggle('ckrec', recOn);
   let dst, time, max;
@@ -6434,6 +6492,29 @@ function updateCockpitUI(){
     if(recOn && mx >= 30 && ck.mxShown != null && mx > ck.mxShown){ const p = mEl.parentNode; p.classList.remove('hit'); void p.offsetWidth; p.classList.add('hit'); }
     ck.mxShown = mx;
   }
+}
+/* Tacho federt weich zum neuen Wert (GPS kommt nur etwa einmal pro Sekunde): Zahl und Ring laufen hin statt zu springen */
+const ckG = {v:0, vel:0, to:null, max:200, raf:0, t:0};
+function ckGaugeSet(v, max){
+  const el = $('#ckSpeed'), txt = v == null ? '–' : String(Math.max(0, Math.round(v)));
+  const n = $('[data-ck="v"]'); if(n.textContent !== txt) n.textContent = txt;
+  el.classList.toggle('w3', txt.length >= 3);
+  el.style.setProperty('--p', v == null ? 0 : Math.max(0, Math.min(1, v / max)).toFixed(3));
+}
+function ckGaugeTo(v, max){
+  ckG.to = v; ckG.max = max;
+  if(v == null || RM.matches){ cancelAnimationFrame(ckG.raf); ckG.raf = 0; ckG.v = v || 0; ckG.vel = 0; ckGaugeSet(v, max); return; }
+  if(ckG.raf) return;
+  ckG.t = performance.now();
+  const step = now => {
+    const dt = Math.min(.05, Math.max(0, (now - ckG.t) / 1000)); ckG.t = now;
+    if((!ckOn && !rp) || ckG.to == null){ ckG.raf = 0; return; }
+    const k = 55, c = 2 * .78 * Math.sqrt(k);   // leicht unterdämpft: kurzes Nachfedern
+    ckG.vel += (k * (ckG.to - ckG.v) - c * ckG.vel) * dt; ckG.v += ckG.vel * dt;
+    if(Math.abs(ckG.to - ckG.v) < .15 && Math.abs(ckG.vel) < .3){ ckG.v = ckG.to; ckG.vel = 0; ckGaugeSet(ckG.v, ckG.max); ckG.raf = 0; return; }
+    ckGaugeSet(ckG.v, ckG.max); ckG.raf = requestAnimationFrame(step);
+  };
+  ckG.raf = requestAnimationFrame(step);
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && ckOn) exitCockpit(); });
 
@@ -6894,11 +6975,30 @@ function openDeath(){
   if(rp) return;
   $('#death').hidden = false; $('#death').scrollTop = 0;
   const p = $('#death .dl-pulse path'); if(p){ p.style.animation = 'none'; void p.getBoundingClientRect(); p.style.animation = ''; }
-  renderDeath(); dlPlaces();
+  dlIntro = true; renderDeath(); dlPlaces();
 }
 function closeDeath(){ $('#death').hidden = true; }
+/* Beim Öffnen baut sich die Liste von unten auf: Platz 10 zuerst, Platz 1 zuletzt mit Herzschlag. Spätere Neuzeichnungen
+   (Ortsnamen kommen nach) laufen ohne Animation. */
+let dlIntro = false, dlIntroT = 0;
+function dlIntroRun(list){
+  const rows = [...list.querySelectorAll('.dl-row')], n = rows.length, step = 85, heroAt = (n - 1) * step + 220;
+  clearTimeout(dlIntroT); list.classList.add('dl-in');
+  rows.forEach((r, i) => {
+    const d = i === 0 ? heroAt : (n - 1 - i) * step;
+    r.style.animationDelay = d + 'ms';
+    const sc = r.querySelector('.dl-score b'); if(sc){ const t = sc.textContent; sc.textContent = '0'; setTimeout(() => { if(sc.isConnected){ sc.textContent = t; countUp(sc, i === 0 ? 900 : 600); } }, d + 120); }
+  });
+  const hero = rows[0], ecg = hero && hero.querySelector('.dl-ecg path');
+  if(ecg){ let L = 0; try{ L = ecg.getTotalLength(); }catch(e){}
+    if(L > 0){ ecg.style.strokeDasharray = L; ecg.style.strokeDashoffset = L; setTimeout(() => { if(!ecg.isConnected) return; ecg.style.transition = 'stroke-dashoffset 1.1s cubic-bezier(.4,.1,.2,1)'; ecg.style.strokeDashoffset = 0; }, heroAt + 250); } }
+  setTimeout(() => { if(list.classList.contains('dl-in') && !$('#death').hidden) haptic(true); }, heroAt + 520);   // Herzschlag
+  dlIntroT = setTimeout(() => { list.classList.remove('dl-in'); if(ecg) ecg.style.transition = ecg.style.strokeDasharray = ecg.style.strokeDashoffset = ''; }, heroAt + 1700);
+}
 function renderDeath(){
   const top = deathTop(), list = $('#dlList');
+  const intro = dlIntro && !RM.matches; dlIntro = false;
+  if(!intro){ clearTimeout(dlIntroT); list.classList.remove('dl-in'); }
   if(!top.length){ list.innerHTML = `<div class="dl-empty"><b>Noch leer</b>Zeichne Fahrten auf. Fahrten ab 2 km kommen in die Wertung, die zehn riskantesten landen hier.</div>`; return; }
   const vmax = Math.max(100, ...top.map(x => x.r.top));
   list.innerHTML = top.map((x, i) => {
@@ -6918,6 +7018,7 @@ function renderDeath(){
       <span class="dl-score"><b>${r.score}</b><span>Risk</span><em>${r.lv.name}</em></span>
     </button>`;
   }).join('');
+  if(intro) dlIntroRun(list);
 }
 async function reverseName(p){
   try{
@@ -7051,6 +7152,7 @@ function startReplay(t){
   const an = analyzeTrack(t); if(!an || rp || ckOn) return;
   rp = {id:t.id, an, tr:0, dur:an.P[an.P.length - 1].ta, mult:RP_SPEEDS.includes(prefs.rpMult) ? prefs.rpMult : 20, playing:true, last:0, carBrg:null, camBrg:null, zoom:null, userZoom:null, gest:false, hud:0};
   tvScrubEnd(); tvSel = -1; tvPaint();
+  cancelAnimationFrame(tvDrawRaf); if(tvHead){ tvHead.remove(); tvHead = null; } document.body.classList.remove('tvdrawing');   // Zeichnen beim Öffnen abbrechen
   document.body.classList.add('replay');
   car3d.on = onOff('car3d'); car3d.pos = {lat:an.P[0].lat, lng:an.P[0].lng};
   if(car3d.on) enableCar3d(); else document.body.classList.remove('car3d');
@@ -7059,6 +7161,12 @@ function startReplay(t){
   map.setMaxPitch(70); try{ map.dragPan.disable(); map.dragRotate.disable(); }catch(_){}
   $('#rpTop').innerHTML = `<b>Replay</b><span>${esc(t.name)}</span>`;
   gShow.lat = gShow.lon = 0;
+  rpTimeline(an);
+  ckG.v = 0; ckG.vel = 0;
+  // Einflug: von der Übersicht hinter das Auto, erst danach läuft die Zeit
+  const P0 = an.P[0], ahead = {lat:an.lerp(Math.min(an.D, 40), 'lat'), lng:an.lerp(Math.min(an.D, 40), 'lng')};
+  rp.carBrg = rp.camBrg = dist(P0, ahead) > 3 ? bearing(P0, ahead) : 0; rp.zoom = ckZoom(0) - .2;
+  if(!RM.matches && mapReady){ rp.introUntil = performance.now() + 1500; map.flyTo({center:[P0.lng, P0.lat], bearing:rp.camBrg, zoom:rp.zoom, pitch:55, padding:ckPad(), duration:1400, essential:true}); }
   rpUI(); rp.raf = requestAnimationFrame(rpFrame);
 }
 function exitReplay(){
@@ -7067,6 +7175,7 @@ function exitReplay(){
   document.body.classList.remove('replay');
   if(!ckOn){ car3d.on = false; document.body.classList.remove('car3d'); if(mapReady) map.triggerRepaint(); }
   if(rpMk){ rpMk.remove(); rpMk = null; }
+  try{ map.setFilter('track-view-line', null); }catch(_){}
   try{ map.dragPan.enable(); map.dragRotate.enable(); }catch(_){}
   map.easeTo({pitch:prefs.terrain ? map.getPitch() : 0, bearing:0, padding:camPad(), duration:600});
   if(!prefs.terrain) map.once('moveend', () => { if(!ckOn && !rp && !prefs.terrain) map.setMaxPitch(0); });
@@ -7077,10 +7186,33 @@ function rpFrame(now){
   if(!rp) return;
   rp.raf = requestAnimationFrame(rpFrame);
   const dt = rp.last ? Math.min(.1, (now - rp.last) / 1000) : 0; rp.last = now;
-  if(rp.playing){ rp.tr = Math.min(rp.dur, rp.tr + dt * rp.mult); if(rp.tr >= rp.dur){ rp.playing = false; rpUI(); } }
+  if(rp.introUntil && now < rp.introUntil){ rpDraw(0, now, true); return; }
+  rp.introUntil = 0;
+  if(rp.playing){ rp.tr = Math.min(rp.dur, rp.tr + dt * rp.mult); if(rp.tr >= rp.dur){ rp.playing = false; rpUI(); rpOutro(); } }
   rpDraw(dt, now);
 }
-function rpDraw(dt = 0, now = performance.now()){
+/* Ende: Kamera fährt hoch und zeigt die ganze Fahrt */
+function rpOutro(){
+  if(!rp || !mapReady || RM.matches) return;
+  const pts = rp.an.P, b = pts.reduce((b, q) => b.extend([q.lng, q.lat]), new maplibregl.LngLatBounds([pts[0].lng, pts[0].lat], [pts[0].lng, pts[0].lat]));
+  rp.outro = true;
+  map.fitBounds(b, {padding:{top:90, bottom:200, left:40, right:40}, pitch:35, bearing:rp.camBrg || 0, duration:2200, essential:true});
+}
+/* Zeitleiste: Tempo-Profil als Fläche, gefahrener Teil hell, Rest gedimmt */
+function rpTimeline(an){
+  const mid = $('#rpBar .rp-mid'), seek = $('#rpSeek'); if(!mid || !seek) return;
+  let tl = mid.querySelector('.rp-tl'); if(!tl){ tl = document.createElement('div'); tl.className = 'rp-tl'; seek.replaceWith(tl); tl.appendChild(seek); }
+  tl.querySelectorAll('svg').forEach(x => x.remove());
+  const W = 300, H = 26, vmax = Math.max(10, ...an.prof.map(q => q[1])), T = an.P[an.P.length - 1].ta || 1;
+  // Profil über die Zeit (nicht die Strecke), damit es zur Zeitleiste passt
+  const pts = Array.from({length:120}, (_, i) => { const p = rpAt(an, T * i / 119); return [i / 119 * W, H - 2 - p.v / vmax * (H - 4)]; });
+  const line = pts.map((q, i) => `${i ? 'L' : 'M'}${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(''), area = `${line}L${W} ${H}L0 ${H}Z`;
+  const grad = `<defs><linearGradient id="rpG" x1="0" x2="0" y1="${H}" y2="0">${TRAMP.map((c, i) => `<stop offset="${i / (TRAMP.length - 1)}" stop-color="${c}"/>`).join('')}</linearGradient></defs>`;
+  const svgOf = cls => `<svg class="${cls}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${cls === 'on' ? grad : ''}<path class="a" d="${area}"/><path class="l" d="${line}"/></svg>`;
+  tl.insertAdjacentHTML('afterbegin', svgOf('off') + svgOf('on'));
+  tl.style.setProperty('--pg', 0);
+}
+function rpDraw(dt = 0, now = performance.now(), intro = false){
   const an = rp.an, p = rpAt(an, rp.tr);
   const ahead = Math.min(an.D, p.d + 18), back = Math.max(0, ahead - 18);
   const pa = {lat:an.lerp(ahead, 'lat'), lng:an.lerp(ahead, 'lng')}, pb = {lat:an.lerp(back, 'lat'), lng:an.lerp(back, 'lng')};
@@ -7093,13 +7225,14 @@ function rpDraw(dt = 0, now = performance.now()){
   car3d.pos = {lat:p.lat, lng:p.lng}; if(rp.carBrg != null) car3d.brg = rp.carBrg;
   car3d.alt = terrainAlt(p);
   if(rpMk){ rpMk.setLngLat([p.lng, p.lat]); if(rp.carBrg != null) rpMk.setRotation(rp.carBrg); }
-  if(mapReady && !rp.gest) map.jumpTo({center:[p.lng, p.lat], bearing:rp.camBrg != null ? rp.camBrg : map.getBearing(), zoom:rp.zoom, pitch:55, padding:ckPad()});
+  if(mapReady && !rp.gest && !intro && !rp.outro) map.jumpTo({center:[p.lng, p.lat], bearing:rp.camBrg != null ? rp.camBrg : map.getBearing(), zoom:rp.zoom, pitch:55, padding:ckPad()});
+  try{ map.setFilter('track-view-line', ['<=', ['coalesce', ['get', 'f'], 0], an.D ? p.d / an.D + .002 : 1]); }catch(_){}   // gefahrener Teil leuchtet, der Rest bleibt dunkel
   gRender({lat:p.glat, lon:p.glon, src:an.g.src});
   if(now - rp.hud > 90 || !dt){
     rp.hud = now;
-    const kmh = Math.max(0, p.v), txt = String(Math.round(kmh));
-    $('[data-ck="v"]').textContent = txt; $('#ckSpeed').classList.toggle('w3', txt.length >= 3); $('#ckSpeed').classList.remove('over');
-    $('#ckSpeed').style.setProperty('--p', Math.min(1, kmh / 260).toFixed(3));
+    const kmh = Math.max(0, p.v);
+    $('#ckSpeed').classList.remove('over'); ckGaugeTo(kmh, 260);
+    const tl = $('#rpBar .rp-tl'); if(tl) tl.style.setProperty('--pg', (rp.tr / (rp.dur || 1)).toFixed(4));
     $('#rpTime').textContent = `${fmtDur(rp.tr * 1000)} / ${fmtDur(rp.dur * 1000)}`;
     $('#rpInfo').textContent = `Sektor ${an.secOf(p.d) + 1} · ${fmtKm1(p.d)} km`;
     if(!rp.seeking) $('#rpSeek').value = Math.round(rp.tr / (rp.dur || 1) * 1000);
@@ -7114,11 +7247,11 @@ function rpUI(){
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-rp]'); if(!b || !rp) return;
   const a = b.dataset.rp;
-  if(a === 'play'){ if(!rp.playing && rp.tr >= rp.dur) rp.tr = 0; rp.playing = !rp.playing; rp.last = 0; rpUI(); }
+  if(a === 'play'){ if(!rp.playing && rp.tr >= rp.dur){ rp.tr = 0; rp.outro = false; } rp.playing = !rp.playing; rp.last = 0; rpUI(); }
   if(a === 'speed'){ rp.mult = RP_SPEEDS[(RP_SPEEDS.indexOf(rp.mult) + 1) % RP_SPEEDS.length]; prefs.rpMult = rp.mult; savePrefs(); rpUI(); }
   if(a === 'close') exitReplay();
 });
-$('#rpSeek').addEventListener('input', e => { if(!rp) return; rp.seeking = true; rp.tr = e.target.value / 1000 * rp.dur; rpDraw(); });
+$('#rpSeek').addEventListener('input', e => { if(!rp) return; rp.seeking = true; rp.introUntil = 0; rp.outro = false; rp.tr = e.target.value / 1000 * rp.dur; rpDraw(); });
 $('#rpSeek').addEventListener('change', () => { if(rp) rp.seeking = false; });
 map.on('zoomstart', e => { if(rp && e.originalEvent) rp.gest = true; });
 map.on('zoomend', () => { if(rp && rp.gest){ rp.gest = false; rp.userZoom = map.getZoom(); rp.zoom = rp.userZoom; } });
@@ -7583,8 +7716,10 @@ function showLimit(l){
   limitNow = l;
   const el = $('#ckLimit');
   if(!l){ el.classList.remove('show'); return; }
+  const key = l.none ? 'none' : String(l.v), changed = el._lim !== key || !el.classList.contains('show'); el._lim = key;
   el.classList.add('show'); el.classList.toggle('none', !!l.none); el.classList.toggle('small', !l.none && l.v >= 100);
   el.textContent = l.none ? '' : String(l.v);
+  if(changed && !RM.matches){ el.classList.remove('lpop'); void el.offsetWidth; el.classList.add('lpop'); }
   el.setAttribute('aria-label', l.none ? 'Kein Tempolimit' : `Tempolimit ${l.v} km/h`);
 }
 
@@ -8930,12 +9065,14 @@ function onPerfPos(p){
       pf.result = {...r, best: sec < best};
       pf.state = 'done'; cancelAnimationFrame(pfRaf);
       beep(1046, .18, .3); setTimeout(() => beep(1318, .25, .3), 160);
+      if(sec < best){ pf.fx = true; hapticWin(); }
     } else if(v < pf.maxV - 8 || t - pf.tStart > 90000){
       pf.state = 'fail'; cancelAnimationFrame(pfRaf); beep(300, .3);
     }
   }
   pf.prev = cur;
   renderPerf();
+  if(pf.fx){ pf.fx = false; bestFx($('#pfTime')); }
 }
 function startRun(){
   pf.state = 'run'; pf.dist = 0; pf.maxV = pf.v; pf.wallStart = Date.now() - Math.max(0, Date.now() - pf.tStart);
@@ -9039,7 +9176,7 @@ const courseEfforts = id => efforts.filter(f => f.course === id).sort((a, b) => 
 
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-sub]'); if(!b || b.dataset.sub === sub) return;
-  sub = b.dataset.sub; if(sub === 'stats') statsIntroN++; renderTracksHead(); renderList(); updateTrackLayers(); if(mobile()) setSnap(sub !== 'rec' && (snap === 'peek' || snap === 'mini') ? 'half' : snap);
+  sub = b.dataset.sub; if(sub === 'stats') statsIntroN++; renderTracksHead(); tabFade(); renderList(); updateTrackLayers(); if(mobile()) setSnap(sub !== 'rec' && (snap === 'peek' || snap === 'mini') ? 'half' : snap);
 });
 
 /* Geometrie (lokales Meter-System) */
@@ -9155,7 +9292,8 @@ function feedLive(p){
         if(!f) continue;
         const rank = rankOf(f), n = courseEfforts(cid).length;
         const vs = ref && ref.rival ? (f.time < ref.time ? `${ref.name} geschlagen! ${fmtDelta(f.time - ref.time)}` : `${ref.name} war ${fmtDelta(ref.time - f.time).replace('−', '')} schneller`) : null;
-        raceFlash = {cid, time:f.time, rank, n, vs, until:Date.now() + 12000};
+        raceFlash = {cid, time:f.time, rank, n, vs, until:Date.now() + 12000, fx:(rank === 1 && !(ref && ref.rival)) || (ref && ref.rival && f.time < ref.time)};
+        if(raceFlash.fx) hapticWin();
         beep(1046, .18, .3); setTimeout(() => beep(1318, .25, .3), 160);
         toast(`${course.name}: ${fmtLap(f.time)} · ${vs || (rank === 1 ? 'Neue Bestzeit!' : `Platz ${rank} von ${n}`)}`);
         if(view === 'course' && selCourse === cid) renderCourseView();
@@ -9211,6 +9349,7 @@ function renderRaceCard(){
   }
   el.classList.toggle('show', !!html);
   if(el._h !== html){ el.innerHTML = html; el._h = html; }
+  if(raceFlash && raceFlash.fx){ raceFlash.fx = false; bestFx(el.querySelector('b.fin')); }
 }
 
 /* Kartenlinien */
@@ -9499,7 +9638,7 @@ $('#drawView').addEventListener('click', e => {
     endDraw();
     const {c, n} = createCourse(name, pts);
     openCourse(c.id, false);
-    toast(n ? `Rennstrecke gespeichert · ${n} Zeit${n > 1 ? 'en' : ''} aus Aufzeichnungen` : 'Rennstrecke gespeichert');
+    toast(n ? `Rennstrecke gespeichert · ${n} Zeit${n > 1 ? 'en' : ''} aus Aufzeichnungen` : 'Rennstrecke gespeichert'); hapticWin();
   }
 });
 syncMatchers();
