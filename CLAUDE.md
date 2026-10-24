@@ -115,6 +115,7 @@ Spots ist eine deutsche Web-App (PWA) für Autofahrer und ihre Crew: Spots auf d
 - Detail:
   - Navigation, Link teilen, In die Crew, Bearbeiten-Stift oben.
   - Sonne und Wetter, Fotospot-Planer (Sonnenrichtung mit Gelände-Horizont), Saison-Hinweise, Parkplatz mit Fußweg.
+  - Wetter, Sonne, Fotospot-Planer und Straßenwetter (auch Listen-Hinweise und „Bester Sonnenuntergang“) nur bei Kategorien mit `catWx()`: Schalter „Wetter und Sonne zeigen“ je Kategorie (`cat.wx`); ohne Einstellung nach Name/Symbol (Aussicht, Chill, Foto, Baden, Natur an; Park, Tanken, Treffpunkt, Essen aus).
 - Neuer Spot:
   - Fadenkreuz und „Fadenkreuz nehmen“ oder „Mein Standort“.
   - Danach die Bearbeitung halb geöffnet, mit Cursor im Namen.

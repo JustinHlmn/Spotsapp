@@ -96,6 +96,17 @@ function save(){
 let prefs = {labels:true, gps:false, terrain:false, base:'sat'};
 try{ Object.assign(prefs, JSON.parse(localStorage.getItem(PREF) || '{}')); }catch(e){}
 const savePrefs = () => { try{ localStorage.setItem(PREF, JSON.stringify(prefs)); }catch(e){} };
+/* Wetter, Sonne und Straßenwetter nur bei Spots, wo man draußen ist und es zählt (Aussicht, Chillen, Foto, Baden, Natur).
+   Pro Kategorie einstellbar (cat.wx); ohne Einstellung entscheidet Name/Symbol. Parkplätze, Tanken, Treffpunkte usw. bleiben ohne. */
+const WX_OFF = /park|tank|werkstatt|treff|meet|drift|tuning|wasch|essen|food|imbiss|restaurant|döner|burger|mc ?d/i;
+const WX_ON = /aussicht|ausblick|blick|view|chill|entspann|ruhe|sonne|sunset|sunrise|foto|photo|bild|baden|see\b|strand|natur|berg|gipfel|camping|zelt|picknick|wandern|wald/i;
+function catWx(c){
+  if(!c) return false;
+  if(typeof c.wx === 'boolean') return c.wx;
+  if(WX_OFF.test(c.name || '')) return false;
+  return WX_ON.test(c.name || '') || ['mountain', 'camera', 'waves', 'tent', 'tree'].includes(c.icon);
+}
+const spotWx = s => !!s && catWx(catById(s.cat));
 const catById = id => data.cats.find(c => c.id === id) || {id:'?', name:'Ohne Kategorie', color:'#868e96', icon:'pin'};
 
 /* ================= Geo ================= */
@@ -1025,7 +1036,7 @@ function renderList(){
     const list = visibleSpots().slice().sort(me ? (a,b) => dist(me, a) - dist(me, b) : (a,b) => (b.created||0) - (a.created||0));
     if(!data.spots.length) body.innerHTML = `<div class="empty"><b>Noch keine Spots</b>Tippe auf <strong>+</strong> und dann auf die Karte, um deinen ersten Spot zu setzen.</div>`;
     else if(!list.length) body.innerHTML = `<div class="empty">Keine Spots in ${filter.size > 1 ? 'diesen Kategorien' : 'dieser Kategorie'}.<button class="btn" data-clearfilter style="margin-top:10px">Filter zurücksetzen</button></div>`;
-    else{ body.innerHTML = (filter.size ? '' : sunCardHTML()) + list.map(itemHTML).join(''); rwListLoad(list); }
+    else{ body.innerHTML = (filter.size ? '' : sunCardHTML()) + list.map(itemHTML).join(''); rwListLoad(list.filter(spotWx)); }
     return;
   }
   const own = data.spots.filter(s => (s.name + ' ' + (s.notes||'') + ' ' + catById(s.cat).name).toLowerCase().includes(q))
@@ -1271,9 +1282,9 @@ function renderDetail(s){
       <button class="btn primary wide" data-act="nav">${svg(UI.nav,16)} ${s.walk && s.parking ? 'Zum Parkplatz navigieren' : 'Navigation starten'}</button>
       <div class="btns"><button class="btn" data-act="share">${svg(UI.share, 15)} Link teilen</button><button class="btn${s.ws ? ' on-ws' : ''}" data-act="ws">${svg(s.ws ? '<path d="m5 12.5 4.5 4.5L19 7.5"/>' : '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 6M17.5 14.2A5.5 5.5 0 0 1 20.5 19"/>', 15, 2.2)} ${s.ws ? 'In der Crew' : 'In die Crew'}</button></div>
       ${s.notes ? `<p class="notes">${esc(s.notes)}</p>` : ''}
-      <div id="rwSpot">${rwSpotHTML(s)}</div>
+      ${spotWx(s) ? `<div id="rwSpot">${rwSpotHTML(s)}</div>
       <div class="card wx" id="wxCard">${wxHTML(s)}</div>
-      <div class="card sunp" id="sunPlan">${sunPlanHTML(s)}</div>
+      <div class="card sunp" id="sunPlan">${sunPlanHTML(s)}</div>` : ''}
       <div id="seasonSpot"></div>
       ${park}
       <div class="card">
@@ -1283,7 +1294,8 @@ function renderDetail(s){
       </div>
       <div class="btns"><button class="btn" data-act="edit">Bearbeiten</button><button class="btn danger" data-act="del">Löschen</button></div>
     </div>`;
-  loadWeather(s); rwSpotLoad(s); sunPlanLoad(s); seasonSpotLoad(s);
+  if(spotWx(s)){ loadWeather(s); rwSpotLoad(s); sunPlanLoad(s); } else setSrc('sunray', FC([]));
+  seasonSpotLoad(s);
   fillPhotos($('#detailView'));
 }
 function closeDetail(){
@@ -1497,6 +1509,7 @@ function rwSpotLoad(s){
 }
 // Spot-Liste: nur echte Hinweise (Regen, Glätte, Schnee) in den nächsten 2 Stunden
 function rwTagHTML(s){
+  if(!spotWx(s)) return '';
   const h = rwPeek(s); if(!h) return '';
   const now = Date.now(), rs = [0, 1, 2].map(k => rwAt(h, now + k * 3600e3)), w = rwWorst(rs);
   if(!rwBad(w)) return '';
@@ -1776,6 +1789,7 @@ function renderCats(){
         <div class="catrow"><input type="color" value="${c.color}" data-k="color" aria-label="Farbe"><input class="inp" value="${esc(c.name)}" data-k="name" aria-label="Name" maxlength="30">
         <button class="icon-btn" data-act="delcat" title="${used[c.id] ? `Wird von ${used[c.id]} Spot(s) genutzt` : 'Löschen'}" ${used[c.id] ? 'disabled style="opacity:.35;cursor:default"' : ''} aria-label="Kategorie löschen">${svg(UI.close,13)}</button></div>
         <div class="iconsel">${Object.keys(ICONS).map(k => `<button class="${k === c.icon ? 'on' : ''}" data-icon="${k}" aria-label="Symbol ${ICON_DE[k] || k}" aria-pressed="${k === c.icon}">${ic(k,15)}</button>`).join('')}</div>
+        <button class="set-row cat-wx${catWx(c) ? ' on' : ''}" data-act="catwx" role="switch" aria-checked="${catWx(c)}"><span>Wetter und Sonne zeigen</span><i class="tg"></i></button>
       </div>`).join('')}
       <button class="btn" style="margin-top:12px" data-act="addcat">${svg(UI.plus,14)} Kategorie hinzufügen</button>
       <div class="muted" style="margin-top:8px">Kategorien mit Spots lassen sich erst löschen, wenn keine Spots mehr darin sind.</div>
@@ -1789,6 +1803,7 @@ $('#modal').addEventListener('click', e => {
   if(b.dataset.icon && cat){ cat.icon = b.dataset.icon; save(); renderCats(); return; }
   const a = b.dataset.act;
   if(a === 'close') closeCats();
+  if(a === 'catwx' && cat){ cat.wx = !catWx(cat); save(); renderCats(); return; }
   if(a === 'delcat' && cat && data.cats.length <= 1){ toast('Mindestens eine Kategorie muss bleiben.'); return; }
   if(a === 'delcat' && cat){ data.cats = data.cats.filter(c => c !== cat); filter.delete(cat.id); save(); renderCats(); }
   if(a === 'addcat'){
@@ -3319,7 +3334,7 @@ async function wsUploadCourse(c){
 /* ================= Bester Sonnenuntergang ================= */
 const sunWx = {t:0, key:'', data:null, busy:false, err:false};
 async function loadSunWx(force){
-  const spots = data.spots.slice(0, 80); if(!spots.length) return;
+  const spots = sunSpots(); if(!spots.length) return;
   const key = spots.map(s => wxKey(s)).join('|');
   if(sunWx.busy || (!force && sunWx.key === key && Date.now() - sunWx.t < 30 * 60000)) return;
   sunWx.busy = true;
@@ -3345,9 +3360,11 @@ function sunScore(low, mid, high, visM, pp){
   return Math.round(100 * (.42 * sLow + .2 * vis + .2 * color + .18 * dry));
 }
 const sunLabel = s => s >= 85 ? 'Traumhaft' : s >= 70 ? 'Gut' : s >= 50 ? 'Geht so' : 'Eher nix';
+const sunSpots = () => data.spots.filter(spotWx).slice(0, 80);
 function sunRanking(){
   if(!sunWx.data) return null;
-  const spots = data.spots.slice(0, 80), now = new Date(), out = [];
+  const spots = sunSpots(), now = new Date(), out = [];
+  if(sunWx.key !== spots.map(s => wxKey(s)).join('|')) return null;   // Spots/Kategorien geändert: Wetter passt nicht mehr zur Liste
   spots.forEach((s, i) => {
     const w = sunWx.data[i]; if(!w || !w.hourly || !w.hourly.cloud_cover_low) return;
     let off = 0, sun = sunFor(s, 0);
@@ -3363,7 +3380,7 @@ function sunRanking(){
   return out.sort((a, b) => (a.off - b.off) || (b.score - a.score));
 }
 function sunCardHTML(){
-  if(!data.spots.length) return '';
+  if(!sunSpots().length) return '';
   const rk = sunRanking();
   if(!rk && sunWx.err){ if(Date.now() - (sunWx.t || 0) > 5 * 60000) loadSunWx(false); return ''; }   // Wetter fehlt: Karte weglassen statt Fehlermeldung oben in der Liste
   if(!rk){ loadSunWx(false); return `<button class="sun-card" data-sun="open"><span class="t">Sonnenuntergang</span><span class="s">${sunWx.err ? 'Wetter gerade nicht erreichbar' : 'Suche den besten Spot …'}</span></button>`; }
@@ -3403,7 +3420,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.21.02';
+const VERSION = '2026.10.24.01';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }

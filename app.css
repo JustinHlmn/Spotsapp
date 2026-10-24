@@ -1869,3 +1869,6 @@ body.boot #ctrl .stack{animation:bootin .6s .55s cubic-bezier(.2,.9,.3,1.1) both
 body.boot #near{animation:bootin .6s .65s cubic-bezier(.2,.9,.3,1.1) both}
 @keyframes bootin{from{opacity:0;transform:translateY(-10px) scale(.94)}}
 @media (prefers-reduced-motion:reduce){#splash.out{clip-path:none;opacity:0;transition:opacity .4s}}
+
+/* Kategorie: Schalter für Wetter und Sonne */
+.catblock .cat-wx{margin-top:8px;padding:8px 2px;border:0;background:none;width:100%;font-size:14px}
