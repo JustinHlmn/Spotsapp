@@ -3420,7 +3420,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.24.01';
+const VERSION = '2026.10.28.01';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4138,7 +4138,7 @@ $('#modal').addEventListener('click', async e => {
   const a = b.dataset.g;
   if(a === 'settings'){ renderSettings(); return; }
   if(a === 'new'){ gEdit = null; gDelArmed = false; openGarageCar(null); return; }
-  if(a === 'open'){ gEdit = null; gDelArmed = false; openGarageCar(b.dataset.id); return; }
+  if(a === 'open'){ gEdit = null; gDelArmed = false; srOpen(b.dataset.id); return; }
   if(a === 'back'){ if(gEdit) gDropUnsaved(gEdit); gEdit = null; openGarage(); return; }
   if(a === 'share'){ prefs.gShare = prefs.gShare === false; savePrefs(); openGarage(); if(grp()) pushMember().then(wsCache).catch(() => {}); return; }
   if(!gEdit) return;
@@ -5835,7 +5835,7 @@ function openTrack(id, fly = true){
   renderTrackView(); show('track', mobile() && snap === 'full' ? 'full' : 'half');
   fitTrack(t.segs);
 }
-document.addEventListener('click', e => { const b = e.target.closest('[data-tvcar]'); if(!b || !gCar(b.dataset.tvcar)) return; gEdit = null; gDelArmed = false; openGarageCar(b.dataset.tvcar); });
+document.addEventListener('click', e => { const b = e.target.closest('[data-tvcar]'); if(!b || !gCar(b.dataset.tvcar)) return; srOpen(b.dataset.tvcar); });
 function curTrack(){ return selTrack && String(selTrack).startsWith('ws:') ? (wsTrackObjs.get(selTrack.slice(3)) || null) : tracks.find(x => x.id === selTrack); }
 function closeTrack(){ const foreign = selTrack && String(selTrack).startsWith('ws:'); selTrack = null; tvSel = -1; tvCmp = null; renderList(); show('list', 'half'); if(foreign) renderWsMarkers(); }
 function renderTrackView(){
@@ -5861,7 +5861,8 @@ function renderTrackView(){
       <div id="wayTv">${wayTrackHTML(t)}</div>
       ${xplTrackHTML(t)}
       ${cmpHTML(t)}
-      ${analyzeTrack(t) ? `<button class="btn primary" data-tv="replay">${svg(UI.play, 15)} Fahrt abspielen</button>` : ''}`}
+      ${analyzeTrack(t) ? `<button class="btn primary" data-tv="replay">${svg(UI.play, 15)} Fahrt abspielen</button>
+      <div class="btns"><button class="btn" data-tv="fly">${svg('<path d="M3 17 9 9l4 5 3-4 5 7z"/><path d="M14.5 5.5 17 3l2.5 2.5"/>', 15)} 3D-Flug</button><button class="btn" data-tv="flyrec">${svg('<rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="m16 10.5 5-3v9l-5-3z"/>', 15)} Als Video</button></div>` : ''}`}
       ${trkLen(t) > 1500 ? `<button class="btn" data-tv="again">${svg(UI.nav, 15)} Nochmal fahren</button>` : ''}
       ${tvDetailsHTML(t)}
       ${t._ws && t._ws.dev !== myId() ? `<button class="btn rival" data-tv="rival">${svg(ICONS.flag,15)} ${courses.some(c => c.fromDrive === t._ws.docId) ? `Geister-Rennen gegen ${esc(t._ws.by)} öffnen` : `Geister-Rennen gegen ${esc(t._ws.by)}`}</button>` : ''}
@@ -5888,6 +5889,8 @@ $('#trackView').addEventListener('click', e => {
   if(a === 'course') return courseFromTrack(t);
   if(a === 'rival') return rivalFromDrive(t);
   if(a === 'replay') return startReplay(t);
+  if(a === 'fly') return flyStart(t, false);
+  if(a === 'flyrec') return flyStart(t, true);
   if(a === 'again') return favGo(t);
   if(a === 'fav'){ t.fav = !t.fav; saveTracks(); haptic(); renderTrackView(); toast(t.fav ? 'Zu den Lieblingsstrecken hinzugefügt' : 'Aus den Lieblingsstrecken entfernt'); return; }
   if(a === 'img'){ if(!t.place) fetchPlace(t).catch(() => {}).finally(() => openShareImg(t)); else openShareImg(t); return; }
@@ -7274,6 +7277,167 @@ map.on('zoomstart', e => { if(rp && e.originalEvent) rp.gest = true; });
 map.on('zoomend', () => { if(rp && rp.gest){ rp.gest = false; rp.userZoom = map.getZoom(); rp.zoom = rp.userZoom; } });
 document.addEventListener('keydown', e => { if(rp && e.key === 'Escape') exitReplay(); if(rp && e.key === ' '){ e.preventDefault(); $('#rpBar [data-rp="play"]').click(); } });
 
+/* ================= 3D-Flug: Drohnenflug über die Fahrt, auf Wunsch als Video =================
+   Einflug aus der Übersicht, dann gleitet die Kamera mit 3D-Gelände die Strecke entlang, die Linie zeichnet sich mit,
+   am Ende fährt sie hoch auf die ganze Fahrt. Als Video (Hochkant 720×1280): wie Teilbilder ohne Tempo, Start und Ziel
+   um 250 m gekürzt, keine Spot- oder Standort-Marker im Bild. */
+let fl = null;
+const FLY_TRIM = 250;
+// alles außer der Fahrt selbst und der Grundkarte ausblenden (Spots, Crew, Navi, Radar …)
+const FLY_HIDE = ['spots-q', 'heat', 'gem-fill', 'gem-line', 'sunray-glow', 'sunray-line', 'sunray-sun', 'acc-fill', 'acc-line', 'track-all-line', 'track-all-hit', 'track-cmp-case', 'track-cmp-line',
+  'track-view-case', 'track-live-case', 'track-live-line', 'nav-alt-case', 'nav-alt-line', 'nav-alt-hit', 'nav-route-case', 'nav-route-line', 'nav-wx-ice', 'nav-wx-rain', 'reach-fill', 'reach-line', 'reach-c',
+  'nav-block-line', 'nav-wild-line', 'nav-wild-sign', 'course-all-line', 'course-all-hit', 'course-view-case', 'course-view-line', 'draw-line-case', 'draw-line', 'draw-pts', 'course-ends', 'track-secs', 'track-cur', 'track-ends', 'links', 'draftlink'];
+const flyHideIds = () => FLY_HIDE.concat((map.getStyle().layers || []).map(l => l.id).filter(id => /^radar/.test(id)));
+function flyMime(){
+  if(!window.MediaRecorder) return null;
+  return ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'].find(m => { try{ return MediaRecorder.isTypeSupported(m); }catch(e){ return false; } }) || null;
+}
+function flyStart(t, record){
+  const an = analyzeTrack(t); if(!an || fl || rp || ckOn || !mapReady) return;
+  const a = record ? FLY_TRIM : 0, b = record ? an.D - FLY_TRIM : an.D;
+  if(b - a < 400){ toast(record ? 'Die Fahrt ist zu kurz für ein Video.' : 'Die Fahrt ist zu kurz für einen Flug.'); return; }
+  if(record){
+    const cv = document.createElement('canvas');
+    if(!flyMime() || !cv.captureStream){ toast('Video-Aufnahme geht in diesem Browser nicht. Der Flug läuft trotzdem.'); record = false; }
+  }
+  const D = b - a, T = Math.max(16, Math.min(42, 14 + D / 1000 * .45)) * 1000;
+  fl = {t, an, a, b, D, T, record, phase:'in', t0:0, brg:null, zoom:Math.max(12.8, Math.min(15.6, 16.2 - Math.log2(Math.max(1, D) / 2000) * .6)),
+        prevTerrain:!!prefs.terrain, lw:map.getPaintProperty('track-view-line', 'line-width'), raf:0, done:false};
+  tvDrawStop();
+  document.body.classList.add('flight');
+  try{
+    map.setMaxPitch(80); map.setTerrain({source:'dem', exaggeration:1.5});
+    map.setSky && map.setSky({'sky-color':'#6f9fd8', 'horizon-color':'#d8e6f3', 'sky-horizon-blend':.55, 'horizon-fog-blend':.65, 'fog-color':'#d8e6f3', 'fog-ground-blend':.35});
+  }catch(e){}
+  fl.vis = {};
+  flyHideIds().forEach(id => { try{ if(!map.getLayer(id)) return; fl.vis[id] = map.getLayoutProperty(id, 'visibility') || 'visible'; map.setLayoutProperty(id, 'visibility', 'none'); }catch(e){} });
+  try{ map.setPaintProperty('track-view-line', 'line-width', ['interpolate', ['linear'], ['zoom'], 10, 4, 15, 8]); }catch(e){}
+  flyFilter(a / an.D);
+  const el = document.createElement('div'); el.className = 'tvhead flkeep';
+  fl.head = new maplibregl.Marker({element:el, anchor:'center'}).setLngLat(flyAt(a)).addTo(map);
+  $('#flTop').innerHTML = `<b>${record ? '<i class="fl-rec"></i>Video' : '3D-Flug'}</b><span>${esc(t.name)}</span>`;
+  $('#flBar').innerHTML = `<div class="fl-prog"><i id="flProg"></i></div><button class="rb" data-fl="close" aria-label="Flug beenden">${svg(UI.close, 18, 2.4)}</button>`;
+  try{ map.dragPan.disable(); map.dragRotate.disable(); map.scrollZoom.disable(); map.touchZoomRotate.disable(); }catch(e){}
+  if(record) flyRecStart();
+  // Einflug: erst die ganze Fahrt schräg von oben, dann hinunter an den Start
+  const pts = an.P.filter(p => p.d >= a && p.d <= b), bb = pts.reduce((bb, p) => bb.extend([p.lng, p.lat]), new maplibregl.LngLatBounds([pts[0].lng, pts[0].lat], [pts[0].lng, pts[0].lat]));
+  fl.bounds = bb; fl.brg = flyBearing(a);
+  map.fitBounds(bb, {padding:{top:120, bottom:160, left:40, right:40}, pitch:45, bearing:fl.brg - 20, duration:1600, essential:true});
+  fl.tIn = setTimeout(() => {
+    if(!fl) return;
+    map.flyTo({center:flyAt(a), zoom:fl.zoom, pitch:62, bearing:fl.brg, duration:2200, curve:1.2, essential:true});
+    fl.tGo = setTimeout(() => { if(!fl) return; fl.phase = 'run'; fl.t0 = performance.now(); fl.raf = requestAnimationFrame(flyFrame); }, 2250);
+  }, 1700);
+}
+const flyAt = d => [fl.an.lerp(d, 'lng'), fl.an.lerp(d, 'lat')];
+function flyBearing(d){
+  const L = Math.max(120, fl.D * .025), A = flyAt(Math.max(fl.a, d - L * .3)), B = flyAt(Math.min(fl.b, d + L));
+  return bearing({lng:A[0], lat:A[1]}, {lng:B[0], lat:B[1]});
+}
+function flyFilter(u){
+  const f0 = fl.a / fl.an.D;
+  try{ map.setFilter('track-view-line', ['all', ['>=', ['coalesce', ['get', 'f'], 0], f0], ['<=', ['coalesce', ['get', 'f'], 0], u + .001]]); }catch(e){}
+}
+function flyFrame(now){
+  if(!fl || fl.phase !== 'run') return;
+  const x = Math.min(1, (now - fl.t0) / fl.T), e = x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;   // sanft an- und auslaufen
+  const d = fl.a + (fl.b - fl.a) * (.02 + .96 * e);
+  const tb = flyBearing(d), diff = ((tb - fl.brg + 540) % 360) - 180;
+  fl.brg = (fl.brg + diff * .035 + 360) % 360;   // Kamera dreht träge mit, kein Zappeln in Kurven
+  const c = flyAt(d);
+  map.jumpTo({center:c, bearing:fl.brg, pitch:62, zoom:fl.zoom});
+  fl.head.setLngLat(c); flyFilter(d / fl.an.D);
+  fl.dNow = d - fl.a;
+  const pg = $('#flProg'); if(pg) pg.style.width = (x * 100).toFixed(1) + '%';
+  if(x < 1){ fl.raf = requestAnimationFrame(flyFrame); return; }
+  // Ausflug: hoch auf die ganze Fahrt
+  fl.phase = 'out'; flyFilter(fl.b / fl.an.D);
+  map.fitBounds(fl.bounds, {padding:{top:120, bottom:180, left:40, right:40}, pitch:50, bearing:fl.brg, duration:2600, essential:true});
+  fl.tOut = setTimeout(flyEnd, 3000);
+}
+function flyEnd(){
+  if(!fl) return;
+  fl.phase = 'end';
+  if(fl.record && fl.rec){ fl.endCard = true; setTimeout(() => { if(fl && fl.rec && fl.rec.state !== 'inactive') fl.rec.stop(); }, 600); }
+  else flyStop();
+}
+function flyStop(){
+  if(!fl) return;
+  const F = fl; fl = null;
+  clearTimeout(F.tIn); clearTimeout(F.tGo); clearTimeout(F.tOut); cancelAnimationFrame(F.raf); clearInterval(F.keep);
+  if(F.rec && F.rec.state !== 'inactive'){ F.cancelRec = true; try{ F.rec.stop(); }catch(e){} }
+  if(F.onRender) map.off('render', F.onRender);
+  if(F.head) F.head.remove();
+  map.stop();
+  Object.entries(F.vis || {}).forEach(([id, v]) => { try{ map.setLayoutProperty(id, 'visibility', v); }catch(e){} });
+  try{ map.setPaintProperty('track-view-line', 'line-width', F.lw == null ? 6.5 : F.lw); map.setFilter('track-view-line', null); }catch(e){}
+  try{ map.dragPan.enable(); map.dragRotate.enable(); map.scrollZoom.enable(); map.touchZoomRotate.enable(); }catch(e){}
+  document.body.classList.remove('flight');
+  if(!F.prevTerrain){ try{ map.setTerrain(null); }catch(e){} map.easeTo({pitch:0, bearing:0, duration:700}); map.once('moveend', () => { if(!prefs.terrain && !fl && !rp && !ckOn) map.setMaxPitch(0); }); }
+  else map.easeTo({bearing:0, duration:700});
+  setTimeout(() => { if(view === 'track' && curTrack()) fitTrack(curTrack().segs); }, 750);
+}
+/* Aufnahme: Kartenbild nach jedem Zeichnen auf eine Hochkant-Leinwand mit Titel und Kilometern, die läuft in den MediaRecorder */
+function flyRecStart(){
+  const W = 720, H = 1280, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const attr = ($('#attrib') ? $('#attrib').textContent : '').trim(), g = cv.getContext('2d'), src = map.getCanvas(), t = fl.t, date = new Date(t.created).toLocaleDateString('de-DE', {day:'numeric', month:'long', year:'numeric'});
+  const draw = () => {
+    if(!fl) return;
+    const sw = src.width, sh = src.height, k = Math.max(W / sw, H / sh), dw = sw * k, dh = sh * k;
+    g.fillStyle = '#06111d'; g.fillRect(0, 0, W, H);
+    try{ g.drawImage(src, (W - dw) / 2, (H - dh) / 2, dw, dh); }catch(e){}
+    if(fl.head && fl.phase !== 'end'){   // Spitze der Linie: DOM-Marker sind nicht im Kartenbild, also selbst malen
+      const q = map.project(fl.head.getLngLat()), pr = sw / (src.clientWidth || sw), hx = (W - dw) / 2 + q.x * pr * k, hy = (H - dh) / 2 + q.y * pr * k;
+      g.beginPath(); g.arc(hx, hy, 22, 0, 7); g.fillStyle = 'rgba(255,255,255,.22)'; g.fill();
+      g.beginPath(); g.arc(hx, hy, 10, 0, 7); g.fillStyle = '#fff'; g.fill();
+    }
+    let gr = g.createLinearGradient(0, 0, 0, 260); gr.addColorStop(0, 'rgba(0,0,0,.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, W, 260);
+    gr = g.createLinearGradient(0, H - 300, 0, H); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.7)'); g.fillStyle = gr; g.fillRect(0, H - 300, W, 300);
+    g.fillStyle = '#fff'; g.textBaseline = 'alphabetic';
+    g.font = '800 46px -apple-system, system-ui, sans-serif'; g.fillText(String(t.name).slice(0, 26), 48, 112);
+    g.font = '500 28px -apple-system, system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,.78)'; g.fillText(date, 48, 156);
+    const km = ((fl.dNow || 0) / 1000).toFixed(1).replace('.', ',');
+    g.fillStyle = '#fff'; g.font = '800 64px -apple-system, system-ui, sans-serif'; g.fillText(km + ' km', 48, H - 88);
+    g.font = '700 26px -apple-system, system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,.7)'; g.textAlign = 'right'; g.fillText('Spots', W - 48, H - 92); g.textAlign = 'left';
+    g.font = '500 15px -apple-system, system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,.5)'; g.fillText(attr, 48, H - 40, W - 96);
+  };
+  fl.onRender = draw; map.on('render', draw); draw();
+  const mime = flyMime(), chunks = [];
+  let rec; try{ rec = new MediaRecorder(cv.captureStream(30), {mimeType:mime, videoBitsPerSecond:6e6}); }catch(e){ toast('Video-Aufnahme geht in diesem Browser nicht.'); fl.record = false; map.off('render', draw); fl.onRender = null; return; }
+  const F = fl;
+  rec.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop = () => {
+    if(F.cancelRec || !chunks.length){ if(!F.cancelRec) toast('Video konnte nicht erstellt werden.'); if(fl === F) flyStop(); return; }
+    const blob = new Blob(chunks, {type:mime.split(';')[0]});
+    if(fl === F) flyStop();
+    flyResult(blob, F.t);
+  };
+  rec.start(500); fl.rec = rec;
+  // während der Aufnahme regelmäßig neu zeichnen lassen, auch wenn die Kamera kurz stillsteht
+  fl.keep = setInterval(() => { if(!fl){ clearInterval(F.keep); return; } map.triggerRepaint(); }, 120);
+}
+function flyResult(blob, t){
+  const url = URL.createObjectURL(blob), ext = /mp4/.test(blob.type) ? 'mp4' : 'webm';
+  const name = (String(t.name).replace(/[^\wäöüÄÖÜß-]+/g, '-').replace(/^-+|-+$/g, '') || 'fahrt') + '-3d-flug.' + ext;
+  const el = document.createElement('div'); el.id = 'flResult'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Video');
+  el.innerHTML = `<div class="flr-card"><video src="${url}" autoplay loop muted playsinline></video>
+    <div class="flr-acts"><button class="btn primary" data-flr="share">${svg(UI.share, 15)} Teilen</button><a class="btn" data-flr="save" href="${url}" download="${esc(name)}">Speichern</a></div>
+    <button class="txtbtn" data-flr="close">Schließen</button></div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', async e => {
+    const b = e.target.closest('[data-flr]'); if(!b) return;
+    if(b.dataset.flr === 'close' || e.target === el){ el.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+    if(b.dataset.flr === 'share'){
+      const file = new File([blob], name, {type:blob.type});
+      if(navigator.canShare && navigator.canShare({files:[file]})){ try{ await navigator.share({files:[file], title:t.name}); }catch(err){} }
+      else el.querySelector('[data-flr="save"]').click();
+    }
+  });
+  hapticWin();
+}
+document.addEventListener('click', e => { if(e.target.closest('[data-fl="close"]') && fl) flyStop(); });
+document.addEventListener('keydown', e => { if(fl && e.key === 'Escape') flyStop(); });
+
 /* ================= Auto-Symbol ================= */
 // Auto von oben; o.c / o.t = Lack und Karosserie (Standard: dein eigenes), Geister ohne Farbe sind lila
 const memberCar = dev => { const mc = (WS.members.find(x => x._id === dev) || {}).car; return mc && CAR_TYPES[mc.t] && CAR_COLORS[mc.c] ? mc : null; };
@@ -7520,6 +7684,112 @@ $('#modal').addEventListener('click', e => {
 $('#modal').addEventListener('pointerdown', e => { const st = e.target.closest('#cpStage'); if(!st) return; cp.drag = {x:e.clientX, a:cp.ang}; try{ st.setPointerCapture(e.pointerId); }catch(_){} });
 $('#modal').addEventListener('pointermove', e => { if(cp.drag) cp.ang = cp.drag.a - (e.clientX - cp.drag.x) / 90; });
 ['pointerup', 'pointercancel'].forEach(n => $('#modal').addEventListener(n, () => { cp.drag = null; }));
+
+/* ================= Showroom: dein Auto als 3D-Modell in Lackfarbe, mit Daten und Fotos =================
+   Drehen per Finger (mit Schwung), zwei Finger oder Mausrad zoomen. Ohne WebGL steht das flache Auto-Bild da. */
+let sr = null;
+function srOpen(id){
+  const c = gCar(id); if(!c) return;
+  if(sr) srClose(true);
+  const type = CAR_TYPES[c.type] ? c.type : 'limo', color = CAR_COLORS[c.color] ? c.color : 'carbon', tr = gTracks(c);
+  const top = tr.reduce((m, t) => Math.max(m, +t.maxSpd || 0), 0) * 3.6, rec = tr.reduce((a, t) => a + (t.dist || 0), 0) / 1000;
+  const tuv = gDue(c).find(d => d.k === 'tuv'), ph = gPhotos(c), sub = [gModel(c) && c.nick ? gModel(c) : '', c.year, CAR_COLORS[color].name].filter(Boolean).join(' · ');
+  const tile = (v, l, cls = '') => `<div class="sr-t${cls}"><b>${v}</b><small>${l}</small></div>`;
+  const el = $('#showroom');
+  el.innerHTML = `<div class="sr-stage" id="srStage"><canvas id="srCanvas"></canvas><div class="sr-fb" id="srFb">${carSideSVG(type, color, 'big')}</div>
+      <button class="rb sr-x" data-sr="close" aria-label="Schließen">${svg(UI.close, 18, 2.4)}</button></div>
+    <div class="sr-info">
+      <div class="sr-h"><h2>${esc(gTitle(c))}</h2>${c.id === garage.active ? '<i class="gact">Aktiv</i>' : ''}</div>
+      ${sub ? `<p class="sr-sub">${esc(sub)}</p>` : ''}
+      <div class="sr-tiles">${tile(fmtNum(gKm(c)), 'km gesamt')}${tile(String(tr.length), tr.length === 1 ? 'Fahrt' : 'Fahrten')}
+        ${tile(rec >= 10 ? fmtNum(rec) : rec.toFixed(1).replace('.', ','), 'km gefahren')}${top > 1 ? tile(Math.round(top) + '<small> km/h</small>', 'Top-Speed') : ''}
+        ${tuv ? tile(esc(c.tuv.slice(5) + '/' + c.tuv.slice(2, 4)), tuv.lvl === 2 ? 'TÜV überfällig' : 'TÜV', tuv.lvl ? ' warn' : '') : ''}</div>
+      ${ph.length ? `<div class="sr-ph">${ph.map((p, i) => `<button data-sr="ph" data-i="${i}" aria-label="Foto ${i + 1}"><img data-ph="${esc(p.id)}" alt=""></button>`).join('')}</div>` : ''}
+      <div class="btns">${c.id !== garage.active ? `<button class="btn" data-sr="use">Als aktives Auto</button>` : ''}<button class="btn primary" data-sr="edit">${svg('<path d="M4 20h4L19 9l-4-4L4 16z"/>', 15)} Bearbeiten</button></div>
+    </div>`;
+  el.hidden = false; requestAnimationFrame(() => el.classList.add('on'));
+  fillPhotos(el);
+  sr = {id, type, color, ang:-.6, vel:0, zoom:1, drag:null, pinch:null, t0:performance.now(), raf:0, r:null};
+  srStart();
+  setTimeout(() => { const x = el.querySelector('[data-sr="close"]'); if(x && sr) x.focus({preventScroll:true}); }, 60);
+}
+async function srStart(){
+  const S = sr;
+  try{ await loadThree(); }catch(e){ return; }
+  if(sr !== S || $('#showroom').hidden) return;
+  const cv = $('#srCanvas'), st = $('#srStage'), THREE = window.THREE;
+  let r; try{ r = new THREE.WebGLRenderer({canvas:cv, antialias:true, alpha:true}); }catch(e){ return; }
+  r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); r.outputEncoding = THREE.sRGBEncoding;
+  const scene = new THREE.Scene(); scene.environment = carEnv(THREE, r);
+  scene.add(new THREE.HemisphereLight(0xe6edff, 0x15171c, .8));
+  const key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(4, 9, 5); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x9fc2ff, .8); rim.position.set(-6, 3, -5); scene.add(rim);
+  // Studio-Boden: heller Lichtfleck unter dem Auto, nach außen dunkel
+  const fc = document.createElement('canvas'); fc.width = fc.height = 256;
+  const fx = fc.getContext('2d'), fg = fx.createRadialGradient(128, 128, 10, 128, 128, 128);
+  fg.addColorStop(0, 'rgba(150,170,205,.42)'); fg.addColorStop(.45, 'rgba(90,105,135,.18)'); fg.addColorStop(1, 'rgba(0,0,0,0)');
+  fx.fillStyle = fg; fx.fillRect(0, 0, 256, 256);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(13, 13), new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(fc), transparent:true, depthWrite:false}));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = .005; scene.add(floor);
+  const t = CAR_TYPES[S.type], car = buildCar(THREE, S.type, S.color); car.position.x = -(t.F + t.Rr) / 2; car.add(carShadow(THREE, t));
+  const g = new THREE.Group(); g.add(car); scene.add(g);
+  const cam = new THREE.PerspectiveCamera(30, 1, .1, 100);
+  S.r = {r, scene, cam, g, THREE};
+  $('#srFb').innerHTML = ''; st.classList.add('gl');
+  const len = t.F - t.Rr;
+  const loop = now => {
+    if(sr !== S){ return; }
+    S.raf = requestAnimationFrame(loop);
+    const w = st.clientWidth, h = st.clientHeight;
+    if(cv.width !== Math.round(w * r.getPixelRatio()) || cv.height !== Math.round(h * r.getPixelRatio())){ r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+    if(!S.drag){ S.ang += .0035 + S.vel; S.vel *= .94; }   // langsame Drehscheibe plus Schwung vom Finger
+    // Einflug: von weit oben herunterschwenken
+    const x = RM.matches ? 1 : Math.min(1, (now - S.t0) / 1500), e = 1 - Math.pow(1 - x, 3);
+    const tf = Math.tan(cam.fov * Math.PI / 360), fitW = len * .54 / (tf * Math.max(.3, cam.aspect));   // Auto passt auch hochkant ganz ins Bild
+    const d = Math.max(2.4 + len * 1.05, fitW) * S.zoom * (1 + (1 - e) * .9), hgt = (1.25 + len * .12) * (1 + (1 - e) * 1.6);
+    const a = S.ang + (1 - e) * 1.4;
+    cam.position.set(Math.cos(a) * d, hgt, Math.sin(a) * d); cam.lookAt(0, .55, 0);
+    r.render(scene, cam);
+  };
+  S.raf = requestAnimationFrame(loop);
+}
+function srClose(quick){
+  if(!sr) return;
+  const S = sr; sr = null; cancelAnimationFrame(S.raf);
+  if(S.r){ try{ S.r.scene.traverse(o => { if(o.geometry) o.geometry.dispose(); }); S.r.r.dispose(); }catch(e){} }
+  const el = $('#showroom'); el.classList.remove('on');
+  const done = () => { if(sr) return; el.hidden = true; el.innerHTML = ''; };
+  if(quick || RM.matches) done(); else setTimeout(done, 260);
+}
+(() => {
+  const el = $('#showroom'), pts = new Map();
+  el.addEventListener('click', e => {
+    const b = e.target.closest('[data-sr]'); if(!b || !sr) return;
+    const a = b.dataset.sr, id = sr.id;
+    if(a === 'close') return srClose();
+    if(a === 'ph'){ const c = gCar(id); if(c) openLightbox(gPhotos(c).map(p => p.id), +b.dataset.i || 0); return; }
+    if(a === 'use'){ gUse(id); const c = gCar(id); toast(`${gTitle(c)} ist jetzt dein aktives Auto`); hapticWin(); srOpen(id); if(!$('#modal').hidden && $('#modal .gar-dlg')) openGarage(); return; }
+    if(a === 'edit'){ srClose(true); gEdit = null; gDelArmed = false; openGarageCar(id); return; }
+  });
+  el.addEventListener('pointerdown', e => {
+    if(!sr || !e.target.closest('#srStage') || e.target.closest('button')) return;
+    pts.set(e.pointerId, e.clientX);
+    try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
+    if(pts.size === 1){ sr.drag = {x:e.clientX, a:sr.ang, lx:e.clientX, lt:performance.now(), v:0}; sr.vel = 0; }
+    if(pts.size === 2){ const [p, q] = [...pts.values()]; sr.pinch = {d:Math.abs(p - q) || 1, z:sr.zoom}; sr.drag = null; }
+  });
+  el.addEventListener('pointermove', e => {
+    if(!sr || !pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, e.clientX);
+    if(sr.pinch && pts.size >= 2){ const [p, q] = [...pts.values()]; sr.zoom = Math.max(.7, Math.min(1.5, sr.pinch.z * sr.pinch.d / (Math.abs(p - q) || 1))); return; }
+    if(sr.drag){ const now = performance.now(), dt = Math.max(1, now - sr.drag.lt); sr.drag.v = -(e.clientX - sr.drag.lx) / 120 / dt * 16; sr.drag.lx = e.clientX; sr.drag.lt = now; sr.ang = sr.drag.a - (e.clientX - sr.drag.x) / 120; }
+  });
+  const up = e => { pts.delete(e.pointerId); if(!sr) return; if(sr.drag){ sr.vel = Math.max(-.12, Math.min(.12, sr.drag.v || 0)); sr.drag = null; } if(pts.size < 2) sr.pinch = null; };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  el.addEventListener('wheel', e => { if(!sr || !e.target.closest('#srStage')) return; e.preventDefault(); sr.zoom = Math.max(.7, Math.min(1.5, sr.zoom * Math.exp(e.deltaY * .0012))); }, {passive:false});
+  // Escape: erst Lightbox, dann Showroom
+  document.addEventListener('keydown', e => { if(sr && e.key === 'Escape' && !lb) srClose(); });
+})();
 
 /* ================= 3D-Auto (three.js, wird erst im Cockpit geladen) ================= */
 function carEnv(THREE, renderer){
@@ -8980,7 +9250,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && navPrevOn){ if(nav && nav.pick){ nav.pick = null; renderNavPrev(); } else endNav(); } });
 /* Zurück-Taste (Android, Browser-Geste) und Escape: erst Overlays schließen, dann eine Ansicht zurück, erst danach die App verlassen */
-const overlayOpen = () => !!(searching || lb || !$('#modal').hidden || incoming || (wrap && !$('#wrap').hidden) || ckOn || !$('#death').hidden || rp || navPrevOn || perfOn);
+const overlayOpen = () => !!(searching || lb || sr || fl || $('#flResult') || !$('#modal').hidden || incoming || (wrap && !$('#wrap').hidden) || ckOn || !$('#death').hidden || rp || navPrevOn || perfOn);
 window.addEventListener('keydown', e => { if(e.key === 'Escape') e.__ov = overlayOpen(); }, true);
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape' || e.__ov || e.defaultPrevented) return;

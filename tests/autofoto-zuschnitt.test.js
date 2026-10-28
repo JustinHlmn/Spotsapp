@@ -13,7 +13,7 @@ const HS = process.env.CHROME_PATH || undefined;
   const click = s => page.evaluate(s => { const el = document.querySelector(s); if(!el) throw new Error('fehlt ' + s); el.click(); }, s);
   const wait = ms => page.waitForTimeout(ms);
   await page.goto(`${BASE}/index.html?noonb`); await wait(1800);
-  await click('#b-settings'); await wait(300); await click('[data-st=garage]'); await wait(300); await click('[data-g=open]'); await wait(300);
+  await click('#b-settings'); await wait(300); await click('[data-st=garage]'); await wait(300); await click('[data-g=open]'); await wait(300); await click('[data-sr=edit]'); await wait(300);
   // Testbild 1600×1200: grau, rotes „Auto“ ganz rechts unten
   const jpg = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 1600; c.height = 1200; const g = c.getContext('2d'); g.fillStyle = '#777'; g.fillRect(0, 0, 1600, 1200); g.fillStyle = '#e11'; g.fillRect(1250, 700, 300, 200); return c.toDataURL('image/jpeg', .9).split(',')[1]; });
   await click('[data-g=photo]'); await wait(200);
@@ -51,7 +51,7 @@ const HS = process.env.CHROME_PATH || undefined;
   if(px.w !== 1280 || px.h !== 800) errs.push('nicht 16:10');
   if(!(px.mid[0] > 180 && px.mid[1] < 80)) errs.push('Auto nicht in der Mitte des Ausschnitts');
   // erneut öffnen: Ausschnitt wiederhergestellt; Abbrechen ändert nichts
-  await click('[data-g=open]'); await wait(300); await click('[data-g=photo]'); await wait(900);
+  await click('[data-g=open]'); await wait(300); await click('[data-sr=edit]'); await wait(300); await click('[data-g=photo]'); await wait(900);
   const z2 = await page.evaluate(() => +document.querySelector('#cropper input').value);
   console.log('wieder geöffnet, Zoom', z2, 'gespeichert', car.crop.z); if(Math.abs(z2 - car.crop.z) > .02) errs.push('Ausschnitt nicht wiederhergestellt');
   await page.keyboard.press('Escape'); await wait(300);

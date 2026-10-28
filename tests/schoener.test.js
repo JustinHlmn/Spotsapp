@@ -96,6 +96,6 @@ const HS = process.env.CHROME_PATH || undefined;
   if(await page.evaluate(() => document.body.classList.contains('replay'))) errs.push('Replay endet nicht');
   // Auto-Zeile öffnet das Auto in der Garage
   await click('[data-tvcar]'); await wait(400);
-  if(!(await page.evaluate(() => !!document.querySelector('#modal .gar-dlg')))) errs.push('Auto öffnet nicht');
+  if(!(await page.evaluate(() => !document.querySelector('#showroom').hidden && /Testmarke Modell X/.test(document.querySelector('#showroom h2').textContent)))) errs.push('Auto öffnet nicht');
   console.log('errors', JSON.stringify(errs)); await b.close(); process.exit(errs.length ? 1 : 0);
 })();

@@ -15,7 +15,7 @@
 <link rel="preload" href="lib/maplibre-gl.js" as="script">
 <link rel="preload" href="lib/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="lib/maplibre-gl.css">
-<link rel="stylesheet" href="app.css?v=2026.10.24.01">
+<link rel="stylesheet" href="app.css?v=2026.10.28.01">
 </head>
 <body>
 <div id="splash" aria-hidden="true">
@@ -43,6 +43,9 @@
   <b><span id="gVal">–</span><small>G</small></b>
 </div>
 <div id="rpTop" class="glass"></div>
+<div id="showroom" role="dialog" aria-modal="true" aria-label="Showroom" hidden></div>
+<div id="flTop" class="glass"></div>
+<div id="flBar" class="glass"></div>
 <div id="rpBar" class="glass">
   <button class="rb play" data-rp="play" aria-label="Pause"></button>
   <div class="rp-mid"><div class="rp-tx"><b id="rpTime">0:00</b><span id="rpInfo"></span></div><input type="range" id="rpSeek" min="0" max="1000" step="1" value="0" aria-label="Zeitleiste"></div>
@@ -184,6 +187,6 @@
 <div id="toast" class="glass" hidden></div>
 
 <script src="lib/maplibre-gl.js"></script>
-<script src="app.js?v=2026.10.24.01"></script>
+<script src="app.js?v=2026.10.28.01"></script>
 </body>
 </html>

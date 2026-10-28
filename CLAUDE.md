@@ -198,6 +198,11 @@ Spots ist eine deutsche Web-App (PWA) für Autofahrer und ihre Crew: Spots auf d
   - Cockpit: Tacho federt (`ckGaugeTo`, auch im Replay), neues Tempolimit-Schild ploppt (`lpop`, nie `pop`).
   - Schimmernde Platzhalter `.sk` beim Laden (Wetter, Straßenwetter, Crew-Fotos, Sonnenuntergang); Bilder ohne `src` schimmern auch.
 - Fahrtenliste mit Vorschaubild der Strecke (`trackThumb`). Fahrt-Detail zeigt das gefahrene Auto (`.tv-car`, tippen öffnet es).
+- 3D-Flug (`flyStart(t, record)`, Knöpfe „3D-Flug“/„Als Video“ im Fahrt-Detail):
+  - Einflug aus der Übersicht, Kamera gleitet mit 3D-Gelände (Pitch 62, träge Drehung) die Fahrt entlang, Linie zeichnet sich mit, am Ende Übersicht. Dauer 16–42 s je nach Länge.
+  - Blendet alle Ebenen außer `track-view-line` und Grundkarte aus (`FLY_HIDE` + Radar) und stellt sie danach wieder her, genauso Gelände, Linienbreite, Gesten.
+  - Video: Hochkant 720×1280, Kartenbild wird im `render`-Event auf eine Leinwand kopiert (Titel, Datum, km, Quellenangabe, kein Tempo), `MediaRecorder` (mp4, sonst webm). Start und Ziel um 250 m gekürzt, unter 400 m Rest „zu kurz“. Danach Karte mit Video, „Teilen“ (Web Share mit Datei) und „Speichern“.
+- Showroom (`srOpen(id)`): Tippen auf ein Auto in der Garage oder auf `.tv-car` öffnet das Auto als 3D-Modell (`buildCar`) in Lackfarbe, drehbar mit Schwung, zwei Finger/Mausrad zoomen, Einflug von oben. Daneben km gesamt, Fahrten, km gefahren, Top-Speed mit dem Auto, TÜV, Fotos (Lightbox), „Als aktives Auto“, „Bearbeiten“ (→ `openGarageCar`). Ohne WebGL das flache Auto-Bild.
 - Replay: Einflug hinter das Auto, gefahrener Teil leuchtet (Filter auf `f`), Zeitleiste mit Tempo-Profil (`rpTimeline`), am Ende fährt die Kamera hoch (`rpOutro`).
 
 ## Externe Dienste (alle ohne Key)

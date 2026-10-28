@@ -24,7 +24,7 @@ const HS = process.env.CHROME_PATH || undefined;
     await page.setInputFiles('#gFile', {name:'f.jpg', mimeType:'image/jpeg', buffer:Buffer.from(du.split(',')[1], 'base64')}); await wait(800); await click('[data-cr=ok]'); await wait(700); };
   await page.goto(`${BASE}/index.html?noonb`); await wait(1500);
   await db('put', 'g_c1_alt', await img('#c33'));
-  await click('#b-settings'); await wait(300); await click('[data-st=garage]'); await wait(300); await click('[data-g=open]'); await wait(400);
+  await click('#b-settings'); await wait(300); await click('[data-st=garage]'); await wait(300); await click('[data-g=open]'); await wait(400); await click('[data-sr=edit]'); await wait(300);
   let t = await thumbs(); console.log('altes Foto übernommen:', JSON.stringify(t), 'Plus-Kachel:', await page.evaluate(() => !!document.querySelector('[data-g=addph]')));
   if(t.length !== 1 || t[0] !== 'g_c1_alt') errs.push('altes Einzelfoto fehlt in der Galerie');
   await addPhoto('#33c'); await addPhoto('#3c3');
@@ -55,11 +55,11 @@ const HS = process.env.CHROME_PATH || undefined;
   if(await db('get', del)) errs.push('gelöschtes Foto noch gespeichert');
   for(const p of c.photos) if(!(await db('get', p.id))) errs.push('Foto-Datei fehlt: ' + p.id);
   // neues Foto hinzufügen, dann „Garage“ ohne Speichern → verworfen
-  await click('[data-g=open]'); await wait(400); await addPhoto('#cc3'); const extra = (await thumbs())[2];
+  await click('[data-g=open]'); await wait(400); await click('[data-sr=edit]'); await wait(300); await addPhoto('#cc3'); const extra = (await thumbs())[2];
   await click('[data-g=back]'); await wait(500);
   const c2 = await car(); if(c2.photos.length !== 2) errs.push('ungespeichertes Foto übernommen'); if(extra && await db('get', extra)) errs.push('ungespeichertes Foto bleibt liegen');
   // Auto löschen räumt alle Fotos weg
-  await click('[data-g=open]'); await wait(400); await click('[data-g=del]'); await wait(200); await click('[data-g=del]'); await wait(600);
+  await click('[data-g=open]'); await wait(400); await click('[data-sr=edit]'); await wait(300); await click('[data-g=del]'); await wait(200); await click('[data-g=del]'); await wait(600);
   for(const p of c.photos){ if(await db('get', p.id)) errs.push('Foto nach Auto-Löschen noch da'); if(p.src && await db('get', p.src)) errs.push('Original nach Auto-Löschen noch da'); }
   console.log('errors', JSON.stringify(errs)); await b.close(); process.exit(errs.length ? 1 : 0);
 })();
