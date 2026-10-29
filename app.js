@@ -264,7 +264,7 @@ function onMapStyle(){
   map.addLayer({id:'track-cmp-case', type:'line', source:'track-cmp', layout:rl, paint:{'line-color':'#0b1d26', 'line-width':8, 'line-opacity':.9}});
   map.addLayer({id:'track-cmp-line', type:'line', source:'track-cmp', layout:rl, paint:{'line-color':'#64d2ff', 'line-width':4.5}});
   map.addLayer({id:'track-view-case', type:'line', source:'track-case', layout:rl, paint:{'line-color':'#111419', 'line-width':11}});
-  map.addLayer({id:'track-view-line', type:'line', source:'track-view', layout:rl, paint:{'line-color':rampExpr(), 'line-width':6.5}});
+  map.addLayer({id:'track-view-line', type:'line', source:'track-view', layout:rl, paint:{'line-color':rampExpr(), 'line-width':6.5, 'line-opacity':['case', ['==', ['get', 'x'], 1], .5, 1]}});
   map.addLayer({id:'track-live-case', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ffffff', 'line-width':8, 'line-opacity':.9}});
   map.addLayer({id:'track-live-line', type:'line', source:'track-live', layout:rl, paint:{'line-color':'#ff3b30', 'line-width':5}});
   map.addSource('nav-route', {type:'geojson', data:FC([])});
@@ -3420,7 +3420,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.28.01';
+const VERSION = '2026.10.29.01';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -4880,8 +4880,13 @@ function pauseRec(){
 }
 function resumeRec(){
   if(!rec || rec.runFrom || rec.stopped) return;
-  if(rec.segs[rec.segs.length - 1].length) rec.segs.push([]);
-  rec.runFrom = Date.now(); rec.last = null; followMe = true;
+  // App war aus Versehen zu (nicht selbst pausiert): im selben Abschnitt weiter, die Lücke wird später über die Straßen ergänzt
+  const sg = rec.segs[rec.segs.length - 1], lq = sg[sg.length - 1], gap = rec.crash ? Date.now() - rec.crash : Infinity;
+  rec.last = null;
+  if(lq && gap < GAP_MAX * 1000){ rec.active += gap; rec.last = {lat:lq[1], lng:lq[0], ts:rec.start + lq[2] * 1000}; }
+  else if(sg.length) rec.segs.push([]);
+  rec.crash = null; rec.sg = null;
+  rec.runFrom = Date.now(); followMe = true;
   startWatch(); requestWake(); startTick();
   persistRec(true); renderTracksHead(); updateRecUI();
 }
@@ -4914,7 +4919,7 @@ function onRecPos(p){
   if(rec.last){
     const d = dist(rec.last, pt), dt = (ts - rec.last.ts) / 1000;
     if(d < Math.max(5, c.accuracy * .4)) return;
-    if(dt > 0 && d / dt > 70) return; // GPS-Sprung
+    if(dt > 0 && d / dt > 70 && dt < GAP_MIN_T) return; // GPS-Sprung
     rec.dist += d;
   }
   const q = [+pt.lng.toFixed(6), +pt.lat.toFixed(6), Math.round((ts - rec.start) / 100) / 10], gp = gTake();
@@ -5017,6 +5022,7 @@ $('#trackSaveView').addEventListener('click', e => {
     rec = null; persistRec(true); drawLive(); renderTracksHead();
     renderList(); openTrack(t.id, false);
     fetchPlace(t); if(grp()) setTimeout(() => pushMember().then(wsCache).catch(() => {}), 1500);
+    gapFillTrack(t);
     const found = scanTrack(t);
     toast(found.length ? `Fahrt gespeichert · ${found.length} neue Zeit${found.length > 1 ? 'en' : ''} auf Rennstrecken` : 'Fahrt gespeichert'); hapticWin();
   } else {
@@ -5834,6 +5840,7 @@ function openTrack(id, fly = true){
   if(sub !== 'rec'){ sub = 'rec'; renderTracksHead(); renderList(); }
   renderTrackView(); show('track', mobile() && snap === 'full' ? 'full' : 'half');
   fitTrack(t.segs);
+  if(!t.gapChk) gapFillTrack(t);   // ältere Fahrten und Fahrten, die offline gespeichert wurden
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-tvcar]'); if(!b || !gCar(b.dataset.tvcar)) return; srOpen(b.dataset.tvcar); });
 function curTrack(){ return selTrack && String(selTrack).startsWith('ws:') ? (wsTrackObjs.get(selTrack.slice(3)) || null) : tracks.find(x => x.id === selTrack); }
@@ -5856,6 +5863,7 @@ function renderTrackView(){
         <div><b>${fmtSpd(avg)}</b><span>Ø Tempo gesamt</span></div>
         <div><b>${fmtSpd(t.maxSpd || 0)}</b><span>Max. Tempo</span></div>
       </div>
+      ${gapNote(t)}
       ${tiny ? '<div class="muted" style="font-size:13px">Diese Aufzeichnung ist zu kurz für Auswertungen.</div>' : `<div id="cxTv">${cxTrackHTML(t)}</div>
       ${riskCardHTML(t)}
       <div id="wayTv">${wayTrackHTML(t)}</div>
@@ -5922,6 +5930,69 @@ const TRAMP = ['#22c55e', '#a3e635', '#facc15', '#f97316', '#ef4444'];   // Lini
 const rampExpr = () => ['interpolate', ['linear'], ['coalesce', ['get', 'k'], .5], 0, TRAMP[0], .25, TRAMP[1], .5, TRAMP[2], .75, TRAMP[3], 1, TRAMP[4]];
 const tCol = k => { const i = Math.max(0, Math.min(.9999, k)) * (TRAMP.length - 1), a = Math.floor(i), f = i - a, h = x => [1, 3, 5].map(j => parseInt(x.slice(j, j + 2), 16)); const p = h(TRAMP[a]), q = h(TRAMP[a + 1]); return '#' + p.map((v, j) => Math.round(v + (q[j] - v) * f).toString(16).padStart(2, '0')).join(''); };
 const anCache = new WeakMap();
+/* ================= Lücken füllen =================
+   War die App zu (Absturz, aus Versehen geschlossen, Hintergrund), springt die Fahrt sonst mit einem geraden Strich zum
+   nächsten Punkt. Solche Lücken werden über die Straßen (OSRM) ergänzt: Punkte entlang der Route, Zeit nach der
+   Durchschnittsgeschwindigkeit der Lücke. Ergänzte Punkte haben 4 Werte [lng, lat, s, 0] und stehen in einem eigenen
+   Abschnitt; die Auswertung rechnet daraus keine G-Kräfte, die Karte zeigt sie blasser. */
+const GAP_MIN_T = 12, GAP_MIN_D = 250, GAP_MAX = 7200;
+const isFillSeg = sg => !!(sg && sg.length && sg[0].length === 4);
+const gapFillM = t => { let m = 0; (t.segs || []).forEach(sg => { if(isFillSeg(sg)) for(let i = 1; i < sg.length; i++) m += dist({lat:sg[i - 1][1], lng:sg[i - 1][0]}, {lat:sg[i][1], lng:sg[i][0]}); }); return m; };
+const gapNote = t => { const m = gapFillM(t); return m >= 50 ? `<div class="gapnote">${svg('<path d="M4 17c3-6 5 2 8-4s5 2 8-4"/>', 15, 2)}<span>${fmtKm(m)} über die Straße ergänzt, die App war da aus.</span></div>` : ''; };
+function gapFind(t){
+  const out = [];
+  (t.segs || []).forEach((sg, si) => {
+    if(isFillSeg(sg)) return;
+    for(let i = 1; i < sg.length; i++){
+      const a = sg[i - 1], b = sg[i], dt = b[2] - a[2], d = dist({lat:a[1], lng:a[0]}, {lat:b[1], lng:b[0]});
+      if(dt >= GAP_MIN_T && dt <= GAP_MAX && d >= GAP_MIN_D) out.push({si, i, a, b, dt, d});
+    }
+  });
+  return out;
+}
+async function gapRoute(a, b, dt, d){
+  const rs = await osrm([{lng:a[0], lat:a[1]}, {lng:b[0], lat:b[1]}], '&steps=false');
+  if(!rs) return null;   // offline: später nochmal
+  const ll = c => ({lat:c[1], lng:c[0]}), co = rs[0].geometry.coordinates;
+  if(dist(ll(a), ll(co[0])) > 300 || dist(ll(b), ll(co[co.length - 1])) > 300) return false;   // nicht auf einer Straße
+  const L = [[a[0], a[1]], ...co, [b[0], b[1]]].filter((c, k, A) => !k || k === A.length - 1 || dist(ll(A[k - 1]), ll(c)) > 1);
+  const cum = [0]; for(let k = 1; k < L.length; k++) cum.push(cum[k - 1] + dist(ll(L[k - 1]), ll(L[k])));
+  const R = cum[cum.length - 1];
+  if(R > d * 2.2 + 1500 || R / dt > 70) return false;   // Umweg oder unmögliches Tempo: lieber gerader Strich
+  const pts = L.map((c, k) => [+c[0].toFixed(6), +c[1].toFixed(6), Math.round((a[2] + dt * cum[k] / R) * 10) / 10, 0]);
+  return {pts, R};
+}
+const gapBusy = new Set();
+async function gapFillTrack(t){
+  if(!t || t._ws || gapBusy.has(t.id)) return false;
+  const gaps = gapFind(t).slice(0, 12);
+  if(!gaps.length){ if(!t.gapChk){ t.gapChk = 1; saveTracks(); } return false; }
+  gapBusy.add(t.id);
+  let offline = false, add = 0; const done = [];
+  for(const g of gaps){
+    const r = await gapRoute(g.a, g.b, g.dt, g.d).catch(() => null);
+    if(r === null){ offline = true; break; }
+    if(r){ done.push({...g, pts:r.pts}); add += r.R - g.d; }
+  }
+  gapBusy.delete(t.id);
+  if(!tracks.includes(t)) return false;
+  if(done.length){
+    // von hinten einsetzen, damit die Stellen davor gültig bleiben: [… a] [Lücke] [b …]
+    done.sort((x, y) => y.si - x.si || y.i - x.i).forEach(g => {
+      const sg = t.segs[g.si]; t.segs.splice(g.si, 1, sg.slice(0, g.i), g.pts, sg.slice(g.i));
+    });
+    t.dist = Math.round(t.dist + add);
+    [anCache, baseCache, lightCache, thumbCache, cellCache, sigCache].forEach(c => c.delete(t));
+    simCache.clear(); cmpCache.clear(); riskCache = new WeakMap();
+  }
+  if(!offline) t.gapChk = 1;
+  if(done.length || !offline) saveTracks();
+  if(done.length){
+    renderList();
+    if(curTrack() === t && view === 'track'){ renderTrackView(); updateTrackLayers(); }
+  }
+  return done.length > 0;
+}
 /* GPS-Ausreißer entfernen (Tunnel, Häuserschluchten): behalten wird die längste Punktfolge, in der sich Tempo und Richtung
    so ändern, wie ein Auto es kann (Tempo höchstens ±18 m/s² zwischen zwei Schritten, quer höchstens 20 m/s², beides mit
    Reserve für normales GPS-Rauschen). Über GPS-Lücken (> 5 s) wird nicht geurteilt. Gleich viele Punkte: die ruhigere Folge gewinnt. */
@@ -5958,9 +6029,9 @@ let tvSel = -1, tvDown = false;
 function analyzeTrack(t){
   if(anCache.has(t)) return anCache.get(t);
   const P = []; let D = 0, TA = 0;
-  t.segs.map(cleanSeg).forEach((sg, si) => sg.forEach((q, i) => {
+  t.segs.map(sg => isFillSeg(sg) ? sg : cleanSeg(sg)).forEach((sg, si) => sg.forEach((q, i) => {
     if(i){ const p = sg[i - 1]; D += dist({lat:p[1], lng:p[0]}, {lat:q[1], lng:q[0]}); TA += Math.max(0, q[2] - p[2]); }
-    P.push({lng:q[0], lat:q[1], d:D, ta:TA, si, sl:q.length > 4 ? q[3] : null, sn:q.length > 4 ? q[4] : null});
+    P.push({lng:q[0], lat:q[1], d:D, ta:TA, si, sl:q.length > 4 ? q[3] : null, sn:q.length > 4 ? q[4] : null, fx:q.length === 4});
   }));
   if(P.length < 3 || D < 30){ anCache.set(t, null); return null; }
   // Tempo je Punkt, über ±2 Nachbarpunkte geglättet (km/h); nie über dem gemessenen Top-Speed der Fahrt
@@ -5988,6 +6059,7 @@ function analyzeTrack(t){
       const ds = (P[b].d - P[a].d) / 2, dh = ((bearing(p, P[b]) - bearing(P[a], p) + 540) % 360) - 180;
       lat = vm * vm * (dh * Math.PI / 180) / ds / 9.81;
     }
+    if(p.fx) lat = lon = 0;   // ergänzte Lücke: Tempo ist nur ein Durchschnitt, daraus keine G-Kräfte
     p.glat = p.sl != null ? p.sl : Math.max(-1.1, Math.min(1.1, lat));
     p.glon = p.sn != null ? p.sn : Math.max(-1.1, Math.min(1.1, lon));
   });
@@ -6025,7 +6097,7 @@ function analyzeTrack(t){
   for(let k = 1; k < P.length; k++){
     const a = P[k - 1], b = P[k]; if(a.si !== b.si) continue;
     const v = (a.v + b.v) / 2;
-    feats.push({type:'Feature', properties:{k:+Math.max(0, Math.min(1, (v - lo) / (hi - lo))).toFixed(3), s:secOf((a.d + b.d) / 2), f:+(b.d / D).toFixed(4)}, geometry:{type:'LineString', coordinates:[[a.lng, a.lat], [b.lng, b.lat]]}});
+    feats.push({type:'Feature', properties:{k:+Math.max(0, Math.min(1, (v - lo) / (hi - lo))).toFixed(3), s:secOf((a.d + b.d) / 2), f:+(b.d / D).toFixed(4), ...(a.fx && b.fx ? {x:1} : {})}, geometry:{type:'LineString', coordinates:[[a.lng, a.lat], [b.lng, b.lat]]}});
   }
   const bounds = secs.slice(1).map(s => ({type:'Feature', properties:{}, geometry:{type:'Point', coordinates:[lerp(s.a, 'lng'), lerp(s.a, 'lat')]}}));
   const prof = Array.from({length:240}, (_, i) => { const d = D * i / 239; return [d, lerp(d, 'v')]; });
@@ -6916,7 +6988,7 @@ function trackRisk(t){
   const P = an.P; let tHigh = 0, ev = 0, lastEv = -1e9;
   for(let k = 1; k < P.length; k++){
     const p = P[k], q = P[k - 1];
-    if(p.si === q.si && (p.v + q.v) / 2 > 130) tHigh += p.ta - q.ta;
+    if(p.si === q.si && !p.fx && (p.v + q.v) / 2 > 130) tHigh += p.ta - q.ta;
     if((Math.abs(p.hlon) > .35 || Math.abs(p.hlat) > .4) && p.ta - lastEv > 5){ ev++; lastEv = p.ta; }   // über zwei Punkte gehalten
   }
   const topKmh = t.maxSpd > 0 ? t.maxSpd * 3.6 : b.p95;   // derselbe Top-Speed wie überall sonst
@@ -9935,7 +10007,7 @@ try{
   const r = JSON.parse(localStorage.getItem(RKEY) || 'null');
   if(r && Array.isArray(r.segs)){
     rec = r; rec.last = null;
-    if(!rec.stopped && rec.runFrom){ rec.active += Math.max(0, (rec.lastSeen || rec.runFrom) - rec.runFrom); rec.runFrom = null; }
+    if(!rec.stopped && rec.runFrom){ rec.active += Math.max(0, (rec.lastSeen || rec.runFrom) - rec.runFrom); rec.runFrom = null; rec.crash = rec.lastSeen || Date.now(); }
   }
 }catch(e){ rec = null; }
 

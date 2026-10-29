@@ -130,6 +130,8 @@ Spots ist eine deutsche Web-App (PWA) für Autofahrer und ihre Crew: Spots auf d
   - Start, Pause, Stopp. Öffnet optional das Cockpit.
   - Wird alle 2 s, beim Verbergen und bei `pagehide` gesichert und nach einem Absturz wiederhergestellt.
   - Im Hintergrund pausiert das GPS: das iPhone erlaubt Web-Apps kein Tracking im Hintergrund.
+  - Lücken füllen (`gapFillTrack`): Sprünge in einem Abschnitt (≥ 12 s, ≥ 250 m, ≤ 2 h) werden nach dem Speichern bzw. beim ersten Öffnen (`gapChk`) über OSRM ergänzt. Zeit nach Durchschnittstempo der Lücke. Ergänzte Punkte haben 4 Werte `[lng,lat,s,0]` in eigenem Abschnitt (`isFillSeg`): kein `cleanSeg`, keine G-Kräfte, nicht in „über 130“, auf der Karte blasser (`x:1`), Hinweis `.gapnote`. Abgelehnt bei Umweg (> 2,2× + 1,5 km), > 70 m/s oder Start/Ziel > 300 m von der Straße; offline später nochmal.
+  - Nach einem Absturz (`rec.crash`) geht „Fortsetzen“ im selben Abschnitt weiter und zählt die Lücke zur Dauer, damit sie gefüllt wird. Selbst pausiert = neuer Abschnitt, nichts wird ergänzt.
 - „Meine“: Liste mit Lieblingen (Stern, Filter, auf der Karte gold) und einer Death List mit Rangliste.
 - Death List und Risk-Score (`analyzeTrack`, `trackRisk`):
   - `cleanSeg()` wirft GPS-Ausreißer raus (Tempo ±18 m/s², quer 20 m/s² zwischen zwei Schritten, über Lücken > 5 s kein Urteil).

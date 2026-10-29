@@ -1926,3 +1926,5 @@ body.flight #flTop,body.flight #flBar{display:flex}
 #showroom .btns .btn:not(.primary){background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.12)}
 @media (min-width:900px){#showroom{flex-direction:row}.sr-stage{flex:1.4;height:auto}.sr-info{flex:1;justify-content:center;padding:40px 36px}}
 body.flight #attrib{transform:none!important;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 1px);right:12px}
+.gapnote{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding:9px 12px;border-radius:12px;background:var(--fill)}
+.gapnote svg{flex:none;opacity:.8}
