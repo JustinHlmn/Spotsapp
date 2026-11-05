@@ -300,6 +300,11 @@ function onMapStyle(){
   map.addLayer({id:'track-secs', type:'circle', source:'track-secs', paint:{'circle-radius':3.5, 'circle-color':'#ffffff', 'circle-stroke-color':'#0b0d10', 'circle-stroke-width':1.5}});
   map.addLayer({id:'track-cur', type:'circle', source:'track-cur', paint:{'circle-radius':7, 'circle-color':['case', ['==', ['get', 'k'], 'b'], '#64d2ff', '#ff9f0a'], 'circle-stroke-color':'#ffffff', 'circle-stroke-width':3}});
   map.addLayer({id:'track-ends', type:'circle', source:'track-ends', paint:{'circle-radius':6.5, 'circle-color':['match', ['get','k'], 'start', '#30d158', '#ff3b30'], 'circle-stroke-color':'#ffffff', 'circle-stroke-width':2.5}});
+  map.addSource('bz', {type:'geojson', data:FC([])});
+  const bzv = onOff('bz') ? 'visible' : 'none';
+  map.addLayer({id:'bz-hit', type:'circle', source:'bz', layout:{visibility:bzv}, paint:{'circle-radius':18, 'circle-opacity':0}});
+  map.addLayer({id:'bz-ring', type:'circle', source:'bz', layout:{visibility:bzv}, paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 8, 4, 14, 8.5], 'circle-color':['case', ['get', 'mob'], '#ff9f0a', '#ff2d55'], 'circle-stroke-color':'#ffffff', 'circle-stroke-width':2.5}});
+  map.addLayer({id:'bz-dot', type:'circle', source:'bz', minzoom:11, layout:{visibility:bzv}, paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 11, 1.6, 14, 3], 'circle-color':'#1c1c1e'}});
   const lineLayout = {'line-cap':'round', 'line-join':'round'};
   map.addLayer({id:'links', type:'line', source:'links', layout:lineLayout, paint:{
     'line-color':['case', ['get','sel'], '#5cb0ff', '#ffffff'],
@@ -1604,8 +1609,8 @@ document.addEventListener('keydown', e => { if(!lb) return; if(e.key === 'Escape
 function enterMode(m){
   mode = m;
   $('#map').classList.add('placing');
-  const txt = m === 'spot' ? 'Tippe auf die Karte, um den Spot zu setzen.' : m === 'ev-meet' ? 'Tippe auf die Karte, wo ihr euch trefft.' : m === 'ev-dest' ? 'Tippe auf die Karte, wo es hingehen soll.' : 'Tippe auf die Karte, wo du parkst.';
-  const tip = m === 'spot' || m.startsWith('ev-') ? 'Tipp: Reinzoomen für mehr Genauigkeit.' : 'Zum Beispiel Wanderparkplatz oder Straßenrand am Wegbeginn.';
+  const txt = m === 'bz' ? 'Tippe auf die Karte, wo der Blitzer steht.' : m === 'spot' ? 'Tippe auf die Karte, um den Spot zu setzen.' : m === 'ev-meet' ? 'Tippe auf die Karte, wo ihr euch trefft.' : m === 'ev-dest' ? 'Tippe auf die Karte, wo es hingehen soll.' : 'Tippe auf die Karte, wo du parkst.';
+  const tip = m === 'spot' || m === 'bz' || m.startsWith('ev-') ? 'Tipp: Reinzoomen für mehr Genauigkeit.' : 'Zum Beispiel Wanderparkplatz oder Straßenrand am Wegbeginn.';
   $('#modeView').innerHTML = `<div class="mode">
       <div class="big"><span class="pulse"></span>${txt}</div>
       <div class="muted">${tip}</div>
@@ -1619,7 +1624,8 @@ $('#modeView').addEventListener('click', e => {
   const a = e.target.closest('button')?.dataset.act;
   if(a === 'cancel'){
     const was = mode; exitMode();
-    if(was && was.startsWith('ev-')){ show('list', 'half'); openEvDlg(); }
+    if(was === 'bz'){ show(selected ? 'detail' : 'list', 'peek'); }
+    else if(was && was.startsWith('ev-')){ show('list', 'half'); openEvDlg(); }
     else if(was === 'spot' && draft && draft.lat == null){ draft = null; renderDraftMarkers(); renderMarkers(); show(selected ? 'detail' : 'list', 'half'); }
     else showEdit();
   }
@@ -1635,6 +1641,7 @@ map.on('click', e => {
   if(drawing){ addDrawPoint(e.lngLat); return; }
   if(gemOn && mapReady && !mode){ const g = map.queryRenderedFeatures(e.point, {layers:['gem-fill']}); if(g.length){ const p = g[0].properties; toast(p.v ? `${p.n} · befahren am ${new Date(+p.t).toLocaleDateString('de-DE', {day:'numeric', month:'short', year:'numeric'})}` : `${p.n} · noch nicht befahren`); return; } }
   if(mode) return place(e.lngLat);
+  if(mapReady && onOff('bz')){ const bh = map.queryRenderedFeatures(e.point, {layers:['bz-hit']}); if(bh.length){ bzOpen(bh[0].properties.id); return; } }
   if(mapReady && (tab === 'tracks' || view === 'track' || view === 'course') && view !== 'edit' && view !== 'trackSave'){
     const ch = map.queryRenderedFeatures(e.point, {layers:['course-all-hit']});
     if(ch.length){ openCourse(ch[0].properties.id, false); return; }
@@ -1651,6 +1658,7 @@ map.on('contextmenu', e => { if(!mode && view !== 'edit'){ newDraft(); place(e.l
 function place(ll){
   const p = {lat:ll.lat, lng:ll.lng};
   if(mode && mode.startsWith('ev-')){ const k = mode.slice(3); exitMode(); evPicked(k, p); return; }
+  if(mode === 'bz'){ exitMode(); show(selected ? 'detail' : 'list', 'peek'); bzAsk(p); return; }
   if(mode === 'spot'){ draft.lat = p.lat; draft.lng = p.lng; }
   else if(mode === 'parking'){ draft.parking = {...p, note: draft.parking?.note || ''}; }
   exitMode(); showEdit();
@@ -1969,7 +1977,7 @@ async function onbJoinChecked(code, gname){
 function onbJoin(code, gname, mk){
   const oldG = grp(); if(oldG && oldG.code !== code) memberGone(oldG.code, myId());
   prefs.group = {code, name:gname || 'Crew', joined:Date.now(), ...(mk ? {mkAdmin:true} : {})}; delete prefs.wsSeen; delete prefs.feedSeen; savePrefs();
-  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.loaded = 0; wsSub = 'feed';
+  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.blitz = []; WS.loaded = 0; wsSub = 'feed';
   syncSpotsHead(); wsSync(true);
 }
 $('#onb').addEventListener('click', async e => {
@@ -2045,7 +2053,7 @@ window.addEventListener('hashchange', handleHash);
    Geschützt über einen langen Crew-Code im Pfad (groups/<code>/…) – ohne Code sieht niemand etwas. */
 const FB = {apiKey:'AIzaSyDPD8Bpe1WkswwwSThBUKjlKwDiCAKE4Tw', projectId:'jamsis-spots'};   // Firebase-Projekt der Gruppe (öffentlich, kein Geheimnis)
 const WSKEY = 'meine-spots-ws';
-const WS = {spots:[], runs:[], courses:[], efforts:[], members:[], drives:[], reacts:[], events:[], rsvps:[], crew:null, loaded:0, busy:false, err:null, rulesOld:false, nameClash:null};
+const WS = {spots:[], runs:[], courses:[], efforts:[], members:[], drives:[], reacts:[], events:[], rsvps:[], blitz:[], crew:null, loaded:0, busy:false, err:null, rulesOld:false, nameClash:null};
 const wsFull = new Map(), wsTrackObjs = new Map();
 const okImg = u => typeof u === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u) ? u : '';
 try{ Object.assign(WS, JSON.parse(localStorage.getItem(WSKEY) || '{}'), {busy:false, err:null}); }catch(e){}
@@ -2082,7 +2090,7 @@ async function fsDel(col, id){
   if(!r.ok && r.status !== 404) throw new Error('Firestore ' + r.status);
 }
 function wsCache(){
-  try{ localStorage.setItem(WSKEY, JSON.stringify({spots:WS.spots.map(s => ({...s, ph:[]})), runs:WS.runs, courses:WS.courses, efforts:WS.efforts, members:WS.members, drives:WS.drives, reacts:WS.reacts, events:WS.events, rsvps:WS.rsvps, crew:WS.crew, loaded:WS.loaded})); }catch(e){}
+  try{ localStorage.setItem(WSKEY, JSON.stringify({spots:WS.spots.map(s => ({...s, ph:[]})), runs:WS.runs, courses:WS.courses, efforts:WS.efforts, members:WS.members, drives:WS.drives, reacts:WS.reacts, events:WS.events, rsvps:WS.rsvps, blitz:WS.blitz, crew:WS.crew, loaded:WS.loaded})); }catch(e){}
 }
 const wsUpsert = (arr, obj) => { const i = arr.findIndex(x => x._id === obj._id); if(i >= 0) arr[i] = obj; else arr.push(obj); };
 function newCode(){ const a = new Uint8Array(18); crypto.getRandomValues(a); return Array.from(a, x => 'abcdefghijkmnpqrstuvwxyz23456789'[x % 32]).join('') + uid().slice(0, 6); }
@@ -2170,7 +2178,7 @@ function memberGone(code, dev){
 }
 function leaveGroupLocal(msg){
   liveStop(true); delete prefs.group; delete prefs.wsSeen; delete prefs.rxSeen; savePrefs(); liveWatch();
-  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.crew = null; WS.loaded = 0; wsCache();
+  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.blitz = []; WS.crew = null; WS.loaded = 0; wsCache();
   syncSpotsHead(); refreshAll(); renderWsMarkers();
   if(msg){
     $('#modal').innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-label="Hinweis"><div class="pad" style="padding:20px 16px 16px;gap:12px"><h2>Nicht mehr in der Crew</h2><div class="muted">${esc(msg)}</div><button class="btn primary" data-gp-ok>OK</button></div></div>`;
@@ -2277,7 +2285,7 @@ $('#modal').addEventListener('click', async e => {
   if(a === 'create') toast('Crew erstellt – lad jetzt deine Freunde ein');
   if(a === 'join' || a === 'code') toast(`Willkommen in „${prefs.group.name}“`);
   wsSub = 'feed'; if(tab !== 'crew') setTab('crew');
-  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.loaded = 0; delete prefs.wsSeen; delete prefs.rxSeen;
+  WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.blitz = []; WS.loaded = 0; delete prefs.wsSeen; delete prefs.rxSeen;
   syncSpotsHead(); refreshAll(); wsSync(true);
   if(next.arg && next.arg.then) next.arg.then();
 });
@@ -2299,12 +2307,12 @@ async function wsSync(force){
     const [sp, ru, co, ef, mb, dr, rx] = await Promise.all([fsList('spots', true), fsList('runs'), fsList('courses'), fsList('efforts'), fsList('members').catch(soft('members')), fsList('drives', true).catch(soft('drives')), fsList('reactions').catch(() => null)]);
     Object.assign(WS, {spots:sp, runs:ru, courses:co, efforts:ef, loaded:Date.now()});
     if(mb){ WS.crew = mb.find(m => m._id === CREW_DOC) || null; WS.members = mb.filter(m => m._id !== CREW_DOC); WS.drives = dr || []; WS.rulesOld = false; }
-    if(rx){ WS.reacts = rx.filter(r => !isEvDoc(r)); WS.events = rx.filter(r => r.kind === 'ev'); WS.rsvps = rx.filter(r => r.kind === 'rv'); evTidy(); }
+    if(rx){ WS.reacts = rx.filter(r => !isEvDoc(r) && r.kind !== 'bz'); WS.events = rx.filter(r => r.kind === 'ev'); WS.rsvps = rx.filter(r => r.kind === 'rv'); WS.blitz = rx.filter(r => r.kind === 'bz'); evTidy(); bzTidy(); }
     if(mb && crewEnforce()){ WS.busy = false; return; }
     // Crew-Name kommt zentral aus dem Crew-Dokument (nicht aus dem Link, den jemand geöffnet hat)
     if(mb && WS.crew && typeof WS.crew.name === 'string' && WS.crew.name.trim() && WS.crew.name !== grp().name){ prefs.group = {...grp(), name:WS.crew.name.trim().slice(0, 40)}; savePrefs(); }
     else if(mb && WS.crew && !WS.crew.name && isAdmin()) crewSave(c => c.name ? {} : {name:grp().name}).catch(() => {});
-    { const bn = crewBan(); if(Object.keys(bn).length){ const ok = x => !x.dev || !bn[x.dev]; ['spots', 'runs', 'efforts', 'drives', 'reacts', 'events', 'rsvps'].forEach(k => { WS[k] = (WS[k] || []).filter(ok); }); } }   // Gesperrte ausblenden
+    { const bn = crewBan(); if(Object.keys(bn).length){ const ok = x => !x.dev || !bn[x.dev]; ['spots', 'runs', 'efforts', 'drives', 'reacts', 'events', 'rsvps', 'blitz'].forEach(k => { WS[k] = (WS[k] || []).filter(ok); }); } }   // Gesperrte ausblenden
     if(mb && grp().mkAdmin && !(crewDoc().admin || []).length){ await crewSave(c => (c.admin || []).length ? {} : {admin:[myId()], since:Date.now(), name:c.name || grp().name}).catch(() => {}); }
     if(grp() && grp().mkAdmin){ delete prefs.group.mkAdmin; savePrefs(); }
     const meDoc = WS.members.find(m => m._id === myId());
@@ -2322,7 +2330,7 @@ function wsRefreshUI(){
   wsBadges();
   if(inWsView() && view === 'list') renderList();
   if(view === 'ws') renderWsDetail();
-  renderWsMarkers();
+  renderWsMarkers(); try{ bzRender(); }catch(e){}   // beim Start ist der Blitzer-Abschnitt evtl. noch nicht geladen
 }
 async function pushMember(){
   if(!myName() || WS.rulesOld) return;
@@ -3420,7 +3428,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Einstellungen ================= */
-const VERSION = '2026.10.29.01';
+const VERSION = '2026.11.05.01';
 const ACCENTS = {vanille:['#f4d35e','#0d3b66','Vanille'], blue:['#4da3ff','#0a6fe0','Blau'], teal:['#2dd4bf','#0b8c80','Türkis'], green:['#34d058','#178a3c','Grün'], orange:['#ff9f0a','#c96a00','Orange'], red:['#ff5a5f','#d4262c','Rot'], purple:['#b583ff','#7a3ae6','Lila']};
 const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : {matches:true};
 function onOff(k, def = true){ return prefs[k] == null ? def : !!prefs[k]; }
@@ -3692,7 +3700,7 @@ $('#modal').addEventListener('click', e => {
     if(o.code) prefs.group = {code:o.code, name:o.g, joined:Date.now()};
     if(o.bk && o.bk !== prefs.bkKey){ prefs.bkKey = o.bk; bk.sent = {}; bkSave(); }   // gleicher Schlüssel wie das andere Gerät, eigenes Backup neu verschlüsseln
     delete prefs.wsSeen; delete prefs.rxSeen; savePrefs();
-    WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.crew = null; WS.loaded = 0; wsCache();
+    WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.blitz = []; WS.crew = null; WS.loaded = 0; wsCache();
     $('#modal').hidden = true; if(!$('#onb').hidden) $('#onb').hidden = true;
     syncSpotsHead(); refreshAll(); liveWatch(); wsSync(true);
     toast(`Verknüpft – du bist jetzt auch hier ${o.name || 'du'}`);
@@ -4011,7 +4019,7 @@ async function bkRestore(src, adopt){
   try{ syncMatchers(); }catch(e){}
   bkDirty();
   bkRes = null; $('#modal').hidden = true; $('#onb').hidden = true;
-  if(adopt){ WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.crew = null; WS.loaded = 0; }
+  if(adopt){ WS.spots = []; WS.runs = []; WS.courses = []; WS.efforts = []; WS.members = []; WS.drives = []; WS.reacts = []; WS.events = []; WS.rsvps = []; WS.blitz = []; WS.crew = null; WS.loaded = 0; }
   applyTheme(); syncSpotsHead(); refreshAll(); liveWatch(); if(grp()) wsSync(true);
   toast(`Wiederhergestellt: ${ns} Spots, ${nt} Fahrten, ${np} Fotos`);
 }
@@ -8425,7 +8433,8 @@ function rwCkRender(){
   const r = rwCk.r;
   if(r && r.k !== 'dry' && (!k || r.lv > RW_LV[k])){ k = r.k; txt = r.t; }
   const wa = (!k || RW_LV[k] < RW_LV.rain) ? wildAhead() : null; if(wa){ k = 'wild'; txt = wa; }
-  const html = k ? `<span class="rw-i">${svg(k === 'wild' ? WILD_IC : RWI[k], 15, 2.2)}</span><b>${esc(txt)}</b>` : '';
+  const bz = bzCkText(); if(bz){ k = 'bz'; txt = bz; }
+  const html = k ? `<span class="rw-i">${svg(k === 'wild' ? WILD_IC : k === 'bz' ? BZ_IC : RWI[k], 15, 2.2)}</span><b>${esc(txt)}</b>` : '';
   el.hidden = !k || !ckOn;
   if(html !== rwCk.html){ rwCk.html = html; el.className = `glass rwk-${k || 'dry'}`; el.innerHTML = html; }
 }
@@ -8672,6 +8681,157 @@ function renderNavPrev(){
     <div class="btns"><button class="btn" data-nav="cancel">Abbrechen</button><button class="btn primary" data-nav="go" ${nav.busy ? 'disabled' : ''}>${svg(UI.nav, 16)} Los</button></div>`;
   navSightsLoad(); navSightMarks(); wildLoad(); wildDraw(); blockLoad(); blockDraw();
 }
+/* ================= Blitzer: selbst eingetragen, mit der Crew geteilt, Hinweis während der Fahrt =================
+   Ohne Crew lokal (meine-spots-bz), mit Crew als bz_… in der Reaktionen-Sammlung (keine neuen Firebase-Regeln nötig).
+   Fest = bleibt, Mobil = verschwindet nach BZ_MOB. Aus dem Cockpit gemeldet: mobil und mit Fahrtrichtung. */
+const BZKEY = 'meine-spots-bz', BZ_PRE = 'bz_', BZ_MOB = 6 * 3600e3, BZ_WARN = 500;
+const BZ_IC = '<rect x="3" y="7" width="13" height="10" rx="2"/><circle cx="9.5" cy="12" r="2.6"/><path d="M16 10.5 21 8v8l-5-2.5"/><path d="M6 4.5h4"/>';
+let bzLocal = [];
+try{ const a = JSON.parse(localStorage.getItem(BZKEY) || '[]'); if(Array.isArray(a)) bzLocal = a; }catch(e){}
+const bzSaveLocal = () => { try{ localStorage.setItem(BZKEY, JSON.stringify(bzLocal)); }catch(e){} };
+// Fremddaten prüfen: nur Zahlen im gültigen Bereich, Typ aus fester Liste
+function bzOk(b){
+  if(!b || typeof b !== 'object') return null;
+  const lat = +b.lat, lng = +b.lng, at = +b.at || 0;
+  if(!isFinite(lat) || !isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  const dir = b.dir == null || b.dir === '' || !isFinite(+b.dir) ? null : ((+b.dir % 360) + 360) % 360;
+  return {id:String(b._id || b.id || '').slice(0, 60), lat, lng, dir, t:b.t === 'mob' ? 'mob' : 'fix', at, by:typeof b.by === 'string' ? b.by.slice(0, 40) : '', dev:typeof b.dev === 'string' ? b.dev.slice(0, 60) : '', crew:!!b._id};
+}
+const bzAlive = b => b.t !== 'mob' || Date.now() - b.at < BZ_MOB;
+function bzAll(){
+  const out = bzLocal.map(bzOk).filter(Boolean);
+  if(grp()) (WS.blitz || []).forEach(x => { const b = bzOk(x); if(b) out.push(b); });
+  return out.filter(bzAlive);
+}
+const bzOn = () => onOff('bz');
+function bzVis(){
+  const pb = $('#b-bz'); if(pb) pb.classList.toggle('on', bzOn());
+  if(!mapReady) return;
+  const v = bzOn() ? 'visible' : 'none';
+  ['bz-hit', 'bz-ring', 'bz-dot'].forEach(id => { try{ map.setLayoutProperty(id, 'visibility', v); }catch(e){} });
+}
+function bzRender(){
+  setSrc('bz', FC(bzAll().map(b => ({type:'Feature', properties:{id:b.id, mob:b.t === 'mob'}, geometry:{type:'Point', coordinates:[b.lng, b.lat]}}))));
+  bzVis();
+}
+$('#b-bz').addEventListener('click', () => {
+  prefs.bz = !bzOn(); savePrefs(); bzVis();
+  toast(bzOn() ? 'Blitzer werden angezeigt' : 'Blitzer ausgeblendet');
+});
+$('#b-bzadd').addEventListener('click', () => {
+  $('#layersPop').hidden = true; $('#b-layers').classList.remove('on'); $('#b-layers').setAttribute('aria-expanded', 'false');
+  if(mode || view === 'edit'){ toast('Erst den Spot fertig bearbeiten.'); return; }
+  if(!bzOn()){ prefs.bz = true; savePrefs(); bzVis(); }
+  enterMode('bz');
+});
+// nach dem Setzen auf der Karte: fest oder mobil?
+function bzAsk(p){
+  $('#modal').innerHTML = `<div class="dlg bz-dlg" role="dialog" aria-modal="true" aria-label="Blitzer eintragen"><div class="pad" style="padding:18px 16px 16px">
+    <div class="park-hero"><span class="cpk bz-ic">${svg(BZ_IC, 26, 2)}</span><div><h2>Blitzer eintragen</h2><span class="muted">${grp() ? 'Sieht die ganze Crew' : 'Nur auf diesem Gerät'}</span></div></div>
+    <div class="btns"><button class="btn primary" data-bz="add-fix">Fest</button><button class="btn" data-bz="add-mob">Mobil · 6 Std</button></div>
+    <button class="txtbtn" data-bz="close" style="align-self:center">Abbrechen</button></div></div>`;
+  bzAsk.p = p; $('#modal').hidden = false;
+}
+async function bzAdd(p, t, dir){
+  const o = {kind:'bz', lat:+p.lat.toFixed(6), lng:+p.lng.toFixed(6), dir:dir == null ? null : Math.round(dir), t, by:myName(), dev:myId(), at:Date.now()};
+  if(grp() && FB){
+    const id = BZ_PRE + uid() + uid();
+    WS.blitz = WS.blitz || []; wsUpsert(WS.blitz, {...o, _id:id, _t:o.at}); bzRender();
+    try{ await fsPut('reactions', id, o); wsCache(); }
+    catch(e){ WS.blitz = WS.blitz.filter(x => x._id !== id); bzLocal.push({...o, id}); bzSaveLocal(); bzRender(); toast('Crew nicht erreichbar – Blitzer nur auf diesem Gerät gespeichert'); hapticWin(); return; }
+  } else { bzLocal.push({...o, id:BZ_PRE + uid()}); bzSaveLocal(); bzRender(); }
+  hapticWin();
+  toast(t === 'mob' ? 'Mobiler Blitzer eingetragen – verschwindet nach 6 Std' : 'Blitzer eingetragen');
+}
+function bzOpen(id){
+  const b = bzAll().find(x => x.id === id); if(!b) return;
+  const d = me ? dist(me, b) : null, who = b.dev ? crewName(b.dev, b.by) : '';
+  const sub = [b.t === 'mob' ? `Mobil · noch ${Math.max(1, Math.round((BZ_MOB - (Date.now() - b.at)) / 3600e3))} Std` : 'Fest', b.dir != null ? 'eine Fahrtrichtung' : '', who && b.crew ? `von ${esc(who)}` : '', b.at ? esc(ago(b.at)) : ''].filter(Boolean).join(' · ');
+  $('#modal').innerHTML = `<div class="dlg bz-dlg" role="dialog" aria-modal="true" aria-label="Blitzer"><div class="pad" style="padding:18px 16px 16px">
+    <div class="park-hero"><span class="cpk bz-ic">${svg(BZ_IC, 26, 2)}</span><div><h2>Möglicher Blitzer</h2><span class="muted">${sub}</span></div></div>
+    ${d != null ? `<div class="tstats"><div><b>${fmtDist(d)}</b><span>Luftlinie</span></div></div>` : ''}
+    <div class="btns">${b.t === 'mob' ? `<button class="btn" data-bz="fix" data-id="${esc(b.id)}">Als fest markieren</button>` : ''}<button class="btn danger" data-bz="del" data-id="${esc(b.id)}">Entfernen</button></div>
+    <button class="txtbtn" data-bz="close" style="align-self:center">Schließen</button></div></div>`;
+  $('#modal').hidden = false;
+}
+async function bzDel(id){
+  const i = bzLocal.findIndex(x => x.id === id);
+  if(i >= 0){ bzLocal.splice(i, 1); bzSaveLocal(); bzRender(); return true; }
+  if(!grp()) return false;
+  try{ await fsDel('reactions', id); }catch(e){ toast('Ging gerade nicht. Prüfe dein Internet.'); return false; }
+  WS.blitz = (WS.blitz || []).filter(x => x._id !== id); wsCache(); bzRender(); return true;
+}
+async function bzFix(id){
+  const l = bzLocal.find(x => x.id === id);
+  if(l){ l.t = 'fix'; bzSaveLocal(); bzRender(); return; }
+  const x = (WS.blitz || []).find(q => q._id === id); if(!x) return;
+  const {_id, _t, ...o} = x, n = {...o, t:'fix'};
+  try{ await fsPut('reactions', id, n); }catch(e){ toast('Ging gerade nicht. Prüfe dein Internet.'); return; }
+  wsUpsert(WS.blitz, {...n, _id, _t:Date.now()}); wsCache(); bzRender();
+}
+$('#modal').addEventListener('click', async e => {
+  const b = e.target.closest('[data-bz]'); if(!b) return;
+  const a = b.dataset.bz;
+  if(a === 'close'){ $('#modal').hidden = true; return; }
+  if(a === 'add-fix' || a === 'add-mob'){ $('#modal').hidden = true; const p = bzAsk.p; bzAsk.p = null; if(p) bzAdd(p, a === 'add-mob' ? 'mob' : 'fix', null); return; }
+  if(a === 'fix'){ $('#modal').hidden = true; await bzFix(b.dataset.id); toast('Als fester Blitzer markiert'); return; }
+  if(a === 'del'){
+    if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = 'Wirklich?'; return; }
+    $('#modal').hidden = true; if(await bzDel(b.dataset.id)) toast('Blitzer entfernt');
+  }
+});
+$('#ckBz').innerHTML = svg(BZ_IC, 19, 2) + '<i>+</i>';
+// aus dem Cockpit: ein Tipp, Blitzer an der aktuellen Stelle (mobil, in Fahrtrichtung)
+$('#ckBz').addEventListener('click', () => {
+  if(!ckOn) return;
+  const p = ckBestPos(); if(!p){ toast('Suche GPS …'); return; }
+  const moving = (ck.v || 0) > 1.4 && ck.h != null;
+  bzAdd(p, 'mob', moving ? ck.h : null);
+});
+// eigene abgelaufene mobile Blitzer in der Crew wegräumen
+function bzTidy(){
+  (WS.blitz || []).filter(x => x.dev === myId() && x.t === 'mob' && Date.now() - (+x.at || 0) > BZ_MOB).forEach(x => fsDel('reactions', x._id).then(() => { WS.blitz = WS.blitz.filter(q => q._id !== x._id); wsCache(); }).catch(() => {}));
+  const n = bzLocal.length; bzLocal = bzLocal.filter(x => { const b = bzOk(x); return b && bzAlive(b); }); if(bzLocal.length !== n) bzSaveLocal();
+}
+/* Hinweis im Cockpit: nächster Blitzer voraus. Mit Navi entlang der Route, sonst Luftlinie im Kegel der Fahrtrichtung. */
+const bzCk = {id:null, d:null};
+function bzAhead(){
+  if(!ckOn || !bzOn()) return null;
+  const pos = ckBestPos(); if(!pos) return null;
+  const v = ck.v || 0, h = ck.h, list = bzAll(); if(!list.length) return null;
+  const dirOk = b => b.dir == null || h == null || Math.abs(((h - b.dir + 540) % 360) - 180) < 60;
+  let best = null;
+  if(nav && nav.active && nav.route && !nav.arrived){
+    const R = nav.route;
+    for(const b of list){
+      if(dist(pos, b) > BZ_WARN + 300 || !dirOk(b)) continue;
+      const pr = routeProject(R, R.toXY(b.lng, b.lat), nav.prog, 30, BZ_WARN + 50);
+      if(pr.off > 35) continue;
+      const d = pr.along - nav.prog;
+      if(d < -15 || d > BZ_WARN) continue;
+      if(!best || d < best.d) best = {b, d:Math.max(0, d)};
+    }
+    if(best) return best;
+  }
+  if(v < 1.4 || h == null) return null;
+  for(const b of list){
+    const d = dist(pos, b); if(d > BZ_WARN || !dirOk(b)) continue;
+    const off = Math.abs(((bearing(pos, b) - h + 540) % 360) - 180);
+    if(d > 40 && off > 35) continue;          // seitlich oder hinter mir
+    if(d <= 40 && off > 100) continue;         // gerade vorbei
+    if(!best || d < best.d) best = {b, d};
+  }
+  return best;
+}
+function bzCkText(){
+  const a = bzAhead();
+  if(!a){ bzCk.id = null; bzCk.d = null; return null; }
+  if(bzCk.id !== a.b.id){ bzCk.id = a.b.id; haptic(true); setTimeout(() => haptic(true), 160); }
+  bzCk.d = a.d;
+  return a.d < 50 ? 'Möglicher Blitzer' : `Möglicher Blitzer in ${fmtNav(a.d)}`;
+}
+bzTidy(); bzRender();
+
 /* ================= Gemeinden sammeln =================
    Gemeindegrenzen des Landkreises aus OpenStreetMap (Overpass), vereinfacht und auf dem Gerät gespeichert.
    Befahren = mindestens ein Punkt einer eigenen Fahrt liegt in der Gemeinde. */

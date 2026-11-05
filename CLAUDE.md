@@ -9,7 +9,7 @@ Spots ist eine deutsche Web-App (PWA) für Autofahrer und ihre Crew: Spots auf d
 - Direkt pushen, wenn alles grün ist.
 - Oberfläche minimal: keine Slogans, kein Füllsatz-Text.
 - **Nie Sprachansagen fürs Navi vorschlagen** (ausdrücklich unerwünscht).
-- Keine Blitzer-Warnungen. Keine Karten-Dienste mit API-Key. Keine Nachbauten echter Automarken oder Logos.
+- Keine Karten-Dienste mit API-Key. Keine Nachbauten echter Automarken oder Logos.
 - Death List, Rangliste („Platz 1“ in Rot), Fahrten-Vergleich mit grünem Sieger und Top-Speed bleiben so: Jamsis bewusste Entscheidung.
 - Wall of Almost ist nur eine Warnung.
 - Teilbilder und geteilte Fahrten:
@@ -76,6 +76,7 @@ Spots ist eine deutsche Web-App (PWA) für Autofahrer und ihre Crew: Spots auf d
   - spots, runs, courses, efforts, members, drives, reactions, live.
   - Neues muss in diese Sammlungen:
     - Ausfahrten und Zusagen als `ev_…`/`rv_…` in `reactions`.
+    - Blitzer als `bz_…` in `reactions`.
     - Backups als `bk_<dev>_<bkId>_<teil>` in `drives`.
 - Gruppencode: 20–40 Zeichen a–z0–9 (`CODE_RE`). Einladung per `#join=<code>&g=<Name>`, geprüft mit `inviteFrom()`.
 - Crew-Dokument `members/_crew`:
@@ -171,6 +172,11 @@ Spots ist eine deutsche Web-App (PWA) für Autofahrer und ihre Crew: Spots auf d
   - Live-Knopf sichtbar.
   - **Aufnahme startet automatisch** (Einstellung `navRec`), Knopf `#navRec`. Beim Ende wird Speichern angeboten.
   - X fragt „Beenden?“ und beendet nur die Navi, das Cockpit bleibt.
+- **Blitzer** (Jamsis Wunsch, Nov 2026):
+  - Eintragen über Ebenen-Menü „Blitzer eintragen“ (Fadenkreuz/Standort, dann Fest oder Mobil · 6 Std) oder im Cockpit mit `#ckBz` (mobil, mit Fahrtrichtung `dir`).
+  - Ohne Crew lokal (`meine-spots-bz`), mit Crew als `bz_…` in `reactions` (`WS.blitz`). Jeder in der Crew darf entfernen oder „Als fest markieren“. Abgelaufene mobile werden weggeräumt (`bzTidy`).
+  - Karte: Ebene `bz` (rot fest, orange mobil), Schalter „Blitzer“ (`prefs.bz`), Tippen öffnet `bzOpen`.
+  - Hinweis im Cockpit/Navi über `#ckRoad` (Vorrang vor Wetter/Wild): „Möglicher Blitzer in … m“ bis 500 m voraus. Mit Navi entlang der Route, sonst Luftlinie im Kegel ±35°. Mit `dir` nur in dieser Richtung.
 - Cockpit:
   - Tempo, Tempolimit (OSM, vorausschauend geladen, mehrere Abschnitte im Speicher, versteht `DE:urban` usw.), Straßenwetter- und Wildwechsel-Chip, Nachtmodus nach Dämmerung, 3D-Auto (three.js).
   - 3D-Gelände ist im Cockpit und in der Navi aus (flach), danach wieder an.

@@ -15,7 +15,7 @@
 <link rel="preload" href="lib/maplibre-gl.js" as="script">
 <link rel="preload" href="lib/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="lib/maplibre-gl.css">
-<link rel="stylesheet" href="app.css?v=2026.10.29.01">
+<link rel="stylesheet" href="app.css?v=2026.11.05.01">
 </head>
 <body>
 <div id="splash" aria-hidden="true">
@@ -37,6 +37,7 @@
   <div class="mx"><b data-ck="max">0</b><span>Max km/h</span></div>
 </div>
 <button id="ckRecenter" class="glass" aria-label="Auf das Auto zentrieren"></button>
+<button id="ckBz" class="glass" aria-label="Blitzer hier melden"></button>
 <button id="ckLive" class="glass" hidden aria-pressed="false" aria-label="Live-Standort teilen"><span class="lv-dot"></span><b>Live</b><span class="lv-avs"></span></button>
 <div id="gMeter" class="glass" aria-hidden="true">
   <svg viewBox="0 0 100 100"><circle class="gr" cx="50" cy="50" r="44"/><circle class="gr" cx="50" cy="50" r="22"/><path class="gx" d="M50 6v88M6 50h88"/><text class="gt" x="50" y="4">Bremsen</text><circle id="gDot" class="gd" cx="50" cy="50" r="7"/></svg>
@@ -114,8 +115,10 @@
     <button class="pop-row" id="b-radar"><span>Regenradar</span><i class="tg"></i></button>
     <button class="pop-row" id="b-heat"><span>Fahrten-Heatmap</span><i class="tg"></i></button>
     <button class="pop-row" id="b-reach"><span>Reichweite</span><i class="tg"></i></button>
+    <button class="pop-row" id="b-bz"><span>Blitzer</span><i class="tg"></i></button>
     <div class="pop-sep"></div>
     <button class="pop-row" id="b-offline"><span>Offline-Karten</span><span class="ri" id="popOff"></span></button>
+    <button class="pop-row" id="b-bzadd"><span>Blitzer eintragen</span><span class="ri">+</span></button>
     <button class="pop-row" data-pf-open><span>0–100 messen</span><span class="ri" id="popTimer"></span></button>
     <button class="pop-row" id="b-park"><span>Hier geparkt</span><span class="ri"><span class="pmark">P</span></span></button>
     <button class="pop-row" id="b-settings"><span>Einstellungen</span><span class="ri" id="popSet"></span></button>
@@ -187,6 +190,6 @@
 <div id="toast" class="glass" hidden></div>
 
 <script src="lib/maplibre-gl.js"></script>
-<script src="app.js?v=2026.10.29.01"></script>
+<script src="app.js?v=2026.11.05.01"></script>
 </body>
 </html>

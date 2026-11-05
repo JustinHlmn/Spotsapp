@@ -1928,3 +1928,17 @@ body.flight #flTop,body.flight #flBar{display:flex}
 body.flight #attrib{transform:none!important;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 1px);right:12px}
 .gapnote{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding:9px 12px;border-radius:12px;background:var(--fill)}
 .gapnote svg{flex:none;opacity:.8}
+
+/* ---------- Blitzer ---------- */
+.rwk-bz{--rw:#ff2d55}
+#ckRoad.rwk-bz{background:#ff2d55;color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(255,45,85,.4);animation:bzin .5s cubic-bezier(.2,.9,.3,1.4)}
+#ckRoad.rwk-bz .rw-i{background:rgba(255,255,255,.22);color:#fff}
+@keyframes bzin{0%{transform:scale(.7);opacity:0}100%{transform:none;opacity:1}}
+#ckBz{display:none;position:absolute;z-index:20;left:14px;top:calc(76px + env(safe-area-inset-top,0px));width:46px;height:46px;border-radius:50%;align-items:center;justify-content:center;color:#ff2d55;border:1px solid var(--line);transition:transform .15s var(--ease)}
+#ckBz i{position:absolute;right:2px;top:1px;width:16px;height:16px;border-radius:50%;background:#ff2d55;color:#fff;font:800 13px/16px var(--font);font-style:normal;text-align:center}
+#ckBz:active{transform:scale(.92)}
+body.cockpit #ckBz{display:inline-flex}
+body.cockpit.nav #ckBz{top:auto;bottom:calc(258px + env(safe-area-inset-bottom,0px))}
+body.replay #ckBz{display:none!important}
+body.cockpit.cknight #ckBz{filter:brightness(.78) saturate(.85)}
+.cpk.bz-ic{background:color-mix(in srgb,#ff2d55 18%,transparent);color:#ff2d55}
